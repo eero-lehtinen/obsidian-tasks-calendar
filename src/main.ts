@@ -3,6 +3,7 @@ import { TasksCalendarRenderer } from "./calendar";
 import { TASKS_CALENDAR_VIEW, TasksCalendarView } from "./calendar-view";
 import { DEFAULT_SETTINGS, TasksCalendarSettingTab } from "./settings";
 import { PerformanceMonitor, PerformanceReportModal } from "./performance";
+import { insertTaskAtTop } from "./file-content";
 import { fallbackToggleLine, rescheduleTaskLine } from "./task-parser";
 import { TaskStore } from "./task-store";
 import type { CalendarTask, DateField, TasksApiV1, TasksCalendarSettings, TasksPluginLike } from "./types";
@@ -162,12 +163,11 @@ export default class TasksCalendarPlugin extends Plugin {
     try {
       const taskLine = await api.createTaskLineModal();
       if (!taskLine) return;
-      const field = this.settings.datePreference[0] ?? "scheduled";
-      const datedTaskLine = rescheduleTaskLine(taskLine, field, date);
+      const datedTaskLine = rescheduleTaskLine(taskLine, "due", date);
       const path = normalizePath(configuredPath.toLowerCase().endsWith(".md")
         ? configuredPath
         : `${configuredPath}.md`);
-      await this.appendTaskLine(path, datedTaskLine);
+      await this.addTaskLineToTop(path, datedTaskLine);
       new Notice(`Created task in ${path}.`);
     } catch (error) {
       new Notice(`Could not create task: ${messageFrom(error)}`);
@@ -223,7 +223,7 @@ export default class TasksCalendarPlugin extends Plugin {
       "scheduled";
   }
 
-  private async appendTaskLine(path: string, taskLine: string): Promise<void> {
+  private async addTaskLineToTop(path: string, taskLine: string): Promise<void> {
     let file = this.app.vault.getAbstractFileByPath(path);
     if (file === null) {
       const parts = path.split("/").slice(0, -1);
@@ -238,10 +238,7 @@ export default class TasksCalendarPlugin extends Plugin {
     }
     if (!(file instanceof TFile)) throw new Error(`The configured path is not a Markdown file: ${path}`);
 
-    await this.app.vault.process(file, (content) => {
-      const separator = content.length === 0 || content.endsWith("\n") ? "" : "\n";
-      return `${content}${separator}${taskLine}\n`;
-    });
+    await this.app.vault.process(file, (content) => insertTaskAtTop(content, taskLine));
   }
 
   async loadSettings(): Promise<void> {

@@ -2,6 +2,7 @@ import { MarkdownRenderChild, Menu, Platform, setIcon, setTooltip } from "obsidi
 import { calendarDays, fromDateKey, isoWeekNumber, moveAnchor, titleForRange, toDateKey } from "./date-utils";
 import { compileQuery } from "./query";
 import { recurrenceDateKeys } from "./recurrence";
+import { compareCalendarTasks } from "./task-sort";
 import type TasksCalendarPlugin from "./main";
 import type { CalendarMode, CalendarState, CalendarTask } from "./types";
 
@@ -238,7 +239,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       }
       const key = toDateKey(day);
       const tasks = tasksByDate.get(key) ?? [];
-      tasks.sort(compareTasks);
+      tasks.sort(compareCalendarTasks);
       const layout = this.renderDay(grid, day, key, tasks, today, anchor);
       if (layout) monthLayouts.push(layout);
     }
@@ -304,12 +305,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
         target.closest(".tasks-calendar-task, .tasks-calendar-more, button, input")
       ) return;
       event.preventDefault();
-      const menu = new Menu();
-      menu.addItem((item) => item
-        .setTitle(`Create task on ${key}`)
-        .setIcon("circle-plus")
-        .onClick(() => void this.plugin.createTask(key)));
-      menu.showAtMouseEvent(event);
+      void this.plugin.createTask(key);
     });
     const heading = cell.createDiv({ cls: "tasks-calendar-day-heading" });
     const dayButton = heading.createEl("button", {
@@ -421,7 +417,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     tasks.sort((left, right) => {
       const leftDate = this.taskDate(left, today) ?? "";
       const rightDate = this.taskDate(right, today) ?? "";
-      return leftDate.localeCompare(rightDate) || left.description.localeCompare(right.description);
+      return leftDate.localeCompare(rightDate) || compareCalendarTasks(left, right);
     });
 
     const panel = root.createDiv({ cls: "tasks-calendar-late-tasks" });
@@ -546,11 +542,4 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
   private notifyStateChange(): void {
     this.onStateChange?.(this.getState());
   }
-}
-
-function compareTasks(left: CalendarTask, right: CalendarTask): number {
-  if (left.completed !== right.completed) return left.completed ? 1 : -1;
-  const priorities = ["highest", "high", "normal", "low", "lowest"];
-  return priorities.indexOf(left.priority) - priorities.indexOf(right.priority) ||
-    left.description.localeCompare(right.description);
 }
