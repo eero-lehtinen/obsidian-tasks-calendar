@@ -189,6 +189,12 @@
   user-select: none;
 }
 
+.tasks-calendar-week-number.is-current {
+  background: color-mix(in srgb, var(--tasks-calendar-accent) 12%, var(--background-secondary));
+  color: var(--tasks-calendar-accent);
+  font-weight: var(--font-semibold);
+}
+
 .tasks-calendar-grid.is-week .tasks-calendar-week-number {
   height: 100%;
   box-sizing: border-box;

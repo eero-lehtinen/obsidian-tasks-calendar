@@ -350,7 +350,15 @@ const CalendarApp = forwardRef(function CalendarApp(
               .join(" ");
 
             return (
-              <DayFragment index={index} key={key} weekNumber={isoWeekNumber(model.days[index + 3] ?? day)}>
+              <DayFragment
+                current={
+                  index % 7 === 0 &&
+                  model.days.slice(index, index + 7).some((weekDay) => toDateKey(weekDay) === model.today)
+                }
+                index={index}
+                key={key}
+                weekNumber={isoWeekNumber(model.days[index + 3] ?? day)}
+              >
                 <DroppableDay
                   aria-label={`${day.toDateString()}, ${dayTasks.length} tasks`}
                   aria-selected={key === state.selectedDate}
@@ -472,11 +480,26 @@ function DroppableDay({
   );
 }
 
-function DayFragment({ children, index, weekNumber }: { children: ReactNode; index: number; weekNumber: number }) {
+function DayFragment({
+  children,
+  current,
+  index,
+  weekNumber,
+}: {
+  children: ReactNode;
+  current: boolean;
+  index: number;
+  weekNumber: number;
+}) {
   return (
     <>
       {index % 7 === 0 ? (
-        <div aria-label={`Week ${weekNumber}`} className="tasks-calendar-week-number" role="rowheader">
+        <div
+          aria-current={current ? "true" : undefined}
+          aria-label={`Week ${weekNumber}`}
+          className={`tasks-calendar-week-number${current ? " is-current" : ""}`}
+          role="rowheader"
+        >
           {weekNumber}
         </div>
       ) : null}
