@@ -53,7 +53,7 @@ npm install
 npm run build
 ```
 
-The development build writes Obsidian's generated `main.js` entry point at the repository root. Copy it with `manifest.json` and `styles.css` to the vault plugin directory.
+The development build writes Obsidian's generated `main.js` and `styles.css` files at the repository root. Copy them with `manifest.json` to the vault plugin directory.
 
 ## Usage
 
@@ -99,7 +99,7 @@ npm run build
 
 Available scripts:
 
-- `npm run dev`: watch the TypeScript sources and rebuild `main.js`
+- `npm run dev`: watch the React, TypeScript, and CSS sources and rebuild `main.js` and `styles.css`
 - `npm run format`: format supported source and configuration files with Biome
 - `npm run format:check`: verify formatting without changing files
 - `npm run check`: verify formatting and type-check without emitting files
