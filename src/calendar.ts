@@ -297,6 +297,20 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       this.clearDropTargets();
       void this.plugin.rescheduleTask(draggedTask, key);
     });
+    cell.addEventListener("contextmenu", (event) => {
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        target.closest(".tasks-calendar-task, .tasks-calendar-more, button, input")
+      ) return;
+      event.preventDefault();
+      const menu = new Menu();
+      menu.addItem((item) => item
+        .setTitle(`Create task on ${key}`)
+        .setIcon("circle-plus")
+        .onClick(() => void this.plugin.createTask(key)));
+      menu.showAtMouseEvent(event);
+    });
     const heading = cell.createDiv({ cls: "tasks-calendar-day-heading" });
     const dayButton = heading.createEl("button", {
       text: this.state.mode === "week"
@@ -363,6 +377,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       item.removeClass("is-dragging");
       this.clearDropTargets();
     });
+    item.addEventListener("contextmenu", (event) => this.openTaskMenu(event, task));
     setTooltip(item, taskName, tooltipOptions);
 
     const checkbox = item.createEl("input", { type: "checkbox", cls: "tasks-calendar-checkbox" });
@@ -377,7 +392,6 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     checkbox.setAttr("aria-labelledby", titleId);
     checkbox.setAttr("aria-description", `${task.completed ? "Reopen" : "Complete"} this task`);
     title.addEventListener("click", () => void this.plugin.openTask(task));
-    title.addEventListener("contextmenu", (event) => this.openTaskMenu(event, task));
 
     if (task.recurrence) {
       const recurrenceIcon = item.createSpan({ cls: "tasks-calendar-recurrence" });

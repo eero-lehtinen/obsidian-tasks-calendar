@@ -1,4 +1,4 @@
-import { MarkdownView, Notice, Plugin, TFile, WorkspaceLeaf } from "obsidian";
+import { MarkdownView, Notice, Plugin, TFile, WorkspaceLeaf, normalizePath } from "obsidian";
 import { TasksCalendarRenderer } from "./calendar";
 import { TASKS_CALENDAR_VIEW, TasksCalendarView } from "./calendar-view";
 import { DEFAULT_SETTINGS, TasksCalendarSettingTab } from "./settings";
@@ -147,6 +147,33 @@ export default class TasksCalendarPlugin extends Plugin {
     }
   }
 
+  async createTask(date: string): Promise<void> {
+    const api = this.tasksApi;
+    if (!api) {
+      new Notice("Enable the Tasks plugin to create tasks from the calendar.");
+      return;
+    }
+    const configuredPath = this.settings.newTaskFile.trim();
+    if (!configuredPath) {
+      new Notice("Choose a new task file in Tasks Calendar settings.");
+      return;
+    }
+
+    try {
+      const taskLine = await api.createTaskLineModal();
+      if (!taskLine) return;
+      const field = this.settings.datePreference[0] ?? "scheduled";
+      const datedTaskLine = rescheduleTaskLine(taskLine, field, date);
+      const path = normalizePath(configuredPath.toLowerCase().endsWith(".md")
+        ? configuredPath
+        : `${configuredPath}.md`);
+      await this.appendTaskLine(path, datedTaskLine);
+      new Notice(`Created task in ${path}.`);
+    } catch (error) {
+      new Notice(`Could not create task: ${messageFrom(error)}`);
+    }
+  }
+
   async openTask(task: CalendarTask): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(task.path);
     if (!(file instanceof TFile)) {
@@ -194,6 +221,27 @@ export default class TasksCalendarPlugin extends Plugin {
     return this.settings.datePreference.find((field) => task[field] !== null) ??
       this.settings.datePreference[0] ??
       "scheduled";
+  }
+
+  private async appendTaskLine(path: string, taskLine: string): Promise<void> {
+    let file = this.app.vault.getAbstractFileByPath(path);
+    if (file === null) {
+      const parts = path.split("/").slice(0, -1);
+      let folder = "";
+      for (const part of parts) {
+        folder = folder ? `${folder}/${part}` : part;
+        if (this.app.vault.getAbstractFileByPath(folder) === null) {
+          await this.app.vault.createFolder(folder);
+        }
+      }
+      file = await this.app.vault.create(path, "");
+    }
+    if (!(file instanceof TFile)) throw new Error(`The configured path is not a Markdown file: ${path}`);
+
+    await this.app.vault.process(file, (content) => {
+      const separator = content.length === 0 || content.endsWith("\n") ? "" : "\n";
+      return `${content}${separator}${taskLine}\n`;
+    });
   }
 
   async loadSettings(): Promise<void> {

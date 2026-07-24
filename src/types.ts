@@ -28,6 +28,7 @@ export interface TasksCalendarSettings {
   defaultQuery: string;
   datePreference: DateField[];
   undatedTasks: "hide" | "today";
+  newTaskFile: string;
   lastViewState: CalendarState | null;
   embeddedViewStates: Record<string, CalendarState>;
 }

@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS: TasksCalendarSettings = {
   defaultQuery: "",
   datePreference: ["scheduled", "due", "start"],
   undatedTasks: "hide",
+  newTaskFile: "Tasks.md",
   lastViewState: null,
   embeddedViewStates: {}
 };
@@ -106,6 +107,17 @@ export class TasksCalendarSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.defaultQuery)
         .onChange(async (value) => {
           this.plugin.settings.defaultQuery = value;
+          await this.plugin.saveSettings();
+        }));
+
+    new Setting(containerEl)
+      .setName("New task file")
+      .setDesc("Vault-relative Markdown file used when creating a task from a calendar day.")
+      .addText((text) => text
+        .setPlaceholder("Tasks.md")
+        .setValue(this.plugin.settings.newTaskFile)
+        .onChange(async (value) => {
+          this.plugin.settings.newTaskFile = value.trim();
           await this.plugin.saveSettings();
         }));
   }
