@@ -468,6 +468,58 @@
   color: var(--text-normal);
 }
 
+.tasks-calendar-late-tasks {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  max-height: min(220px, 32vh);
+  border-top: 1px solid var(--tasks-calendar-border);
+  overflow: hidden;
+  background: var(--background-secondary);
+}
+
+.tasks-calendar-late-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px 5px;
+}
+
+.tasks-calendar-late-header h3 {
+  margin: 0;
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-semibold);
+}
+
+.tasks-calendar-late-count {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  text-align: center;
+}
+
+.tasks-calendar-late-list {
+  min-height: 0;
+  padding: 0 10px 8px;
+  overflow-y: auto;
+}
+
+.tasks-calendar-late-meta {
+  grid-column: 2 / -1;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.82em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tasks-calendar:has(.tasks-calendar-late-tasks) .tasks-calendar-grid.is-week {
+  max-height: calc(100vh - 280px);
+}
+
 @container (max-width: 760px) {
   .tasks-calendar-toolbar {
     grid-template-columns: 1fr auto;

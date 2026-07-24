@@ -161,6 +161,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     this.taskElementId = 0;
     root.querySelector(".tasks-calendar-grid")?.remove();
     root.querySelector(".tasks-calendar-error")?.remove();
+    root.querySelector(".tasks-calendar-late-tasks")?.remove();
     const query = compileQuery(this.state.query);
     if (query.error) {
       root.createDiv({ text: query.error, cls: "tasks-calendar-error" });
@@ -173,7 +174,12 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       end: toDateKey(days[days.length - 1])
     };
     const today = toDateKey(new Date());
+    const todayViewStart = toDateKey(
+      calendarDays(new Date(), this.state.mode, this.plugin.settings.weekStartsOn)[0]
+    );
+    const visibleDateKeys = new Set(days.map(toDateKey));
     const tasksByDate = new Map<string, CalendarTask[]>();
+    const lateTasks: CalendarTask[] = [];
     const search = this.state.search.trim().toLowerCase();
     let visibleTasks = 0;
 
@@ -182,6 +188,9 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       if (search && !`${task.description} ${task.path} ${task.tags.join(" ")}`.toLowerCase().includes(search)) continue;
       const key = this.taskDate(task, today);
       if (!key) continue;
+      if (!task.completed && key < todayViewStart && !visibleDateKeys.has(key)) {
+        lateTasks.push(task);
+      }
       const bucket = tasksByDate.get(key) ?? [];
       bucket.push(task);
       tasksByDate.set(key, bucket);
@@ -243,6 +252,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       this.gridResizeObserver = new ResizeObserver(fit);
       this.gridResizeObserver.observe(grid);
     }
+    this.renderLateTasks(root, lateTasks, today);
     this.plugin.performanceMonitor.record("render.calendar", performance.now() - startedAt, {
       indexedTasks: this.plugin.taskStore.getTasks().length,
       visibleTasks,
@@ -304,7 +314,11 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     return { cell, list, taskElements, moreButton };
   }
 
-  private renderTask(list: HTMLElement, task: CalendarTask): HTMLElement {
+  private renderTask(
+    list: HTMLElement,
+    task: CalendarTask,
+    showSource = this.state.mode === "week"
+  ): HTMLElement {
     const taskName = task.description || "Untitled task";
     const tooltipOptions = { placement: "bottom" as const, delay: 200 };
     const item = list.createDiv({
@@ -338,7 +352,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       recurrenceIcon.addEventListener("blur", () => this.clearRecurrencePreview());
     }
 
-    if (this.state.mode === "week") {
+    if (showSource) {
       const source = item.createEl("button", {
         text: task.path.replace(/\.md$/i, "").split("/").pop(),
         cls: "tasks-calendar-task-source",
@@ -348,6 +362,29 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       source.addEventListener("click", () => void this.plugin.openTask(task));
     }
     return item;
+  }
+
+  private renderLateTasks(root: HTMLElement, tasks: CalendarTask[], today: string): void {
+    if (tasks.length === 0) return;
+    tasks.sort((left, right) => {
+      const leftDate = this.taskDate(left, today) ?? "";
+      const rightDate = this.taskDate(right, today) ?? "";
+      return leftDate.localeCompare(rightDate) || left.description.localeCompare(right.description);
+    });
+
+    const panel = root.createDiv({ cls: "tasks-calendar-late-tasks" });
+    const header = panel.createDiv({ cls: "tasks-calendar-late-header" });
+    header.createEl("h3", { text: "Very late tasks" });
+    header.createSpan({ text: String(tasks.length), cls: "tasks-calendar-late-count" });
+    const list = panel.createDiv({ cls: "tasks-calendar-task-list tasks-calendar-late-list" });
+    for (const task of tasks) {
+      const item = this.renderTask(list, task, false);
+      const date = this.taskDate(task, today);
+      item.createSpan({
+        text: `${date ?? "No date"} · ${task.path.replace(/\.md$/i, "")}`,
+        cls: "tasks-calendar-late-meta"
+      });
+    }
   }
 
   private fitMonthCell(layout: MonthCellLayout): void {
