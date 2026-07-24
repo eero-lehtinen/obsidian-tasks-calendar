@@ -28,7 +28,15 @@ export class TasksCalendarView extends ItemView {
   async onOpen(): Promise<void> {
     this.contentEl.empty();
     this.contentEl.addClass("tasks-calendar-view");
-    this.renderer = new TasksCalendarRenderer(this.contentEl, this.plugin, this.pendingState);
+    this.renderer = new TasksCalendarRenderer(
+      this.contentEl,
+      this.plugin,
+      { ...(this.plugin.settings.lastViewState ?? {}), ...this.pendingState },
+      (state) => {
+        this.plugin.rememberCalendarState(state);
+        this.app.workspace.requestSaveLayout();
+      }
+    );
     this.addChild(this.renderer);
   }
 

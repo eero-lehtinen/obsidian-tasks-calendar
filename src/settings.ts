@@ -10,7 +10,8 @@ export const DEFAULT_SETTINGS: TasksCalendarSettings = {
   defaultQuery: "",
   datePreference: ["scheduled", "due", "start"],
   undatedTasks: "hide",
-  compactMonthTasks: 4
+  lastViewState: null,
+  embeddedViewStates: {}
 };
 
 export class TasksCalendarSettingTab extends PluginSettingTab {
@@ -93,19 +94,6 @@ export class TasksCalendarSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.undatedTasks)
         .onChange(async (value) => {
           this.plugin.settings.undatedTasks = value as "hide" | "today";
-          await this.plugin.saveSettings();
-          this.plugin.refreshCalendars();
-        }));
-
-    new Setting(containerEl)
-      .setName("Tasks visible per day in month view")
-      .setDesc("Additional tasks are collapsed behind a “more” button.")
-      .addSlider((slider) => slider
-        .setLimits(1, 10, 1)
-        .setValue(this.plugin.settings.compactMonthTasks)
-        .setDynamicTooltip()
-        .onChange(async (value) => {
-          this.plugin.settings.compactMonthTasks = value;
           await this.plugin.saveSettings();
           this.plugin.refreshCalendars();
         }));

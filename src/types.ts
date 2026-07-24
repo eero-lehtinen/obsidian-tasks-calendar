@@ -28,7 +28,8 @@ export interface TasksCalendarSettings {
   defaultQuery: string;
   datePreference: DateField[];
   undatedTasks: "hide" | "today";
-  compactMonthTasks: number;
+  lastViewState: CalendarState | null;
+  embeddedViewStates: Record<string, CalendarState>;
 }
 
 export interface CalendarState {
@@ -36,6 +37,8 @@ export interface CalendarState {
   anchor: string;
   query: string;
   showCompleted: boolean;
+  search: string;
+  weekHeight: number | null;
 }
 
 export interface QueryResult {

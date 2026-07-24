@@ -28,5 +28,8 @@
     "tslib": "^2.8.0",
     "typescript": "^5.8.0",
     "vitest": "^3.2.0"
+  },
+  "dependencies": {
+    "rrule": "^2.8.1"
   }
 }

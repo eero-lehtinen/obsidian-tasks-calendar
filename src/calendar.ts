@@ -1,25 +1,42 @@
-import { MarkdownRenderChild, Menu, Platform, setIcon } from "obsidian";
-import { calendarDays, fromDateKey, moveAnchor, titleForRange, toDateKey } from "./date-utils";
+import { MarkdownRenderChild, Menu, Platform, setIcon, setTooltip } from "obsidian";
+import { calendarDays, fromDateKey, isoWeekNumber, moveAnchor, titleForRange, toDateKey } from "./date-utils";
 import { compileQuery } from "./query";
+import { recurrenceDateKeys } from "./recurrence";
 import type TasksCalendarPlugin from "./main";
 import type { CalendarMode, CalendarState, CalendarTask } from "./types";
 
+let nextCalendarInstanceId = 0;
+
+interface MonthCellLayout {
+  cell: HTMLElement;
+  list: HTMLElement;
+  taskElements: HTMLElement[];
+  moreButton: HTMLButtonElement;
+}
+
 export class TasksCalendarRenderer extends MarkdownRenderChild {
   private state: CalendarState;
-  private search = "";
   private queryOpen = false;
+  private readonly calendarInstanceId = nextCalendarInstanceId++;
+  private taskElementId = 0;
+  private visibleDateRange: { start: string; end: string } | null = null;
+  private gridResizeObserver: ResizeObserver | null = null;
+  private layoutFrame: number | null = null;
 
   constructor(
     containerEl: HTMLElement,
     private readonly plugin: TasksCalendarPlugin,
-    initial: Partial<CalendarState> = {}
+    initial: Partial<CalendarState> = {},
+    private readonly onStateChange?: (state: CalendarState) => void
   ) {
     super(containerEl);
     this.state = {
       mode: initial.mode ?? plugin.settings.defaultView,
       anchor: initial.anchor ?? toDateKey(new Date()),
       query: initial.query ?? plugin.settings.defaultQuery,
-      showCompleted: initial.showCompleted ?? plugin.settings.showCompleted
+      showCompleted: initial.showCompleted ?? plugin.settings.showCompleted,
+      search: initial.search ?? "",
+      weekHeight: initial.weekHeight ?? null
     };
   }
 
@@ -27,6 +44,13 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     this.containerEl.addClass("tasks-calendar");
     this.registerEvent(this.plugin.taskStore.on("tasks-calendar:changed", () => this.render()));
     this.render();
+  }
+
+  onunload(): void {
+    this.gridResizeObserver?.disconnect();
+    this.gridResizeObserver = null;
+    if (this.layoutFrame !== null) window.cancelAnimationFrame(this.layoutFrame);
+    this.layoutFrame = null;
   }
 
   refresh(): void {
@@ -40,6 +64,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
 
   setState(state: Partial<CalendarState>): void {
     this.state = { ...this.state, ...state };
+    this.notifyStateChange();
     this.render();
   }
 
@@ -55,12 +80,13 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
   private renderToolbar(root: HTMLElement): void {
     const toolbar = root.createDiv({ cls: "tasks-calendar-toolbar" });
     const navigation = toolbar.createDiv({ cls: "tasks-calendar-navigation" });
-    this.iconButton(navigation, "chevron-left", "Previous", () => this.navigate(-1));
     navigation.createEl("button", { text: "Today", cls: "tasks-calendar-today-button" })
       .addEventListener("click", () => {
         this.state.anchor = toDateKey(new Date());
+        this.notifyStateChange();
         this.render();
       });
+    this.iconButton(navigation, "chevron-left", "Previous", () => this.navigate(-1));
     this.iconButton(navigation, "chevron-right", "Next", () => this.navigate(1));
 
     toolbar.createEl("h2", {
@@ -73,11 +99,12 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       type: "search",
       placeholder: "Search tasks",
       cls: "tasks-calendar-search",
-      value: this.search
+      value: this.state.search
     });
     search.setAttr("aria-label", "Search tasks");
     search.addEventListener("input", () => {
-      this.search = search.value;
+      this.state.search = search.value;
+      this.notifyStateChange();
       this.renderCalendar(root);
     });
 
@@ -93,6 +120,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       this.state.showCompleted ? "Hide completed tasks" : "Show completed tasks",
       () => {
         this.state.showCompleted = !this.state.showCompleted;
+        this.notifyStateChange();
         this.render();
       }
     );
@@ -114,6 +142,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     textarea.rows = 3;
     textarea.addEventListener("input", () => {
       this.state.query = textarea.value;
+      this.notifyStateChange();
       this.renderCalendar(root);
     });
     panel.createEl("a", {
@@ -125,6 +154,11 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
 
   private renderCalendar(root: HTMLElement): void {
     const startedAt = performance.now();
+    this.gridResizeObserver?.disconnect();
+    this.gridResizeObserver = null;
+    if (this.layoutFrame !== null) window.cancelAnimationFrame(this.layoutFrame);
+    this.layoutFrame = null;
+    this.taskElementId = 0;
     root.querySelector(".tasks-calendar-grid")?.remove();
     root.querySelector(".tasks-calendar-error")?.remove();
     const query = compileQuery(this.state.query);
@@ -134,9 +168,13 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
 
     const anchor = fromDateKey(this.state.anchor);
     const days = calendarDays(anchor, this.state.mode, this.plugin.settings.weekStartsOn);
+    this.visibleDateRange = {
+      start: toDateKey(days[0]),
+      end: toDateKey(days[days.length - 1])
+    };
     const today = toDateKey(new Date());
     const tasksByDate = new Map<string, CalendarTask[]>();
-    const search = this.search.trim().toLowerCase();
+    const search = this.state.search.trim().toLowerCase();
     let visibleTasks = 0;
 
     for (const task of this.plugin.taskStore.getTasks()) {
@@ -154,6 +192,22 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       cls: `tasks-calendar-grid is-${this.state.mode}`,
       attr: { role: "grid", "aria-label": "Tasks calendar" }
     });
+    if (this.state.mode === "week") {
+      if (this.state.weekHeight !== null) grid.style.height = `${this.state.weekHeight}px`;
+      this.gridResizeObserver = new ResizeObserver((entries) => {
+        const height = Math.round(entries[0]?.contentRect.height ?? 0);
+        if (height > 0 && Math.abs(height - (this.state.weekHeight ?? 0)) > 1) {
+          this.state.weekHeight = height;
+          this.notifyStateChange();
+        }
+      });
+      this.gridResizeObserver.observe(grid);
+    }
+    grid.createDiv({
+      text: "Wk",
+      cls: "tasks-calendar-weekday tasks-calendar-week-number-header",
+      attr: { role: "columnheader", "aria-label": "ISO week number" }
+    });
     for (const day of days.slice(0, 7)) {
       grid.createDiv({
         text: new Intl.DateTimeFormat(undefined, { weekday: this.state.mode === "week" ? "long" : "short" }).format(day),
@@ -162,11 +216,32 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       });
     }
 
-    for (const day of days) {
+    const monthLayouts: MonthCellLayout[] = [];
+    for (const [index, day] of days.entries()) {
+      if (index % 7 === 0) {
+        const week = isoWeekNumber(days[index + 3] ?? day);
+        grid.createDiv({
+          text: String(week),
+          cls: "tasks-calendar-week-number",
+          attr: { role: "rowheader", "aria-label": `Week ${week}` }
+        });
+      }
       const key = toDateKey(day);
       const tasks = tasksByDate.get(key) ?? [];
       tasks.sort(compareTasks);
-      this.renderDay(grid, day, key, tasks, today, anchor);
+      const layout = this.renderDay(grid, day, key, tasks, today, anchor);
+      if (layout) monthLayouts.push(layout);
+    }
+    if (this.state.mode === "month") {
+      const fit = () => {
+        for (const layout of monthLayouts) this.fitMonthCell(layout);
+      };
+      this.layoutFrame = window.requestAnimationFrame(() => {
+        this.layoutFrame = null;
+        fit();
+      });
+      this.gridResizeObserver = new ResizeObserver(fit);
+      this.gridResizeObserver.observe(grid);
     }
     this.plugin.performanceMonitor.record("render.calendar", performance.now() - startedAt, {
       indexedTasks: this.plugin.taskStore.getTasks().length,
@@ -182,7 +257,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     tasks: CalendarTask[],
     today: string,
     anchor: Date
-  ): void {
+  ): MonthCellLayout | null {
     const isOutside = this.state.mode === "month" && day.getMonth() !== anchor.getMonth();
     const cell = grid.createDiv({
       cls: [
@@ -190,7 +265,11 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
         key === today ? "is-today" : "",
         isOutside ? "is-outside" : ""
       ].filter(Boolean).join(" "),
-      attr: { role: "gridcell", "aria-label": `${day.toDateString()}, ${tasks.length} tasks` }
+      attr: {
+        role: "gridcell",
+        "aria-label": `${day.toDateString()}, ${tasks.length} tasks`,
+        "data-date": key
+      }
     });
     const heading = cell.createDiv({ cls: "tasks-calendar-day-heading" });
     const dayButton = heading.createEl("button", {
@@ -202,45 +281,105 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     dayButton.addEventListener("click", () => {
       this.state.anchor = key;
       this.state.mode = "week";
+      this.notifyStateChange();
       this.render();
     });
     if (tasks.length > 0) heading.createSpan({ text: String(tasks.length), cls: "tasks-calendar-day-count" });
 
     const list = cell.createDiv({ cls: "tasks-calendar-task-list" });
-    const maximum = this.state.mode === "month" ? this.plugin.settings.compactMonthTasks : Number.POSITIVE_INFINITY;
-    for (const task of tasks.slice(0, maximum)) this.renderTask(list, task);
-    if (tasks.length > maximum) {
-      const more = list.createEl("button", {
-        text: `+${tasks.length - maximum} more`,
-        cls: "tasks-calendar-more"
-      });
-      more.addEventListener("click", () => {
-        this.state.anchor = key;
-        this.state.mode = "week";
-        this.render();
-      });
-    }
+    const taskElements = tasks.map((task) => this.renderTask(list, task));
+    if (this.state.mode !== "month" || tasks.length === 0) return null;
+
+    const moreButton = list.createEl("button", {
+      text: "",
+      cls: "tasks-calendar-more"
+    });
+    moreButton.hidden = true;
+    moreButton.addEventListener("click", () => {
+      this.state.anchor = key;
+      this.state.mode = "week";
+      this.notifyStateChange();
+      this.render();
+    });
+    return { cell, list, taskElements, moreButton };
   }
 
-  private renderTask(list: HTMLElement, task: CalendarTask): void {
+  private renderTask(list: HTMLElement, task: CalendarTask): HTMLElement {
+    const taskName = task.description || "Untitled task";
+    const tooltipOptions = { placement: "bottom" as const, delay: 200 };
     const item = list.createDiv({
       cls: `tasks-calendar-task${task.completed ? " is-completed" : ""}`,
       attr: { "data-priority": task.priority }
     });
+    setTooltip(item, taskName, tooltipOptions);
+
     const checkbox = item.createEl("input", { type: "checkbox", cls: "tasks-calendar-checkbox" });
     checkbox.checked = task.completed;
-    checkbox.setAttr("aria-label", `${task.completed ? "Reopen" : "Complete"} ${task.description}`);
     checkbox.addEventListener("click", (event) => event.stopPropagation());
     checkbox.addEventListener("change", () => void this.plugin.toggleTask(task));
 
-    const title = item.createEl("button", { text: task.description || "Untitled task", cls: "tasks-calendar-task-title" });
-    title.setAttr("title", `${task.description}\n${task.path}:${task.line + 1}`);
+    const title = item.createEl("button", { text: taskName, cls: "tasks-calendar-task-title" });
+    const titleId = `tasks-calendar-${this.calendarInstanceId}-task-${this.taskElementId}`;
+    this.taskElementId += 1;
+    title.id = titleId;
+    checkbox.setAttr("aria-labelledby", titleId);
+    checkbox.setAttr("aria-description", `${task.completed ? "Reopen" : "Complete"} this task`);
     title.addEventListener("click", () => void this.plugin.openTask(task));
     title.addEventListener("contextmenu", (event) => this.openTaskMenu(event, task));
 
-    if (this.state.mode === "week") {
-      item.createSpan({ text: task.path.replace(/\.md$/i, "").split("/").pop(), cls: "tasks-calendar-task-source" });
+    if (task.recurrence) {
+      const recurrenceIcon = item.createSpan({ cls: "tasks-calendar-recurrence" });
+      setIcon(recurrenceIcon, "repeat-2");
+      setTooltip(recurrenceIcon, `Repeats: ${task.recurrence}`, tooltipOptions);
+      recurrenceIcon.tabIndex = 0;
+      recurrenceIcon.addEventListener("pointerenter", () => this.showRecurrencePreview(task));
+      recurrenceIcon.addEventListener("pointerleave", () => this.clearRecurrencePreview());
+      recurrenceIcon.addEventListener("focus", () => this.showRecurrencePreview(task));
+      recurrenceIcon.addEventListener("blur", () => this.clearRecurrencePreview());
     }
+
+    if (this.state.mode === "week") {
+      const source = item.createEl("button", {
+        text: task.path.replace(/\.md$/i, "").split("/").pop(),
+        cls: "tasks-calendar-task-source",
+        attr: { type: "button" }
+      });
+      setTooltip(source, `Open ${task.path}`, tooltipOptions);
+      source.addEventListener("click", () => void this.plugin.openTask(task));
+    }
+    return item;
+  }
+
+  private fitMonthCell(layout: MonthCellLayout): void {
+    const { cell, list, taskElements, moreButton } = layout;
+    for (const task of taskElements) task.hidden = false;
+    moreButton.hidden = true;
+
+    const listTop = list.offsetTop - cell.offsetTop;
+    const availableHeight = Math.max(0, cell.clientHeight - listTop - 5);
+    if (list.scrollHeight <= availableHeight) return;
+
+    moreButton.hidden = false;
+    const moreHeight = moreButton.getBoundingClientRect().height;
+    const taskHeightLimit = Math.max(0, availableHeight - moreHeight);
+    let usedHeight = 0;
+    let visibleCount = 0;
+    let overflowed = false;
+    for (const task of taskElements) {
+      const height = task.getBoundingClientRect().height;
+      const fits = !overflowed && usedHeight + height <= taskHeightLimit;
+      task.hidden = !fits;
+      if (fits) {
+        usedHeight += height;
+        visibleCount += 1;
+      } else {
+        overflowed = true;
+      }
+    }
+
+    const hiddenCount = taskElements.length - visibleCount;
+    moreButton.textContent = `+${hiddenCount} more`;
+    moreButton.hidden = hiddenCount === 0;
   }
 
   private openTaskMenu(event: MouseEvent, task: CalendarTask): void {
@@ -261,8 +400,31 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     return this.plugin.settings.undatedTasks === "today" ? today : null;
   }
 
+  private showRecurrencePreview(task: CalendarTask): void {
+    this.clearRecurrencePreview();
+    if (!task.recurrence || !this.visibleDateRange) return;
+    const baseDate = this.taskDate(task, toDateKey(new Date()));
+    if (!baseDate) return;
+    const dates = recurrenceDateKeys(
+      task.recurrence,
+      baseDate,
+      this.visibleDateRange.start,
+      this.visibleDateRange.end
+    );
+    for (const day of Array.from(this.containerEl.querySelectorAll<HTMLElement>(".tasks-calendar-day[data-date]"))) {
+      day.toggleClass("is-recurrence-preview", dates.has(day.dataset.date ?? ""));
+    }
+  }
+
+  private clearRecurrencePreview(): void {
+    for (const day of Array.from(this.containerEl.querySelectorAll(".tasks-calendar-day.is-recurrence-preview"))) {
+      day.removeClass("is-recurrence-preview");
+    }
+  }
+
   private navigate(direction: -1 | 1): void {
     this.state.anchor = toDateKey(moveAnchor(fromDateKey(this.state.anchor), this.state.mode, direction));
+    this.notifyStateChange();
     this.render();
   }
 
@@ -273,6 +435,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     });
     button.addEventListener("click", () => {
       this.state.mode = mode;
+      this.notifyStateChange();
       this.render();
     });
   }
@@ -283,6 +446,10 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     button.addEventListener("click", handler);
     if (!Platform.isMobile) button.setAttr("data-tooltip-position", "top");
     return button;
+  }
+
+  private notifyStateChange(): void {
+    this.onStateChange?.(this.getState());
   }
 }
 

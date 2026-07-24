@@ -6,6 +6,7 @@ import { PerformanceMonitor, PerformanceReportModal } from "./performance";
 import { fallbackToggleLine } from "./task-parser";
 import { TaskStore } from "./task-store";
 import type { CalendarTask, TasksApiV1, TasksCalendarSettings, TasksPluginLike } from "./types";
+import type { CalendarState } from "./types";
 
 interface ObsidianAppWithPlugins {
   plugins?: {
@@ -18,6 +19,7 @@ export default class TasksCalendarPlugin extends Plugin {
   taskStore!: TaskStore;
   readonly performanceMonitor = new PerformanceMonitor();
   private embeddedCalendars = new Set<TasksCalendarRenderer>();
+  private stateSaveTimer: number | null = null;
 
   get tasksApi(): TasksApiV1 | null {
     const app = this.app as typeof this.app & ObsidianAppWithPlugins;
@@ -56,7 +58,15 @@ export default class TasksCalendarPlugin extends Plugin {
     });
 
     this.registerMarkdownCodeBlockProcessor("tasks-calendar", (source, element, context) => {
-      const renderer = new TasksCalendarRenderer(element, this, { query: source });
+      const section = context.getSectionInfo(element);
+      const stateKey = embeddedStateKey(context.sourcePath, section?.lineStart ?? -1, source);
+      const savedState = this.settings.embeddedViewStates[stateKey];
+      const renderer = new TasksCalendarRenderer(
+        element,
+        this,
+        savedState ?? { query: source },
+        (state) => this.rememberEmbeddedCalendarState(stateKey, state)
+      );
       this.embeddedCalendars.add(renderer);
       context.addChild(renderer);
       renderer.register(() => this.embeddedCalendars.delete(renderer));
@@ -76,6 +86,11 @@ export default class TasksCalendarPlugin extends Plugin {
   }
 
   onunload(): void {
+    if (this.stateSaveTimer !== null) {
+      window.clearTimeout(this.stateSaveTimer);
+      this.stateSaveTimer = null;
+      void this.saveSettings();
+    }
     this.app.workspace.detachLeavesOfType(TASKS_CALENDAR_VIEW);
   }
 
@@ -86,7 +101,10 @@ export default class TasksCalendarPlugin extends Plugin {
       await leaf.setViewState({
         type: TASKS_CALENDAR_VIEW,
         active: true,
-        state: mode ? { mode } : {}
+        state: {
+          ...(this.settings.lastViewState ?? {}),
+          ...(mode ? { mode } : {})
+        }
       });
     } else if (mode) {
       await leaf.setViewState({ type: TASKS_CALENDAR_VIEW, active: true, state: { mode } });
@@ -142,6 +160,24 @@ export default class TasksCalendarPlugin extends Plugin {
     for (const calendar of this.embeddedCalendars) calendar.refresh();
   }
 
+  rememberCalendarState(state: CalendarState): void {
+    this.settings.lastViewState = state;
+    this.scheduleSettingsSave();
+  }
+
+  rememberEmbeddedCalendarState(key: string, state: CalendarState): void {
+    this.settings.embeddedViewStates[key] = state;
+    this.scheduleSettingsSave();
+  }
+
+  private scheduleSettingsSave(): void {
+    if (this.stateSaveTimer !== null) window.clearTimeout(this.stateSaveTimer);
+    this.stateSaveTimer = window.setTimeout(() => {
+      this.stateSaveTimer = null;
+      void this.saveSettings();
+    }, 250);
+  }
+
   async loadSettings(): Promise<void> {
     const data = await this.loadData() as Partial<TasksCalendarSettings> | null;
     this.settings = { ...DEFAULT_SETTINGS, ...(data ?? {}) };
@@ -154,4 +190,13 @@ export default class TasksCalendarPlugin extends Plugin {
 
 function messageFrom(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function embeddedStateKey(sourcePath: string, lineStart: number, source: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < source.length; index += 1) {
+    hash ^= source.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `${sourcePath}:${lineStart}:${(hash >>> 0).toString(16)}`;
 }
