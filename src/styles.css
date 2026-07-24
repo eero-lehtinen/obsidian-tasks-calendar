@@ -521,6 +521,10 @@
 }
 
 .tasks-calendar-grid.is-week .tasks-calendar-task-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
   white-space: normal;
 }
 
