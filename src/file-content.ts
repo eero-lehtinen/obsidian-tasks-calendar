@@ -6,7 +6,7 @@ export function insertTaskAtTop(content: string, taskLine: string): string {
   let insertionIndex = 0;
   if (lines[0].trim() === "---") {
     const frontmatterEnd = lines.findIndex(
-      (line, index) => index > 0 && (line.trim() === "---" || line.trim() === "...")
+      (line, index) => index > 0 && (line.trim() === "---" || line.trim() === "..."),
     );
     if (frontmatterEnd > 0) insertionIndex = frontmatterEnd + 1;
   }

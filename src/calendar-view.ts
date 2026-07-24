@@ -9,7 +9,10 @@ export class TasksCalendarView extends ItemView {
   private renderer: TasksCalendarRenderer | null = null;
   private pendingState: Partial<CalendarState> = {};
 
-  constructor(leaf: WorkspaceLeaf, private readonly plugin: TasksCalendarPlugin) {
+  constructor(
+    leaf: WorkspaceLeaf,
+    private readonly plugin: TasksCalendarPlugin,
+  ) {
     super(leaf);
   }
 
@@ -35,7 +38,7 @@ export class TasksCalendarView extends ItemView {
       (state) => {
         this.plugin.rememberCalendarState(state);
         this.app.workspace.requestSaveLayout();
-      }
+      },
     );
     this.addChild(this.renderer);
   }
@@ -45,7 +48,7 @@ export class TasksCalendarView extends ItemView {
   }
 
   getState(): Record<string, unknown> {
-    return this.renderer?.getState() as unknown as Record<string, unknown> ?? {};
+    return (this.renderer?.getState() as unknown as Record<string, unknown>) ?? {};
   }
 
   async setState(state: Partial<CalendarState>): Promise<void> {

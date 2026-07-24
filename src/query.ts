@@ -7,7 +7,10 @@ export function compileQuery(source: string, now = new Date()): QueryResult {
   const predicates: Predicate[] = [];
   const today = toDateKey(now);
   const tomorrow = toDateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
-  const lines = source.split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !line.startsWith("#"));
+  const lines = source
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"));
 
   for (const line of lines) {
     const parsed = parseExpression(line, today, tomorrow);
@@ -17,7 +20,7 @@ export function compileQuery(source: string, now = new Date()): QueryResult {
 
   return {
     predicate: (task) => predicates.every((predicate) => predicate(task)),
-    error: null
+    error: null,
   };
 }
 
@@ -84,7 +87,8 @@ function parseInstruction(line: string, today: string, tomorrow: string): Predic
     if (!value) return `Unsupported date in query: "${line}"`;
     const operator = operatorRaw.trim();
     return (task) => {
-      const values = field === "happens" ? [task.start, task.scheduled, task.due] : [task[field as "due" | "scheduled" | "start"]];
+      const values =
+        field === "happens" ? [task.start, task.scheduled, task.due] : [task[field as "due" | "scheduled" | "start"]];
       return values.some((candidate) => {
         if (!candidate) return false;
         if (operator === "before") return candidate < value;

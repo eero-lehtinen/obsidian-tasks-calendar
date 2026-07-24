@@ -35,7 +35,10 @@ export function calendarDays(anchor: Date, mode: CalendarMode, weekStartsOn: 0 |
   const gridStart = startOfWeek(monthStart, weekStartsOn);
   const monthEnd = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
   const trailing = (weekStartsOn + 6 - monthEnd.getDay() + 7) % 7;
-  const count = Math.max(35, Math.ceil((monthEnd.getDate() + ((monthStart.getDay() - weekStartsOn + 7) % 7) + trailing) / 7) * 7);
+  const count = Math.max(
+    35,
+    Math.ceil((monthEnd.getDate() + ((monthStart.getDay() - weekStartsOn + 7) % 7) + trailing) / 7) * 7,
+  );
   return Array.from({ length: count }, (_, index) => addDays(gridStart, index));
 }
 
@@ -51,7 +54,7 @@ export function isoWeekNumber(date: Date): number {
   const day = utcDate.getUTCDay() || 7;
   utcDate.setUTCDate(utcDate.getUTCDate() + 4 - day);
   const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1));
-  return Math.ceil((((utcDate.getTime() - yearStart.getTime()) / 86_400_000) + 1) / 7);
+  return Math.ceil(((utcDate.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
 }
 
 export function titleForRange(anchor: Date, mode: CalendarMode, weekStartsOn: 0 | 1, locale?: string): string {
@@ -64,12 +67,12 @@ export function titleForRange(anchor: Date, mode: CalendarMode, weekStartsOn: 0 
   const startText = new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
-    year: sameYear ? undefined : "numeric"
+    year: sameYear ? undefined : "numeric",
   }).format(start);
   const endText = new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
-    year: "numeric"
+    year: "numeric",
   }).format(end);
   return `${startText} – ${endText}`;
 }

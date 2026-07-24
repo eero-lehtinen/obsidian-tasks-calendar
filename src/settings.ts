@@ -12,11 +12,14 @@ export const DEFAULT_SETTINGS: TasksCalendarSettings = {
   undatedTasks: "hide",
   newTaskFile: "Tasks.md",
   lastViewState: null,
-  embeddedViewStates: {}
+  embeddedViewStates: {},
 };
 
 export class TasksCalendarSettingTab extends PluginSettingTab {
-  constructor(app: App, private readonly plugin: TasksCalendarPlugin) {
+  constructor(
+    app: App,
+    private readonly plugin: TasksCalendarPlugin,
+  ) {
     super(app, plugin);
   }
 
@@ -27,18 +30,19 @@ export class TasksCalendarSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Default calendar view")
       .setDesc("The view used when a new Tasks Calendar is opened.")
-      .addDropdown((dropdown) => dropdown
-        .addOption("month", "Month")
-        .addOption("week", "Week")
-        .setValue(this.plugin.settings.defaultView)
-        .onChange(async (value) => {
-          this.plugin.settings.defaultView = value as "month" | "week";
-          await this.plugin.saveSettings();
-        }));
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("month", "Month")
+          .addOption("week", "Week")
+          .setValue(this.plugin.settings.defaultView)
+          .onChange(async (value) => {
+            this.plugin.settings.defaultView = value as "month" | "week";
+            await this.plugin.saveSettings();
+          }),
+      );
 
-    new Setting(containerEl)
-      .setName("First day of week")
-      .addDropdown((dropdown) => dropdown
+    new Setting(containerEl).setName("First day of week").addDropdown((dropdown) =>
+      dropdown
         .addOption("1", "Monday")
         .addOption("0", "Sunday")
         .setValue(String(this.plugin.settings.weekStartsOn))
@@ -46,22 +50,22 @@ export class TasksCalendarSettingTab extends PluginSettingTab {
           this.plugin.settings.weekStartsOn = Number(value) as 0 | 1;
           await this.plugin.saveSettings();
           this.plugin.refreshCalendars();
-        }));
+        }),
+    );
 
     new Setting(containerEl)
       .setName("Show completed tasks")
       .setDesc("Completed tasks remain visible but are muted. The calendar toolbar can override this.")
-      .addToggle((toggle) => toggle
-        .setValue(this.plugin.settings.showCompleted)
-        .onChange(async (value) => {
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.showCompleted).onChange(async (value) => {
           this.plugin.settings.showCompleted = value;
           await this.plugin.saveSettings();
           this.plugin.refreshCalendars();
-        }));
+        }),
+      );
 
-    new Setting(containerEl)
-      .setName("Completed task opacity")
-      .addSlider((slider) => slider
+    new Setting(containerEl).setName("Completed task opacity").addSlider((slider) =>
+      slider
         .setLimits(0.15, 0.8, 0.05)
         .setValue(this.plugin.settings.completedOpacity)
         .setDynamicTooltip()
@@ -69,62 +73,73 @@ export class TasksCalendarSettingTab extends PluginSettingTab {
           this.plugin.settings.completedOpacity = value;
           await this.plugin.saveSettings();
           this.plugin.refreshCalendars();
-        }));
+        }),
+    );
 
     new Setting(containerEl)
       .setName("Date priority")
       .setDesc("First available field determines where a task appears. Use scheduled, due, and start once each.")
-      .addText((text) => text
-        .setPlaceholder("scheduled, due, start")
-        .setValue(this.plugin.settings.datePreference.join(", "))
-        .onChange(async (value) => {
-          const fields = value.split(",").map((item) => item.trim().toLowerCase());
-          if (isDatePreference(fields)) {
-            this.plugin.settings.datePreference = fields;
-            await this.plugin.saveSettings();
-            this.plugin.refreshCalendars();
-          }
-        }));
+      .addText((text) =>
+        text
+          .setPlaceholder("scheduled, due, start")
+          .setValue(this.plugin.settings.datePreference.join(", "))
+          .onChange(async (value) => {
+            const fields = value.split(",").map((item) => item.trim().toLowerCase());
+            if (isDatePreference(fields)) {
+              this.plugin.settings.datePreference = fields;
+              await this.plugin.saveSettings();
+              this.plugin.refreshCalendars();
+            }
+          }),
+      );
 
     new Setting(containerEl)
       .setName("Tasks without dates")
       .setDesc("Optionally collect undated tasks on today.")
-      .addDropdown((dropdown) => dropdown
-        .addOption("hide", "Hide")
-        .addOption("today", "Show on today")
-        .setValue(this.plugin.settings.undatedTasks)
-        .onChange(async (value) => {
-          this.plugin.settings.undatedTasks = value as "hide" | "today";
-          await this.plugin.saveSettings();
-          this.plugin.refreshCalendars();
-        }));
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("hide", "Hide")
+          .addOption("today", "Show on today")
+          .setValue(this.plugin.settings.undatedTasks)
+          .onChange(async (value) => {
+            this.plugin.settings.undatedTasks = value as "hide" | "today";
+            await this.plugin.saveSettings();
+            this.plugin.refreshCalendars();
+          }),
+      );
 
     new Setting(containerEl)
       .setName("Default query")
       .setDesc("Tasks-style filters applied when opening the full calendar view.")
-      .addTextArea((text) => text
-        .setPlaceholder("not done\npath includes Projects")
-        .setValue(this.plugin.settings.defaultQuery)
-        .onChange(async (value) => {
-          this.plugin.settings.defaultQuery = value;
-          await this.plugin.saveSettings();
-        }));
+      .addTextArea((text) =>
+        text
+          .setPlaceholder("not done\npath includes Projects")
+          .setValue(this.plugin.settings.defaultQuery)
+          .onChange(async (value) => {
+            this.plugin.settings.defaultQuery = value;
+            await this.plugin.saveSettings();
+          }),
+      );
 
     new Setting(containerEl)
       .setName("New task file")
       .setDesc("Vault-relative Markdown file used when creating a task from a calendar day.")
-      .addText((text) => text
-        .setPlaceholder("Tasks.md")
-        .setValue(this.plugin.settings.newTaskFile)
-        .onChange(async (value) => {
-          this.plugin.settings.newTaskFile = value.trim();
-          await this.plugin.saveSettings();
-        }));
+      .addText((text) =>
+        text
+          .setPlaceholder("Tasks.md")
+          .setValue(this.plugin.settings.newTaskFile)
+          .onChange(async (value) => {
+            this.plugin.settings.newTaskFile = value.trim();
+            await this.plugin.saveSettings();
+          }),
+      );
   }
 }
 
 function isDatePreference(fields: string[]): fields is DateField[] {
-  return fields.length === 3 &&
+  return (
+    fields.length === 3 &&
     new Set(fields).size === 3 &&
-    fields.every((field) => field === "scheduled" || field === "due" || field === "start");
+    fields.every((field) => field === "scheduled" || field === "due" || field === "start")
+  );
 }

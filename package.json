@@ -7,8 +7,10 @@
   "scripts": {
     "build": "npm run check && node esbuild.config.mjs production",
     "dev": "node esbuild.config.mjs",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
     "test": "vitest run",
-    "check": "tsc --noEmit",
+    "check": "npm run format:check && tsc --noEmit",
     "clean": "node scripts/clean.mjs",
     "deploy": "node scripts/deploy.mjs",
     "release": "npm run clean && npm run test && npm run build && node scripts/package-release.mjs",
@@ -22,6 +24,7 @@
   "author": "Obsidian Tasks Calendar contributors",
   "license": "MIT",
   "devDependencies": {
+    "@biomejs/biome": "2.5.5",
     "@types/node": "^24.0.0",
     "esbuild": "^0.25.0",
     "obsidian": "^1.8.7",

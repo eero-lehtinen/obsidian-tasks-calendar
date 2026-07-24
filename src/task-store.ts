@@ -23,7 +23,7 @@ export class TaskStore extends Events {
 
   constructor(
     private readonly vault: Vault,
-    private readonly performanceMonitor: PerformanceMonitor
+    private readonly performanceMonitor: PerformanceMonitor,
   ) {
     super();
   }
@@ -35,12 +35,12 @@ export class TaskStore extends Events {
     if (failures.length > 0) {
       throw new AggregateError(
         failures.map(({ error }) => error),
-        `Could not index ${failures.length} task file${failures.length === 1 ? "" : "s"}.`
+        `Could not index ${failures.length} task file${failures.length === 1 ? "" : "s"}.`,
       );
     }
     this.performanceMonitor.record("index.initial", performance.now() - startedAt, {
       files: files.length,
-      tasks: this.getTasks().length
+      tasks: this.getTasks().length,
     });
   }
 
@@ -80,7 +80,7 @@ export class TaskStore extends Events {
     this.tasksByPath.set(file.path, tasks);
     this.performanceMonitor.record("index.file", performance.now() - startedAt, {
       lines: content.split(/\r?\n/).length,
-      tasks: tasks.length
+      tasks: tasks.length,
     });
   }
 
@@ -117,13 +117,12 @@ export class TaskStore extends Events {
       }
 
       if (failures.length < files.length) {
-        const recordedEventTimes = Array.from(eventTimes.values())
-          .filter((value): value is number => value !== undefined);
-        const earliestEvent = recordedEventTimes.length > 0
-          ? Math.min(...recordedEventTimes)
-          : performance.now();
+        const recordedEventTimes = Array.from(eventTimes.values()).filter(
+          (value): value is number => value !== undefined,
+        );
+        const earliestEvent = recordedEventTimes.length > 0 ? Math.min(...recordedEventTimes) : performance.now();
         this.performanceMonitor.record("index.update-latency", performance.now() - earliestEvent, {
-          files: files.length - failures.length
+          files: files.length - failures.length,
         });
         this.trigger(TASKS_CHANGED_EVENT);
       }

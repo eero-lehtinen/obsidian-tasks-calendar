@@ -37,17 +37,17 @@ export default class TasksCalendarPlugin extends Plugin {
     this.addCommand({
       id: "open-tasks-calendar",
       name: "Open calendar",
-      callback: () => void this.activateView()
+      callback: () => void this.activateView(),
     });
     this.addCommand({
       id: "open-tasks-calendar-week",
       name: "Open calendar in week view",
-      callback: () => void this.activateView("week")
+      callback: () => void this.activateView("week"),
     });
     this.addCommand({
       id: "show-performance-report",
       name: "Show performance report",
-      callback: () => new PerformanceReportModal(this.app, this.performanceMonitor).open()
+      callback: () => new PerformanceReportModal(this.app, this.performanceMonitor).open(),
     });
     this.addCommand({
       id: "reset-performance-measurements",
@@ -55,34 +55,37 @@ export default class TasksCalendarPlugin extends Plugin {
       callback: () => {
         this.performanceMonitor.reset();
         new Notice("Tasks Calendar performance measurements reset.");
-      }
+      },
     });
 
     this.registerMarkdownCodeBlockProcessor("tasks-calendar", (source, element, context) => {
       const section = context.getSectionInfo(element);
       const stateKey = embeddedStateKey(context.sourcePath, section?.lineStart ?? -1, source);
       const savedState = this.settings.embeddedViewStates[stateKey];
-      const renderer = new TasksCalendarRenderer(
-        element,
-        this,
-        savedState ?? { query: source },
-        (state) => this.rememberEmbeddedCalendarState(stateKey, state)
+      const renderer = new TasksCalendarRenderer(element, this, savedState ?? { query: source }, (state) =>
+        this.rememberEmbeddedCalendarState(stateKey, state),
       );
       this.embeddedCalendars.add(renderer);
       context.addChild(renderer);
       renderer.register(() => this.embeddedCalendars.delete(renderer));
     });
 
-    this.registerEvent(this.app.vault.on("create", (file) => {
-      if (file instanceof TFile) this.taskStore.scheduleFile(file);
-    }));
-    this.registerEvent(this.app.vault.on("modify", (file) => {
-      if (file instanceof TFile) this.taskStore.scheduleFile(file);
-    }));
+    this.registerEvent(
+      this.app.vault.on("create", (file) => {
+        if (file instanceof TFile) this.taskStore.scheduleFile(file);
+      }),
+    );
+    this.registerEvent(
+      this.app.vault.on("modify", (file) => {
+        if (file instanceof TFile) this.taskStore.scheduleFile(file);
+      }),
+    );
     this.registerEvent(this.app.vault.on("delete", (file) => this.taskStore.removePath(file.path)));
-    this.registerEvent(this.app.vault.on("rename", (file, oldPath) => {
-      if (file instanceof TFile) this.taskStore.renamePath(file, oldPath);
-    }));
+    this.registerEvent(
+      this.app.vault.on("rename", (file, oldPath) => {
+        if (file instanceof TFile) this.taskStore.renamePath(file, oldPath);
+      }),
+    );
     this.addSettingTab(new TasksCalendarSettingTab(this.app, this));
   }
 
@@ -104,8 +107,8 @@ export default class TasksCalendarPlugin extends Plugin {
         active: true,
         state: {
           ...(this.settings.lastViewState ?? {}),
-          ...(mode ? { mode } : {})
-        }
+          ...(mode ? { mode } : {}),
+        },
       });
     } else if (mode) {
       await leaf.setViewState({ type: TASKS_CALENDAR_VIEW, active: true, state: { mode } });
@@ -115,7 +118,8 @@ export default class TasksCalendarPlugin extends Plugin {
 
   async toggleTask(task: CalendarTask): Promise<void> {
     try {
-      const replacement = this.tasksApi?.executeToggleTaskDoneCommand(task.raw, task.path) ?? fallbackToggleLine(task.raw);
+      const replacement =
+        this.tasksApi?.executeToggleTaskDoneCommand(task.raw, task.path) ?? fallbackToggleLine(task.raw);
       await this.taskStore.replaceTask(task, replacement);
     } catch (error) {
       new Notice(`Could not update task: ${messageFrom(error)}`);
@@ -164,9 +168,9 @@ export default class TasksCalendarPlugin extends Plugin {
       const taskLine = await api.createTaskLineModal();
       if (!taskLine) return;
       const datedTaskLine = rescheduleTaskLine(taskLine, "due", date);
-      const path = normalizePath(configuredPath.toLowerCase().endsWith(".md")
-        ? configuredPath
-        : `${configuredPath}.md`);
+      const path = normalizePath(
+        configuredPath.toLowerCase().endsWith(".md") ? configuredPath : `${configuredPath}.md`,
+      );
       await this.addTaskLineToTop(path, datedTaskLine);
       new Notice(`Created task in ${path}.`);
     } catch (error) {
@@ -186,10 +190,13 @@ export default class TasksCalendarPlugin extends Plugin {
       const view = leaf.view;
       if (view instanceof MarkdownView) {
         view.editor.setCursor({ line: task.line, ch: Math.max(0, task.raw.indexOf(task.description)) });
-        view.editor.scrollIntoView({
-          from: { line: task.line, ch: 0 },
-          to: { line: task.line, ch: task.raw.length }
-        }, true);
+        view.editor.scrollIntoView(
+          {
+            from: { line: task.line, ch: 0 },
+            to: { line: task.line, ch: task.raw.length },
+          },
+          true,
+        );
       }
     } catch (error) {
       new Notice(`Could not open task: ${messageFrom(error)}`);
@@ -222,9 +229,11 @@ export default class TasksCalendarPlugin extends Plugin {
   }
 
   private calendarDateField(task: CalendarTask): DateField {
-    return this.settings.datePreference.find((field) => task[field] !== null) ??
+    return (
+      this.settings.datePreference.find((field) => task[field] !== null) ??
       this.settings.datePreference[0] ??
-      "scheduled";
+      "scheduled"
+    );
   }
 
   private async addTaskLineToTop(path: string, taskLine: string): Promise<void> {
@@ -246,7 +255,7 @@ export default class TasksCalendarPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    const data = await this.loadData() as Partial<TasksCalendarSettings> | null;
+    const data = (await this.loadData()) as Partial<TasksCalendarSettings> | null;
     this.settings = { ...DEFAULT_SETTINGS, ...(data ?? {}) };
   }
 

@@ -100,9 +100,11 @@ npm run build
 Available scripts:
 
 - `npm run dev`: watch the TypeScript sources and rebuild `main.js`
-- `npm run check`: type-check without emitting files
+- `npm run format`: format supported source and configuration files with Biome
+- `npm run format:check`: verify formatting without changing files
+- `npm run check`: verify formatting and type-check without emitting files
 - `npm test`: run the unit test suite
-- `npm run build`: type-check and create a minified production `main.js`
+- `npm run build`: verify formatting, type-check, and create a minified production `main.js`
 - `npm run clean`: remove generated build and release artifacts
 - `npm run deploy -- <vault-path>`: build and copy the runtime files to `<vault-path>/.obsidian/plugins/tasks-calendar/`
 - `npm run release`: clean, test, build, and assemble the three release assets under `dist/tasks-calendar-<version>/`

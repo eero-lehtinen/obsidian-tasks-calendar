@@ -303,11 +303,7 @@
 
 .tasks-calendar-task {
   --tasks-calendar-task-accent: color-mix(in srgb, var(--interactive-accent) 55%, var(--text-muted));
-  --tasks-calendar-task-background: color-mix(
-    in srgb,
-    var(--interactive-accent) 8%,
-    var(--background-secondary)
-  );
+  --tasks-calendar-task-background: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-secondary));
   display: grid;
   grid-template-columns: 16px minmax(0, 1fr) auto;
   align-items: center;
@@ -322,7 +318,9 @@
   cursor: default;
   font-size: calc(var(--font-ui-smaller) + 1px);
   line-height: 1.3;
-  transition: background-color 100ms ease, outline-color 100ms ease;
+  transition:
+    background-color 100ms ease,
+    outline-color 100ms ease;
   user-select: none;
 }
 
@@ -344,11 +342,7 @@
 
 .tasks-calendar-task:hover,
 .tasks-calendar-task:focus-within {
-  background: color-mix(
-    in srgb,
-    var(--tasks-calendar-task-background) 86%,
-    var(--tasks-calendar-task-accent)
-  );
+  background: color-mix(in srgb, var(--tasks-calendar-task-background) 86%, var(--tasks-calendar-task-accent));
   background-clip: padding-box;
 }
 
@@ -443,7 +437,10 @@
   box-sizing: content-box;
   cursor: default;
   border-radius: 4px;
-  transition: background-color 100ms ease, color 100ms ease, transform 100ms ease;
+  transition:
+    background-color 100ms ease,
+    color 100ms ease,
+    transform 100ms ease;
   user-select: none;
 }
 
@@ -477,7 +474,9 @@
   font-weight: var(--font-medium);
   line-height: 1.3;
   text-align: left;
-  transition: background-color 100ms ease, color 100ms ease;
+  transition:
+    background-color 100ms ease,
+    color 100ms ease;
 }
 
 .tasks-calendar-more:hover,

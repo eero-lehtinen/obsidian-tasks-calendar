@@ -3,7 +3,11 @@ import { fallbackToggleLine, parseTaskLine, rescheduleTaskLine } from "../src/ta
 
 describe("parseTaskLine", () => {
   it("parses Tasks emoji fields", () => {
-    const task = parseTaskLine("- [ ] Ship release #work ⏫ 🔁 every week ⏳ 2026-07-24 📅 2026-07-25", "Project.md", 4);
+    const task = parseTaskLine(
+      "- [ ] Ship release #work ⏫ 🔁 every week ⏳ 2026-07-24 📅 2026-07-25",
+      "Project.md",
+      4,
+    );
     expect(task).toMatchObject({
       path: "Project.md",
       line: 4,
@@ -13,7 +17,7 @@ describe("parseTaskLine", () => {
       recurrence: "every week",
       scheduled: "2026-07-24",
       due: "2026-07-25",
-      completed: false
+      completed: false,
     });
   });
 
@@ -30,18 +34,14 @@ describe("fallbackToggleLine", () => {
 
 describe("rescheduleTaskLine", () => {
   it("updates the selected existing date field", () => {
-    expect(rescheduleTaskLine(
-      "- [ ] Prepare report ⏳ 2026-07-20 📅 2026-07-25",
-      "scheduled",
-      "2026-07-28"
-    )).toBe("- [ ] Prepare report ⏳ 2026-07-28 📅 2026-07-25");
+    expect(rescheduleTaskLine("- [ ] Prepare report ⏳ 2026-07-20 📅 2026-07-25", "scheduled", "2026-07-28")).toBe(
+      "- [ ] Prepare report ⏳ 2026-07-28 📅 2026-07-25",
+    );
   });
 
   it("adds a missing field before a block link", () => {
-    expect(rescheduleTaskLine(
-      "- [ ] Prepare report ^report",
-      "scheduled",
-      "2026-07-28"
-    )).toBe("- [ ] Prepare report ⏳ 2026-07-28 ^report");
+    expect(rescheduleTaskLine("- [ ] Prepare report ^report", "scheduled", "2026-07-28")).toBe(
+      "- [ ] Prepare report ⏳ 2026-07-28 ^report",
+    );
   });
 });

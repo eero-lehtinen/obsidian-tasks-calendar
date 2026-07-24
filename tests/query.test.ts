@@ -16,10 +16,7 @@ describe("compileQuery", () => {
   });
 
   it("supports parenthesized boolean combinations", () => {
-    const query = compileQuery(
-      "(scheduled today) OR ((due today) AND (NOT done))",
-      new Date(2026, 6, 24)
-    );
+    const query = compileQuery("(scheduled today) OR ((due today) AND (NOT done))", new Date(2026, 6, 24));
     expect(query.error).toBeNull();
     expect(query.predicate(task)).toBe(true);
   });

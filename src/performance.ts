@@ -1,11 +1,7 @@
 import { Modal, Setting } from "obsidian";
 import type { App } from "obsidian";
 
-export type PerformanceMetric =
-  | "index.initial"
-  | "index.file"
-  | "index.update-latency"
-  | "render.calendar";
+export type PerformanceMetric = "index.initial" | "index.file" | "index.update-latency" | "render.calendar";
 
 interface Measurement {
   duration: number;
@@ -51,7 +47,7 @@ export class PerformanceMonitor {
         p95: percentile(sorted, 0.95),
         maximum: sorted[sorted.length - 1],
         latest: latest.duration,
-        latestDetails: latest.details
+        latestDetails: latest.details,
       };
     });
   }
@@ -67,18 +63,20 @@ export class PerformanceMonitor {
       `Captured: ${new Date().toISOString()}`,
       `Measurement window: ${formatDuration(Date.now() - this.startedAt)}`,
       "",
-      "Metric | Samples | Average | P50 | P95 | Max | Latest"
+      "Metric | Samples | Average | P50 | P95 | Max | Latest",
     ];
     for (const summary of this.summaries()) {
-      lines.push([
-        summary.metric,
-        summary.count,
-        formatDuration(summary.average),
-        formatDuration(summary.p50),
-        formatDuration(summary.p95),
-        formatDuration(summary.maximum),
-        formatDuration(summary.latest)
-      ].join(" | "));
+      lines.push(
+        [
+          summary.metric,
+          summary.count,
+          formatDuration(summary.average),
+          formatDuration(summary.p50),
+          formatDuration(summary.p95),
+          formatDuration(summary.maximum),
+          formatDuration(summary.latest),
+        ].join(" | "),
+      );
       if (summary.latestDetails) {
         lines.push(`  Latest details: ${formatDetails(summary.latestDetails)}`);
       }
@@ -89,7 +87,10 @@ export class PerformanceMonitor {
 }
 
 export class PerformanceReportModal extends Modal {
-  constructor(app: App, private readonly monitor: PerformanceMonitor) {
+  constructor(
+    app: App,
+    private readonly monitor: PerformanceMonitor,
+  ) {
     super(app);
   }
 
@@ -103,7 +104,7 @@ export class PerformanceReportModal extends Modal {
     contentEl.empty();
     contentEl.createEl("p", {
       text: "Measurements are retained in memory for the current Obsidian session. Up to 500 samples are kept per metric.",
-      cls: "setting-item-description"
+      cls: "setting-item-description",
     });
 
     const summaries = this.monitor.summaries();
@@ -127,26 +128,30 @@ export class PerformanceReportModal extends Modal {
         row.createEl("td", {
           text: summary.latestDetails
             ? `${formatDuration(summary.latest)} (${formatDetails(summary.latestDetails)})`
-            : formatDuration(summary.latest)
+            : formatDuration(summary.latest),
         });
       }
     }
 
     new Setting(contentEl)
-      .addButton((button) => button
-        .setButtonText("Copy report")
-        .setCta()
-        .onClick(async () => {
-          await navigator.clipboard.writeText(this.monitor.report());
-          button.setButtonText("Copied");
-        }))
-      .addButton((button) => button
-        .setButtonText("Reset measurements")
-        .setWarning()
-        .onClick(() => {
-          this.monitor.reset();
-          this.render();
-        }));
+      .addButton((button) =>
+        button
+          .setButtonText("Copy report")
+          .setCta()
+          .onClick(async () => {
+            await navigator.clipboard.writeText(this.monitor.report());
+            button.setButtonText("Copied");
+          }),
+      )
+      .addButton((button) =>
+        button
+          .setButtonText("Reset measurements")
+          .setWarning()
+          .onClick(() => {
+            this.monitor.reset();
+            this.render();
+          }),
+      );
   }
 }
 
@@ -161,7 +166,9 @@ function formatDuration(milliseconds: number): string {
 }
 
 function formatDetails(details: Record<string, number>): string {
-  return Object.entries(details).map(([key, value]) => `${key}=${value}`).join(", ");
+  return Object.entries(details)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(", ");
 }
 
 function metricLabel(metric: PerformanceMetric): string {
@@ -169,7 +176,7 @@ function metricLabel(metric: PerformanceMetric): string {
     "index.initial": "Initial vault index",
     "index.file": "File indexing",
     "index.update-latency": "File event → indexed",
-    "render.calendar": "Calendar render"
+    "render.calendar": "Calendar render",
   };
   return labels[metric];
 }

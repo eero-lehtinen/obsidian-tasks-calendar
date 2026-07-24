@@ -1,13 +1,16 @@
 import type { CalendarTask, DateField } from "./types";
 
 const TASK_PATTERN = /^([\s\t>]*)((?:[-*+]|\d+[.)]))\s+\[(.)\]\s*(.*)$/u;
-const DATE_MARKERS: Record<string, keyof Pick<CalendarTask, "scheduled" | "due" | "start" | "created" | "done" | "cancelled">> = {
+const DATE_MARKERS: Record<
+  string,
+  keyof Pick<CalendarTask, "scheduled" | "due" | "start" | "created" | "done" | "cancelled">
+> = {
   "⏳": "scheduled",
   "📅": "due",
   "🛫": "start",
   "➕": "created",
   "✅": "done",
-  "❌": "cancelled"
+  "❌": "cancelled",
 };
 const COMPLETED_STATUSES = new Set(["x", "X", "-", "_"]);
 
@@ -17,13 +20,16 @@ export function parseTaskLine(raw: string, path: string, line: number): Calendar
 
   const status = match[3];
   const body = match[4].trim();
-  const dates: Record<keyof Pick<CalendarTask, "scheduled" | "due" | "start" | "created" | "done" | "cancelled">, string | null> = {
+  const dates: Record<
+    keyof Pick<CalendarTask, "scheduled" | "due" | "start" | "created" | "done" | "cancelled">,
+    string | null
+  > = {
     scheduled: null,
     due: null,
     start: null,
     created: null,
     done: null,
-    cancelled: null
+    cancelled: null,
   };
 
   for (const [marker, field] of Object.entries(DATE_MARKERS)) {
@@ -56,7 +62,7 @@ export function parseTaskLine(raw: string, path: string, line: number): Calendar
     created: dates.created,
     done: dates.done,
     cancelled: dates.cancelled,
-    recurrence: recurrenceMatch?.[1].trim() ?? null
+    recurrence: recurrenceMatch?.[1].trim() ?? null,
   };
 }
 

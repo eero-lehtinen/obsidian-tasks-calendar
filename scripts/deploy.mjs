@@ -27,9 +27,7 @@ const pluginDirectory = join(obsidianDirectory, "plugins", manifest.id);
 const pluginFiles = ["main.js", "manifest.json", "styles.css"];
 
 await mkdir(pluginDirectory, { recursive: true });
-await Promise.all(
-  pluginFiles.map((file) => copyFile(file, join(pluginDirectory, file)))
-);
+await Promise.all(pluginFiles.map((file) => copyFile(file, join(pluginDirectory, file))));
 
 console.log(`Installed ${manifest.name} ${manifest.version} to ${pluginDirectory}`);
 console.log("Reload Obsidian to load the updated plugin.");
@@ -38,7 +36,7 @@ async function runBuild() {
   const child = spawn("npm run build", {
     cwd: process.cwd(),
     stdio: "inherit",
-    shell: true
+    shell: true,
   });
 
   const exitCode = await new Promise((resolveExit, reject) => {

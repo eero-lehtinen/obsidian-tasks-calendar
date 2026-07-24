@@ -5,18 +5,14 @@ export function recurrenceDateKeys(
   ruleText: string,
   baseDateKey: string,
   rangeStartKey: string,
-  rangeEndKey: string
+  rangeEndKey: string,
 ): Set<string> {
   try {
     const isolatedRule = ruleText.replace(/\s+when done$/i, "").trim();
     const options = RRule.parseText(isolatedRule);
     options.dtstart = toUtcDate(baseDateKey);
     const rule = new RRule(options);
-    const occurrences = rule.between(
-      toUtcDate(rangeStartKey),
-      endOfUtcDate(rangeEndKey),
-      true
-    );
+    const occurrences = rule.between(toUtcDate(rangeStartKey), endOfUtcDate(rangeEndKey), true);
     return new Set(occurrences.map(toUtcDateKey));
   } catch {
     return new Set();

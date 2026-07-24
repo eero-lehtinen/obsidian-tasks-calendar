@@ -23,7 +23,7 @@ const context = await esbuild.context({
     "@lezer/common",
     "@lezer/highlight",
     "@lezer/lr",
-    ...builtinModules
+    ...builtinModules,
   ],
   format: "cjs",
   target: "es2021",
@@ -31,7 +31,7 @@ const context = await esbuild.context({
   sourcemap: production ? false : "inline",
   treeShaking: true,
   minify: production,
-  outfile: "main.js"
+  outfile: "main.js",
 });
 
 if (production) {
