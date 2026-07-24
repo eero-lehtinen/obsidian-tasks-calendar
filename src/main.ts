@@ -140,6 +140,15 @@ export default class TasksCalendarPlugin extends Plugin {
     }
   }
 
+  async deleteTask(task: CalendarTask): Promise<void> {
+    try {
+      await this.taskStore.deleteTask(task);
+      new Notice(`Deleted “${task.description || "Untitled task"}”.`);
+    } catch (error) {
+      new Notice(`Could not delete task: ${messageFrom(error)}`);
+    }
+  }
+
   async rescheduleTask(task: CalendarTask, date: string): Promise<void> {
     const field = this.calendarDateField(task);
     if (task[field] === date) return;

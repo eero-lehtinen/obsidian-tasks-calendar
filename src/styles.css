@@ -420,6 +420,30 @@
   }
 }
 
+.menu-item:has(.tasks-calendar-delete-hold) {
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-item:has(.tasks-calendar-delete-hold) .menu-item-icon,
+.menu-item:has(.tasks-calendar-delete-hold) .menu-item-title {
+  z-index: 1;
+}
+
+.tasks-calendar-delete-hold-fill {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: color-mix(in srgb, var(--text-error) 22%, transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.tasks-calendar-delete-hold.is-holding .tasks-calendar-delete-hold-fill {
+  transform: scaleX(1);
+  transition: transform 1200ms linear;
+}
+
 .tasks-calendar-task-title {
   display: block;
   width: 100%;

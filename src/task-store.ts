@@ -1,4 +1,5 @@
 import { Events, TFile, Vault } from "obsidian";
+import { deleteTaskLine } from "./file-content";
 import type { PerformanceMonitor } from "./performance";
 import { parseTaskLine } from "./task-parser";
 import type { CalendarTask } from "./types";
@@ -189,5 +190,12 @@ export class TaskStore extends Events {
       }
       return lines.join(newline);
     });
+  }
+
+  async deleteTask(task: CalendarTask): Promise<void> {
+    const file = this.vault.getAbstractFileByPath(task.path);
+    if (!(file instanceof TFile)) throw new Error(`Task file not found: ${task.path}`);
+
+    await this.vault.process(file, (content) => deleteTaskLine(content, task.raw, task.line));
   }
 }

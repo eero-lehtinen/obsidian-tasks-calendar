@@ -14,3 +14,13 @@ export function insertTaskAtTop(content: string, taskLine: string): string {
   lines.splice(insertionIndex, 0, taskLine);
   return lines.join(newline);
 }
+
+export function deleteTaskLine(content: string, taskLine: string, expectedLineNumber: number): string {
+  const newline = content.includes("\r\n") ? "\r\n" : "\n";
+  const lines = content.split(/\r?\n/);
+  const lineNumber = lines[expectedLineNumber] === taskLine ? expectedLineNumber : lines.indexOf(taskLine);
+  if (lineNumber === -1) throw new Error("The task changed before it could be deleted.");
+
+  lines.splice(lineNumber, 1);
+  return lines.join(newline);
+}

@@ -1,9 +1,10 @@
 import { useDraggable } from "@dnd-kit/core";
-import { Menu, setIcon, setTooltip } from "obsidian";
+import { setIcon, setTooltip } from "obsidian";
 import { useCallback, useEffect, useRef } from "react";
 import type { MouseEvent, PointerEvent, ReactNode, RefObject } from "react";
 import { playCompletionFeedback } from "./completion-feedback";
 import type TasksCalendarPlugin from "./main";
+import { showTaskActions } from "./task-actions-menu";
 import type { CalendarTask } from "./types";
 
 interface TaskCardProps {
@@ -59,12 +60,10 @@ export function TaskCard({ plugin, meta, showSource, task, titleId, onRecurrence
     event.preventDefault();
     event.stopPropagation();
     if (lastPointerType.current === "touch") {
-      lastPointerType.current = "mouse";
       suppressClicksUntil.current = performance.now() + 750;
-      showTaskActions(plugin, task, { x: event.clientX, y: event.clientY });
-      return;
     }
-    void plugin.openTask(task);
+    lastPointerType.current = "mouse";
+    showTaskActions(plugin, task, { x: event.clientX, y: event.clientY });
   };
 
   return (
@@ -159,21 +158,4 @@ function useTooltip(ref: RefObject<HTMLElement | null>, text: string): void {
   useEffect(() => {
     if (ref.current) setTooltip(ref.current, text, tooltipOptions);
   }, [ref, text]);
-}
-
-function showTaskActions(plugin: TasksCalendarPlugin, task: CalendarTask, position: { x: number; y: number }): void {
-  const menu = new Menu();
-  menu.addItem((item) =>
-    item
-      .setTitle("Edit task")
-      .setIcon("pencil")
-      .onClick(() => void plugin.editTask(task)),
-  );
-  menu.addItem((item) =>
-    item
-      .setTitle("Open source")
-      .setIcon("file-text")
-      .onClick(() => void plugin.openTask(task)),
-  );
-  menu.showAtPosition(position);
 }

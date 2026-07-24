@@ -13,9 +13,9 @@ Tasks Calendar is an Obsidian community plugin that displays Markdown tasks in a
 - Scheduled, due, and start date support using Tasks emoji syntax
 - Completed tasks shown after active tasks with muted, configurable styling
 - A toolbar filter editor and instant text search
-- Checkbox completion directly from the calendar
+- Checkbox completion directly from the calendar with a chime and celebration effect
 - Recurring-task completion through the Tasks API when Tasks is installed
-- Click a task to edit it through Tasks; right-click to open its source line; on touch, tap for both options
+- Click a task to edit it through Tasks; right-click, or tap on touch, for edit, source, and hold-to-delete actions
 - Drag a task onto another day to reschedule its active calendar date
 - Right-click empty day space to create a due-dated task with the Tasks popup
 - Automatic updates when Markdown files are created, edited, renamed, or deleted
@@ -58,6 +58,8 @@ The development build writes Obsidian's generated `main.js` and `styles.css` fil
 ## Usage
 
 Run **Tasks Calendar: Open calendar** from the command palette or select the calendar-check ribbon icon. Use the arrow buttons to navigate, **Today** to return to the current date, and the **Month/Week** buttons to change layout.
+
+Right-click a task to open its action menu. To delete a task, press and hold **Hold to delete** until the progress background fills; releasing early cancels deletion and keeps the menu open. On touch devices, tap a task to open the same menu.
 
 Run **Tasks Calendar: Show performance report** to inspect initial indexing, individual file indexing, file-event-to-index latency, and calendar render timing. The report includes sample count, average, p50, p95, maximum, and latest values. Measurements are held only for the current session, capped at 500 samples per metric, and can be copied or reset.
 
