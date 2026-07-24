@@ -1,6 +1,7 @@
+import { useDraggable } from "@dnd-kit/core";
 import { Menu, setIcon, setTooltip } from "obsidian";
-import { useEffect, useRef } from "react";
-import type { DragEvent, MouseEvent, PointerEvent, ReactNode, RefObject } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import type { MouseEvent, PointerEvent, ReactNode, RefObject } from "react";
 import type TasksCalendarPlugin from "./main";
 import type { CalendarTask } from "./types";
 
@@ -10,46 +11,29 @@ interface TaskCardProps {
   showSource: boolean;
   task: CalendarTask;
   titleId: string;
-  onDragEnd: () => void;
-  onDragStart: (task: CalendarTask) => void;
   onRecurrencePreview: (task: CalendarTask | null) => void;
 }
 
 const tooltipOptions = { placement: "bottom" as const, delay: 200 };
 
-export function TaskCard({
-  plugin,
-  meta,
-  showSource,
-  task,
-  titleId,
-  onDragEnd,
-  onDragStart,
-  onRecurrencePreview,
-}: TaskCardProps) {
+export function TaskCard({ plugin, meta, showSource, task, titleId, onRecurrencePreview }: TaskCardProps) {
   const itemRef = useRef<HTMLDivElement>(null);
   const lastPointerType = useRef("mouse");
   const suppressClicksUntil = useRef(0);
   const taskName = task.description || "Untitled task";
+  const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef } = useDraggable({
+    id: task.id,
+    data: { task },
+  });
+  const setItemRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      itemRef.current = element;
+      setNodeRef(element);
+    },
+    [setNodeRef],
+  );
 
   useTooltip(itemRef, taskName);
-
-  const handleDragStart = (event: DragEvent<HTMLDivElement>) => {
-    const target = event.target as Element;
-    if (target.closest(".tasks-calendar-checkbox, .tasks-calendar-recurrence, .tasks-calendar-task-source")) {
-      event.preventDefault();
-      return;
-    }
-    onDragStart(task);
-    event.currentTarget.classList.add("is-dragging");
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", task.id);
-  };
-
-  const handleDragEnd = (event: DragEvent<HTMLDivElement>) => {
-    event.currentTarget.classList.remove("is-dragging");
-    onDragEnd();
-  };
 
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
     if (performance.now() < suppressClicksUntil.current) {
@@ -84,17 +68,14 @@ export function TaskCard({
 
   return (
     <div
-      className={`tasks-calendar-task${task.completed ? " is-completed" : ""}`}
+      className={`tasks-calendar-task${task.completed ? " is-completed" : ""}${isDragging ? " is-dragging" : ""}`}
       data-priority={task.priority}
-      draggable
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      onDragEnd={handleDragEnd}
-      onDragStart={handleDragStart}
       onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
         lastPointerType.current = event.pointerType;
       }}
-      ref={itemRef}
+      ref={setItemRef}
     >
       <input
         aria-description={`${task.completed ? "Reopen" : "Complete"} this task`}
@@ -105,7 +86,14 @@ export function TaskCard({
         onClick={(event) => event.stopPropagation()}
         type="checkbox"
       />
-      <button className="tasks-calendar-task-title" id={titleId} type="button">
+      <button
+        className="tasks-calendar-task-title"
+        id={titleId}
+        ref={setActivatorNodeRef}
+        type="button"
+        {...attributes}
+        {...listeners}
+      >
         {taskName}
       </button>
       {task.recurrence ? (

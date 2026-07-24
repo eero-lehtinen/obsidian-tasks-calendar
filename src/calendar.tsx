@@ -1,3 +1,15 @@
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import type { Announcements } from "@dnd-kit/core";
 import { MarkdownRenderChild, Platform, setIcon } from "obsidian";
 import {
   StrictMode,
@@ -10,7 +22,8 @@ import {
   useRef,
   useState,
 } from "react";
-import type { CSSProperties, DragEvent, ReactNode, Ref } from "react";
+import type { CSSProperties, HTMLAttributes, ReactNode, Ref } from "react";
+import { createPortal } from "react-dom";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import { CalendarLayoutController, type MonthCellLayout } from "./calendar-layout";
@@ -35,6 +48,23 @@ interface CalendarAppProps {
 }
 
 let nextCalendarInstanceId = 0;
+
+const dragAnnouncements: Announcements = {
+  onDragStart: ({ active }) => `Picked up ${dragTaskName(active.data.current?.task)}.`,
+  onDragOver: ({ active, over }) => {
+    const date = over?.data.current?.date;
+    return date
+      ? `${dragTaskName(active.data.current?.task)} is over ${date}.`
+      : `${dragTaskName(active.data.current?.task)} is not over a calendar day.`;
+  },
+  onDragEnd: ({ active, over }) => {
+    const date = over?.data.current?.date;
+    return date
+      ? `Moved ${dragTaskName(active.data.current?.task)} to ${date}.`
+      : `${dragTaskName(active.data.current?.task)} was not moved.`;
+  },
+  onDragCancel: ({ active }) => `Cancelled moving ${dragTaskName(active.data.current?.task)}.`,
+};
 
 export class TasksCalendarRenderer extends MarkdownRenderChild {
   private readonly calendarRef = { current: null as CalendarHandle | null };
@@ -103,12 +133,16 @@ const CalendarApp = forwardRef(function CalendarApp(
   const [state, setState] = useState(initial);
   const [queryOpen, setQueryOpen] = useState(false);
   const [revision, setRevision] = useState(0);
-  const [draggedTask, setDraggedTask] = useState<CalendarTask | null>(null);
-  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const [activeTask, setActiveTask] = useState<CalendarTask | null>(null);
   const [recurrencePreview, setRecurrencePreview] = useState<Set<string>>(() => new Set());
   const stateRef = useRef(state);
   const gridRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef(new CalendarLayoutController());
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(KeyboardSensor),
+  );
 
   const updateState = useCallback(
     (update: Partial<CalendarState> | ((current: CalendarState) => CalendarState)) => {
@@ -192,15 +226,6 @@ const CalendarApp = forwardRef(function CalendarApp(
     );
   };
 
-  const handleDrop = (event: DragEvent<HTMLDivElement>, date: string) => {
-    if (!draggedTask) return;
-    event.preventDefault();
-    const task = draggedTask;
-    setDraggedTask(null);
-    setDropTarget(null);
-    void plugin.rescheduleTask(task, date);
-  };
-
   let taskIndex = 0;
   const taskCard = (task: CalendarTask, showSource: boolean) => {
     const titleId = `tasks-calendar-${instanceId}-task-${taskIndex}`;
@@ -208,11 +233,6 @@ const CalendarApp = forwardRef(function CalendarApp(
     return (
       <TaskCard
         key={task.id}
-        onDragEnd={() => {
-          setDraggedTask(null);
-          setDropTarget(null);
-        }}
-        onDragStart={setDraggedTask}
         onRecurrencePreview={previewRecurrence}
         plugin={plugin}
         showSource={showSource}
@@ -227,134 +247,183 @@ const CalendarApp = forwardRef(function CalendarApp(
   } as CSSProperties;
 
   return (
-    <div className="tasks-calendar-react-root" style={calendarStyle}>
-      <CalendarToolbar
-        onNavigate={(direction) =>
-          updateState({
-            anchor: toDateKey(moveAnchor(fromDateKey(state.anchor), state.mode, direction)),
-            selectedDate: null,
-          })
-        }
-        onQueryToggle={() => setQueryOpen((open) => !open)}
-        onToday={() => updateState({ anchor: toDateKey(new Date()), selectedDate: null })}
-        plugin={plugin}
-        state={state}
-        updateState={updateState}
-      />
-      {queryOpen ? <QueryEditor state={state} updateState={updateState} /> : null}
-      {model.queryError ? <div className="tasks-calendar-error">{model.queryError}</div> : null}
-      <div aria-label="Tasks calendar" className={`tasks-calendar-grid is-${state.mode}`} ref={gridRef} role="grid">
-        <div
-          aria-label="ISO week number"
-          className="tasks-calendar-weekday tasks-calendar-week-number-header"
-          role="columnheader"
-        >
-          Wk
-        </div>
-        {model.days.slice(0, 7).map((day) => (
-          <div className="tasks-calendar-weekday" key={`weekday-${day.getDay()}`} role="columnheader">
-            {new Intl.DateTimeFormat(undefined, { weekday: state.mode === "week" ? "long" : "short" }).format(day)}
+    <DndContext
+      accessibility={{ announcements: dragAnnouncements }}
+      collisionDetection={closestCenter}
+      onDragCancel={() => setActiveTask(null)}
+      onDragEnd={(event) => {
+        const task = event.active.data.current?.task as CalendarTask | undefined;
+        const date = event.over?.data.current?.date as string | undefined;
+        setActiveTask(null);
+        if (task && date) void plugin.rescheduleTask(task, date);
+      }}
+      onDragStart={(event) => {
+        setActiveTask((event.active.data.current?.task as CalendarTask | undefined) ?? null);
+      }}
+      sensors={sensors}
+    >
+      <div className="tasks-calendar-react-root" style={calendarStyle}>
+        <CalendarToolbar
+          onNavigate={(direction) =>
+            updateState({
+              anchor: toDateKey(moveAnchor(fromDateKey(state.anchor), state.mode, direction)),
+              selectedDate: null,
+            })
+          }
+          onQueryToggle={() => setQueryOpen((open) => !open)}
+          onToday={() => updateState({ anchor: toDateKey(new Date()), selectedDate: null })}
+          plugin={plugin}
+          state={state}
+          updateState={updateState}
+        />
+        {queryOpen ? <QueryEditor state={state} updateState={updateState} /> : null}
+        {model.queryError ? <div className="tasks-calendar-error">{model.queryError}</div> : null}
+        <div aria-label="Tasks calendar" className={`tasks-calendar-grid is-${state.mode}`} ref={gridRef} role="grid">
+          <div
+            aria-label="ISO week number"
+            className="tasks-calendar-weekday tasks-calendar-week-number-header"
+            role="columnheader"
+          >
+            Wk
           </div>
-        ))}
-        {model.days.map((day, index) => {
-          const key = toDateKey(day);
-          const dayTasks = model.tasksByDate.get(key) ?? [];
-          const isOutside = state.mode === "month" && day.getMonth() !== anchor.getMonth();
-          const dayClasses = [
-            "tasks-calendar-day",
-            key === model.today ? "is-today" : "",
-            key === state.selectedDate ? "is-selected" : "",
-            isOutside ? "is-outside" : "",
-            recurrencePreview.has(key) ? "is-recurrence-preview" : "",
-            dropTarget === key ? "is-drop-target" : "",
-          ]
-            .filter(Boolean)
-            .join(" ");
+          {model.days.slice(0, 7).map((day) => (
+            <div className="tasks-calendar-weekday" key={`weekday-${day.getDay()}`} role="columnheader">
+              {new Intl.DateTimeFormat(undefined, { weekday: state.mode === "week" ? "long" : "short" }).format(day)}
+            </div>
+          ))}
+          {model.days.map((day, index) => {
+            const key = toDateKey(day);
+            const dayTasks = model.tasksByDate.get(key) ?? [];
+            const isOutside = state.mode === "month" && day.getMonth() !== anchor.getMonth();
+            const dayClasses = [
+              "tasks-calendar-day",
+              key === model.today ? "is-today" : "",
+              key === state.selectedDate ? "is-selected" : "",
+              isOutside ? "is-outside" : "",
+              recurrencePreview.has(key) ? "is-recurrence-preview" : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
 
-          return (
-            <DayFragment index={index} key={key} weekNumber={isoWeekNumber(model.days[index + 3] ?? day)}>
-              <div
-                aria-label={`${day.toDateString()}, ${dayTasks.length} tasks`}
-                aria-selected={key === state.selectedDate}
-                className={dayClasses}
-                data-date={key}
-                onContextMenu={(event) => {
-                  if ((event.target as Element).closest(".tasks-calendar-task, .tasks-calendar-more, button, input"))
-                    return;
-                  event.preventDefault();
-                  void plugin.createTask(key);
-                }}
-                onDragOver={(event) => {
-                  if (!draggedTask) return;
-                  event.preventDefault();
-                  event.dataTransfer.dropEffect = "move";
-                  setDropTarget(key);
-                }}
-                onDrop={(event) => handleDrop(event, key)}
-                role="gridcell"
-              >
-                <div className="tasks-calendar-day-heading">
-                  <button
-                    className="tasks-calendar-day-number"
-                    onClick={() => updateState({ anchor: key, mode: "week", selectedDate: key })}
-                    type="button"
-                  >
-                    {state.mode === "week"
-                      ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(day)
-                      : day.getDate()}
-                  </button>
-                  {dayTasks.length > 0 ? <span className="tasks-calendar-day-count">{dayTasks.length}</span> : null}
-                </div>
-                <div className="tasks-calendar-task-list">
-                  {dayTasks.map((task) => taskCard(task, state.mode === "week"))}
-                  {state.mode === "month" && dayTasks.length > 0 ? (
+            return (
+              <DayFragment index={index} key={key} weekNumber={isoWeekNumber(model.days[index + 3] ?? day)}>
+                <DroppableDay
+                  aria-label={`${day.toDateString()}, ${dayTasks.length} tasks`}
+                  aria-selected={key === state.selectedDate}
+                  className={dayClasses}
+                  date={key}
+                  onContextMenu={(event) => {
+                    if ((event.target as Element).closest(".tasks-calendar-task, .tasks-calendar-more, button, input"))
+                      return;
+                    event.preventDefault();
+                    void plugin.createTask(key);
+                  }}
+                  role="gridcell"
+                >
+                  <div className="tasks-calendar-day-heading">
                     <button
-                      className="tasks-calendar-more"
-                      hidden
                       onClick={() => updateState({ anchor: key, mode: "week", selectedDate: key })}
+                      className="tasks-calendar-day-number"
                       type="button"
-                    />
-                  ) : null}
-                </div>
-              </div>
-            </DayFragment>
-          );
-        })}
+                    >
+                      {state.mode === "week"
+                        ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(day)
+                        : day.getDate()}
+                    </button>
+                    {dayTasks.length > 0 ? <span className="tasks-calendar-day-count">{dayTasks.length}</span> : null}
+                  </div>
+                  <div className="tasks-calendar-task-list">
+                    {dayTasks.map((task) => taskCard(task, state.mode === "week"))}
+                    {state.mode === "month" && dayTasks.length > 0 ? (
+                      <button
+                        className="tasks-calendar-more"
+                        hidden
+                        onClick={() => updateState({ anchor: key, mode: "week", selectedDate: key })}
+                        type="button"
+                      />
+                    ) : null}
+                  </div>
+                </DroppableDay>
+              </DayFragment>
+            );
+          })}
+        </div>
+        {model.lateTasks.length > 0 ? (
+          <section className="tasks-calendar-late-tasks">
+            <header className="tasks-calendar-late-header">
+              <h3>Very late tasks</h3>
+              <span className="tasks-calendar-late-count">{model.lateTasks.length}</span>
+            </header>
+            <div className="tasks-calendar-task-list tasks-calendar-late-list">
+              {model.lateTasks.map((task) => (
+                <TaskCard
+                  key={`late-${task.id}`}
+                  meta={
+                    <span className="tasks-calendar-late-meta">
+                      {calendarTaskDate(task, plugin.settings, model.today) ?? "No date"} ·{" "}
+                      {task.path.replace(/\.md$/i, "")}
+                    </span>
+                  }
+                  onRecurrencePreview={previewRecurrence}
+                  plugin={plugin}
+                  showSource={false}
+                  task={task}
+                  titleId={`tasks-calendar-${instanceId}-task-${taskIndex++}`}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
-      {model.lateTasks.length > 0 ? (
-        <section className="tasks-calendar-late-tasks">
-          <header className="tasks-calendar-late-header">
-            <h3>Very late tasks</h3>
-            <span className="tasks-calendar-late-count">{model.lateTasks.length}</span>
-          </header>
-          <div className="tasks-calendar-task-list tasks-calendar-late-list">
-            {model.lateTasks.map((task) => (
-              <TaskCard
-                key={`late-${task.id}`}
-                meta={
-                  <span className="tasks-calendar-late-meta">
-                    {calendarTaskDate(task, plugin.settings, model.today) ?? "No date"} ·{" "}
-                    {task.path.replace(/\.md$/i, "")}
-                  </span>
-                }
-                onDragEnd={() => {
-                  setDraggedTask(null);
-                  setDropTarget(null);
-                }}
-                onDragStart={setDraggedTask}
-                onRecurrencePreview={previewRecurrence}
-                plugin={plugin}
-                showSource={false}
-                task={task}
-                titleId={`tasks-calendar-${instanceId}-task-${taskIndex++}`}
-              />
-            ))}
-          </div>
-        </section>
-      ) : null}
-    </div>
+      {createPortal(
+        <DragOverlay dropAnimation={null}>
+          {activeTask ? (
+            <div
+              className={`tasks-calendar-task tasks-calendar-drag-overlay${activeTask.completed ? " is-completed" : ""}`}
+              data-priority={activeTask.priority}
+              style={
+                {
+                  "--tasks-calendar-completed-opacity": String(plugin.settings.completedOpacity),
+                } as CSSProperties
+              }
+            >
+              <span className="tasks-calendar-drag-checkbox">{activeTask.completed ? "✓" : ""}</span>
+              <span className="tasks-calendar-task-title">{activeTask.description || "Untitled task"}</span>
+            </div>
+          ) : null}
+        </DragOverlay>,
+        document.body,
+      )}
+    </DndContext>
   );
 });
+
+function dragTaskName(value: unknown): string {
+  const task = value as CalendarTask | undefined;
+  return task?.description || "Untitled task";
+}
+
+function DroppableDay({
+  children,
+  className,
+  date,
+  ...props
+}: {
+  children: ReactNode;
+  className: string;
+  date: string;
+} & Omit<HTMLAttributes<HTMLDivElement>, "children" | "className">) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: `date:${date}`,
+    data: { date },
+  });
+
+  return (
+    <div {...props} className={`${className}${isOver ? " is-drop-target" : ""}`} data-date={date} ref={setNodeRef}>
+      {children}
+    </div>
+  );
+}
 
 function DayFragment({ children, index, weekNumber }: { children: ReactNode; index: number; weekNumber: number }) {
   return (
