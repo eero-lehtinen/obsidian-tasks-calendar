@@ -4,11 +4,15 @@ import { parseTaskLine } from "./task-parser";
 import type { CalendarTask } from "./types";
 
 export const TASKS_CHANGED_EVENT = "tasks-calendar:changed";
+const FILE_INDEX_CONCURRENCY = 8;
+const UPDATE_DEBOUNCE_MS = 120;
 
 export class TaskStore extends Events {
   private readonly tasksByPath = new Map<string, CalendarTask[]>();
-  private readonly refreshTimers = new Map<string, number>();
+  private readonly pendingFiles = new Map<string, TFile>();
   private readonly scheduledAt = new Map<string, number>();
+  private refreshTimer: number | null = null;
+  private batchRunning = false;
 
   constructor(
     private readonly vault: Vault,
@@ -20,7 +24,7 @@ export class TaskStore extends Events {
   async initialize(): Promise<void> {
     const startedAt = performance.now();
     const files = this.vault.getMarkdownFiles();
-    await Promise.all(files.map((file) => this.indexFile(file)));
+    await this.indexFiles(files);
     this.performanceMonitor.record("index.initial", performance.now() - startedAt, {
       files: files.length,
       tasks: this.getTasks().length
@@ -32,30 +36,22 @@ export class TaskStore extends Events {
   }
 
   scheduleFile(file: TFile): void {
-    const existingTimer = this.refreshTimers.get(file.path);
-    if (existingTimer !== undefined) window.clearTimeout(existingTimer);
+    this.pendingFiles.set(file.path, file);
     if (!this.scheduledAt.has(file.path)) this.scheduledAt.set(file.path, performance.now());
-    const timer = window.setTimeout(() => {
-      this.refreshTimers.delete(file.path);
-      void this.indexFile(file).then(() => {
-        const eventStartedAt = this.scheduledAt.get(file.path);
-        this.scheduledAt.delete(file.path);
-        if (eventStartedAt !== undefined) {
-          this.performanceMonitor.record("index.update-latency", performance.now() - eventStartedAt);
-        }
-        this.trigger(TASKS_CHANGED_EVENT);
-      });
-    }, 120);
-    this.refreshTimers.set(file.path, timer);
+    this.scheduleBatch();
   }
 
   removePath(path: string): void {
+    this.pendingFiles.delete(path);
+    this.scheduledAt.delete(path);
     if (this.tasksByPath.delete(path)) this.trigger(TASKS_CHANGED_EVENT);
   }
 
   renamePath(file: TFile, oldPath: string): void {
     this.tasksByPath.delete(oldPath);
-    void this.indexFile(file).then(() => this.trigger(TASKS_CHANGED_EVENT));
+    this.pendingFiles.delete(oldPath);
+    this.scheduledAt.delete(oldPath);
+    this.scheduleFile(file);
   }
 
   async indexFile(file: TFile): Promise<void> {
@@ -71,6 +67,54 @@ export class TaskStore extends Events {
       lines: content.split(/\r?\n/).length,
       tasks: tasks.length
     });
+  }
+
+  private scheduleBatch(): void {
+    if (this.refreshTimer !== null) window.clearTimeout(this.refreshTimer);
+    this.refreshTimer = window.setTimeout(() => {
+      this.refreshTimer = null;
+      void this.flushPendingFiles();
+    }, UPDATE_DEBOUNCE_MS);
+  }
+
+  private async flushPendingFiles(): Promise<void> {
+    if (this.batchRunning) return;
+    const files = Array.from(this.pendingFiles.values());
+    if (files.length === 0) return;
+
+    this.batchRunning = true;
+    const eventTimes = files
+      .map((file) => this.scheduledAt.get(file.path))
+      .filter((value): value is number => value !== undefined);
+    for (const file of files) {
+      this.pendingFiles.delete(file.path);
+      this.scheduledAt.delete(file.path);
+    }
+
+    try {
+      await this.indexFiles(files);
+      const earliestEvent = eventTimes.length > 0 ? Math.min(...eventTimes) : performance.now();
+      this.performanceMonitor.record("index.update-latency", performance.now() - earliestEvent, {
+        files: files.length
+      });
+      this.trigger(TASKS_CHANGED_EVENT);
+    } finally {
+      this.batchRunning = false;
+      if (this.pendingFiles.size > 0) this.scheduleBatch();
+    }
+  }
+
+  private async indexFiles(files: TFile[]): Promise<void> {
+    let nextIndex = 0;
+    const workerCount = Math.min(FILE_INDEX_CONCURRENCY, files.length);
+    const workers = Array.from({ length: workerCount }, async () => {
+      while (nextIndex < files.length) {
+        const file = files[nextIndex];
+        nextIndex += 1;
+        await this.indexFile(file);
+      }
+    });
+    await Promise.all(workers);
   }
 
   async replaceTask(task: CalendarTask, replacement: string): Promise<void> {
