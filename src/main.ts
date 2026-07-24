@@ -3,9 +3,9 @@ import { TasksCalendarRenderer } from "./calendar";
 import { TASKS_CALENDAR_VIEW, TasksCalendarView } from "./calendar-view";
 import { DEFAULT_SETTINGS, TasksCalendarSettingTab } from "./settings";
 import { PerformanceMonitor, PerformanceReportModal } from "./performance";
-import { fallbackToggleLine } from "./task-parser";
+import { fallbackToggleLine, rescheduleTaskLine } from "./task-parser";
 import { TaskStore } from "./task-store";
-import type { CalendarTask, TasksApiV1, TasksCalendarSettings, TasksPluginLike } from "./types";
+import type { CalendarTask, DateField, TasksApiV1, TasksCalendarSettings, TasksPluginLike } from "./types";
 import type { CalendarState } from "./types";
 
 interface ObsidianAppWithPlugins {
@@ -135,6 +135,18 @@ export default class TasksCalendarPlugin extends Plugin {
     }
   }
 
+  async rescheduleTask(task: CalendarTask, date: string): Promise<void> {
+    const field = this.calendarDateField(task);
+    if (task[field] === date) return;
+    try {
+      const replacement = rescheduleTaskLine(task.raw, field, date);
+      await this.taskStore.replaceTask(task, replacement);
+      new Notice(`Rescheduled “${task.description || "Untitled task"}” to ${date}.`);
+    } catch (error) {
+      new Notice(`Could not reschedule task: ${messageFrom(error)}`);
+    }
+  }
+
   async openTask(task: CalendarTask): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(task.path);
     if (!(file instanceof TFile)) {
@@ -176,6 +188,12 @@ export default class TasksCalendarPlugin extends Plugin {
       this.stateSaveTimer = null;
       void this.saveSettings();
     }, 250);
+  }
+
+  private calendarDateField(task: CalendarTask): DateField {
+    return this.settings.datePreference.find((field) => task[field] !== null) ??
+      this.settings.datePreference[0] ??
+      "scheduled";
   }
 
   async loadSettings(): Promise<void> {

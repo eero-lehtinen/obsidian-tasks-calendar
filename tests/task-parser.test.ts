@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fallbackToggleLine, parseTaskLine } from "../src/task-parser";
+import { fallbackToggleLine, parseTaskLine, rescheduleTaskLine } from "../src/task-parser";
 
 describe("parseTaskLine", () => {
   it("parses Tasks emoji fields", () => {
@@ -25,5 +25,23 @@ describe("parseTaskLine", () => {
 describe("fallbackToggleLine", () => {
   it("preserves indentation and content", () => {
     expect(fallbackToggleLine("  - [ ] Keep everything 📅 2026-07-24")).toBe("  - [x] Keep everything 📅 2026-07-24");
+  });
+});
+
+describe("rescheduleTaskLine", () => {
+  it("updates the selected existing date field", () => {
+    expect(rescheduleTaskLine(
+      "- [ ] Prepare report ⏳ 2026-07-20 📅 2026-07-25",
+      "scheduled",
+      "2026-07-28"
+    )).toBe("- [ ] Prepare report ⏳ 2026-07-28 📅 2026-07-25");
+  });
+
+  it("adds a missing field before a block link", () => {
+    expect(rescheduleTaskLine(
+      "- [ ] Prepare report ^report",
+      "scheduled",
+      "2026-07-28"
+    )).toBe("- [ ] Prepare report ⏳ 2026-07-28 ^report");
   });
 });

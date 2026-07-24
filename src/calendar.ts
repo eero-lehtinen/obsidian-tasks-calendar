@@ -22,6 +22,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
   private visibleDateRange: { start: string; end: string } | null = null;
   private gridResizeObserver: ResizeObserver | null = null;
   private layoutFrame: number | null = null;
+  private draggedTask: CalendarTask | null = null;
 
   constructor(
     containerEl: HTMLElement,
@@ -281,6 +282,21 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
         "data-date": key
       }
     });
+    cell.addEventListener("dragover", (event) => {
+      if (!this.draggedTask) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+      this.clearDropTargets();
+      cell.addClass("is-drop-target");
+    });
+    cell.addEventListener("drop", (event) => {
+      if (!this.draggedTask) return;
+      event.preventDefault();
+      const draggedTask = this.draggedTask;
+      this.draggedTask = null;
+      this.clearDropTargets();
+      void this.plugin.rescheduleTask(draggedTask, key);
+    });
     const heading = cell.createDiv({ cls: "tasks-calendar-day-heading" });
     const dayButton = heading.createEl("button", {
       text: this.state.mode === "week"
@@ -324,6 +340,28 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     const item = list.createDiv({
       cls: `tasks-calendar-task${task.completed ? " is-completed" : ""}`,
       attr: { "data-priority": task.priority }
+    });
+    item.draggable = true;
+    item.addEventListener("dragstart", (event) => {
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        target.closest(".tasks-calendar-checkbox, .tasks-calendar-recurrence, .tasks-calendar-task-source")
+      ) {
+        event.preventDefault();
+        return;
+      }
+      this.draggedTask = task;
+      item.addClass("is-dragging");
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", task.id);
+      }
+    });
+    item.addEventListener("dragend", () => {
+      this.draggedTask = null;
+      item.removeClass("is-dragging");
+      this.clearDropTargets();
     });
     setTooltip(item, taskName, tooltipOptions);
 
@@ -456,6 +494,12 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
   private clearRecurrencePreview(): void {
     for (const day of Array.from(this.containerEl.querySelectorAll(".tasks-calendar-day.is-recurrence-preview"))) {
       day.removeClass("is-recurrence-preview");
+    }
+  }
+
+  private clearDropTargets(): void {
+    for (const day of Array.from(this.containerEl.querySelectorAll(".tasks-calendar-day.is-drop-target"))) {
+      day.removeClass("is-drop-target");
     }
   }
 

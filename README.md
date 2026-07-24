@@ -13,6 +13,7 @@ Tasks Calendar is an Obsidian community plugin that displays Markdown tasks in a
 - Checkbox completion directly from the calendar
 - Recurring-task completion through the Tasks API when Tasks is installed
 - Click a task to open its source line; right-click to edit through Tasks
+- Drag a task onto another day to reschedule its active calendar date
 - Automatic updates when Markdown files are created, edited, renamed, or deleted
 - In-session performance measurements for indexing, update latency, and rendering
 - A bounded “Very late tasks” backlog for incomplete tasks older than today’s visible calendar range

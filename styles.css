@@ -244,6 +244,11 @@
   box-shadow: inset 0 3px 0 var(--tasks-calendar-recurrence-accent);
 }
 
+.tasks-calendar-day.is-drop-target {
+  outline: 2px dashed var(--interactive-accent);
+  outline-offset: -3px;
+}
+
 .tasks-calendar-day-heading {
   display: flex;
   align-items: center;
@@ -309,6 +314,11 @@
   font-size: var(--font-ui-smaller);
   line-height: 1.3;
   transition: background-color 100ms ease, outline-color 100ms ease;
+  user-select: none;
+}
+
+.tasks-calendar-task.is-dragging {
+  opacity: 0.35;
 }
 
 .tasks-calendar-task[data-priority="highest"],
