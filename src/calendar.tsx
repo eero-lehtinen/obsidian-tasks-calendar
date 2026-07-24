@@ -274,7 +274,7 @@ const CalendarApp = forwardRef(function CalendarApp(
     return (
       <TaskCard
         completesDay={completesDay}
-        key={task.id}
+        key={`${state.mode}:${task.id}`}
         onCompletionChange={updateCompletionOverride}
         onRecurrencePreview={previewRecurrence}
         plugin={plugin}
@@ -403,7 +403,7 @@ const CalendarApp = forwardRef(function CalendarApp(
             <div className="tasks-calendar-task-list tasks-calendar-late-list">
               {model.lateTasks.map((task) => (
                 <TaskCard
-                  key={`late-${task.id}`}
+                  key={`late-${state.mode}:${task.id}`}
                   meta={
                     <span className="tasks-calendar-late-meta">
                       {calendarTaskDate(task, plugin.settings, model.today) ?? "No date"} ·{" "}
