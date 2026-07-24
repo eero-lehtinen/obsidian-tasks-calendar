@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Menu, Platform, setIcon, setTooltip } from "obsidian";
+import { MarkdownRenderChild, Platform, setIcon, setTooltip } from "obsidian";
 import { calendarDays, fromDateKey, isoWeekNumber, moveAnchor, titleForRange, toDateKey } from "./date-utils";
 import { compileQuery } from "./query";
 import { recurrenceDateKeys } from "./recurrence";
@@ -379,7 +379,19 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       item.removeClass("is-dragging");
       this.clearDropTargets();
     });
-    item.addEventListener("contextmenu", (event) => this.openTaskMenu(event, task));
+    item.addEventListener("click", (event) => {
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        target.closest(".tasks-calendar-checkbox, .tasks-calendar-task-source")
+      ) return;
+      void this.plugin.editTask(task);
+    });
+    item.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      void this.plugin.openTask(task);
+    });
     setTooltip(item, taskName, tooltipOptions);
 
     const checkbox = item.createEl("input", { type: "checkbox", cls: "tasks-calendar-checkbox" });
@@ -393,7 +405,6 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     title.id = titleId;
     checkbox.setAttr("aria-labelledby", titleId);
     checkbox.setAttr("aria-description", `${task.completed ? "Reopen" : "Complete"} this task`);
-    title.addEventListener("click", () => void this.plugin.openTask(task));
 
     if (task.recurrence) {
       const recurrenceIcon = item.createSpan({ cls: "tasks-calendar-recurrence" });
@@ -471,16 +482,6 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     const hiddenCount = taskElements.length - visibleCount;
     moreButton.textContent = `+${hiddenCount} more`;
     moreButton.hidden = hiddenCount === 0;
-  }
-
-  private openTaskMenu(event: MouseEvent, task: CalendarTask): void {
-    event.preventDefault();
-    const menu = new Menu();
-    menu.addItem((item) => item.setTitle("Open source").setIcon("file-text").onClick(() => void this.plugin.openTask(task)));
-    if (this.plugin.tasksApi) {
-      menu.addItem((item) => item.setTitle("Edit task").setIcon("pencil").onClick(() => void this.plugin.editTask(task)));
-    }
-    menu.showAtMouseEvent(event);
   }
 
   private taskDate(task: CalendarTask, today: string): string | null {
