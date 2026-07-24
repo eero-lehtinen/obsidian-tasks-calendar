@@ -259,10 +259,18 @@
 .tasks-calendar-day.is-selected {
   outline: 3px solid var(--tasks-calendar-selected-accent);
   outline-offset: -3px;
+  animation: tasks-calendar-selection-outline 1.2s ease-out forwards;
 }
 
-.tasks-calendar-day.is-selected .tasks-calendar-day-number {
-  box-shadow: 0 0 0 2px var(--tasks-calendar-selected-accent);
+@keyframes tasks-calendar-selection-outline {
+  0%,
+  55% {
+    outline-color: var(--tasks-calendar-selected-accent);
+  }
+
+  100% {
+    outline-color: transparent;
+  }
 }
 
 .tasks-calendar-day-heading {

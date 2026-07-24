@@ -48,6 +48,7 @@ interface CalendarAppProps {
 }
 
 let nextCalendarInstanceId = 0;
+const SELECTION_DISPLAY_DURATION_MS = 1_200;
 
 const dragAnnouncements: Announcements = {
   onDragStart: ({ active }) => `Picked up ${dragTaskName(active.data.current?.task)}.`,
@@ -192,6 +193,16 @@ const CalendarApp = forwardRef(function CalendarApp(
       return next.size === current.size ? current : next;
     });
   }, [revision]);
+
+  useEffect(() => {
+    if (!state.selectedDate) return;
+
+    const timeoutId = window.setTimeout(() => {
+      updateState({ selectedDate: null });
+    }, SELECTION_DISPLAY_DURATION_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [state.selectedDate, updateState]);
 
   const updateCompletionOverride = useCallback((taskId: string, completed: boolean | null) => {
     setCompletionOverrides((current) => {
