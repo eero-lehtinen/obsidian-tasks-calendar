@@ -12,6 +12,10 @@ Run these commands before committing:
 - `npm test`
 - `npm run build`
 
+## Releases
+
+Run `npm run release` before pushing a release tag.
+
 ## Project structure
 
 - `src/`: plugin source
