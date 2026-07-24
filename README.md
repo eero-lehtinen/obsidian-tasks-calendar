@@ -15,7 +15,7 @@ Tasks Calendar is an Obsidian community plugin that displays Markdown tasks in a
 - A toolbar filter editor and instant text search
 - Checkbox completion directly from the calendar
 - Recurring-task completion through the Tasks API when Tasks is installed
-- Click a task to open its source line; right-click to edit through Tasks
+- Click a task to edit it through Tasks; right-click to open its source line
 - Drag a task onto another day to reschedule its active calendar date
 - Right-click empty day space to create a due-dated task with the Tasks popup
 - Automatic updates when Markdown files are created, edited, renamed, or deleted
@@ -25,9 +25,20 @@ Tasks Calendar is an Obsidian community plugin that displays Markdown tasks in a
 
 ## Installation
 
-### From a release
+### With BRAT
 
-Download `main.js`, `manifest.json`, and `styles.css` from the GitHub release and copy them into:
+Until Tasks Calendar is available in Obsidian's Community Plugins directory, the easiest installation method is [BRAT](https://github.com/TfTHacker/obsidian42-brat):
+
+1. Install and enable **BRAT** from Obsidian's Community Plugins.
+2. Open **Settings → BRAT → Add Beta plugin**.
+3. Enter `https://github.com/eero-lehtinen/obsidian-tasks-calendar`.
+4. Enable **Tasks Calendar** when prompted.
+
+BRAT installs new GitHub releases automatically.
+
+### From a GitHub release
+
+Download `tasks-calendar-<version>.zip` from the [latest GitHub release](https://github.com/eero-lehtinen/obsidian-tasks-calendar/releases/latest) and extract it into:
 
 ```text
 <vault>/.obsidian/plugins/tasks-calendar/
@@ -106,3 +117,17 @@ npm run deploy -- "D:\Notes\My Vault"
 ```
 
 The vault must already contain a `.obsidian` directory. The command creates the plugin-specific directory if needed and overwrites only the plugin's three generated runtime files.
+
+## Publishing
+
+Version and publish a release with:
+
+```bash
+npm version patch -m "chore(release): %s"
+git push origin master --follow-tags
+```
+
+Use `minor` or `major` instead of `patch` when appropriate. The version command synchronizes `package.json`, `manifest.json`, and `versions.json`. Pushing the resulting `x.y.z` tag runs the GitHub release workflow, which validates the metadata, runs the test suite and production build, and publishes:
+
+- `main.js`, `manifest.json`, and `styles.css` for Obsidian and BRAT
+- `tasks-calendar-<version>.zip` for manual installation

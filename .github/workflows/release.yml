@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate release metadata
+        shell: bash
+        run: |
+          manifest_version="$(node -p "require('./manifest.json').version")"
+          package_version="$(node -p "require('./package.json').version")"
+          minimum_app_version="$(node -p "require('./manifest.json').minAppVersion")"
+          recorded_minimum="$(node -p "require('./versions.json')[process.env.GITHUB_REF_NAME]")"
+
+          if [[ ! "$GITHUB_REF_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Release tags must use x.y.z format without a v prefix."
+            exit 1
+          fi
+
+          if [[ "$GITHUB_REF_NAME" != "$manifest_version" || "$GITHUB_REF_NAME" != "$package_version" ]]; then
+            echo "::error::Tag, manifest.json, and package.json versions must match."
+            exit 1
+          fi
+
+          if [[ "$minimum_app_version" != "$recorded_minimum" ]]; then
+            echo "::error::versions.json must record the manifest minimum app version."
+            exit 1
+          fi
+
+      - name: Test and package
+        run: npm run release
+
+      - name: Create installation archive
+        shell: bash
+        run: |
+          release_directory="dist/tasks-calendar-${GITHUB_REF_NAME}"
+          (
+            cd "$release_directory"
+            zip -r "../tasks-calendar-${GITHUB_REF_NAME}.zip" main.js manifest.json styles.css
+          )
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          release_directory="dist/tasks-calendar-${GITHUB_REF_NAME}"
+          gh release create "$GITHUB_REF_NAME" \
+            "$release_directory/main.js" \
+            "$release_directory/manifest.json" \
+            "$release_directory/styles.css" \
+            "dist/tasks-calendar-${GITHUB_REF_NAME}.zip" \
+            --generate-notes \
+            --title "Tasks Calendar ${GITHUB_REF_NAME}" \
+            --verify-tag
