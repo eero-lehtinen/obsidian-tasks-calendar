@@ -2,6 +2,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { Menu, setIcon, setTooltip } from "obsidian";
 import { useCallback, useEffect, useRef } from "react";
 import type { MouseEvent, PointerEvent, ReactNode, RefObject } from "react";
+import { playCompletionFeedback } from "./completion-feedback";
 import type TasksCalendarPlugin from "./main";
 import type { CalendarTask } from "./types";
 
@@ -82,7 +83,10 @@ export function TaskCard({ plugin, meta, showSource, task, titleId, onRecurrence
         aria-labelledby={titleId}
         checked={task.completed}
         className="tasks-calendar-checkbox"
-        onChange={() => void plugin.toggleTask(task)}
+        onChange={(event) => {
+          if (!task.completed) playCompletionFeedback(event.currentTarget);
+          void plugin.toggleTask(task);
+        }}
         onClick={(event) => event.stopPropagation()}
         type="checkbox"
       />
