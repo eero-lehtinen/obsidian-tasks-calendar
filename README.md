@@ -5,6 +5,12 @@ Tasks Calendar is an Obsidian community plugin that displays Markdown tasks in m
 > [!NOTE]
 > This plugin is coded with heavy AI assistance
 
+## Month view
+<img width="2046" height="1151" alt="image" src="https://github.com/user-attachments/assets/18f125bb-9efe-4039-a98d-99dd0671e3da" />
+
+## Week view
+<img width="1838" height="818" alt="image" src="https://github.com/user-attachments/assets/acc383f0-adeb-45a3-9b2b-bb8bf6dbbbe6" />
+
 ## Features
 
 - Month and week layouts with previous, next, and today navigation
