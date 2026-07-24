@@ -2,6 +2,7 @@
   --tasks-calendar-border: var(--background-modifier-border);
   --tasks-calendar-accent: var(--interactive-accent);
   --tasks-calendar-recurrence-accent: var(--color-cyan, #00b8d4);
+  --tasks-calendar-selected-accent: var(--color-orange, #f59e0b);
   --tasks-calendar-today: color-mix(in srgb, #fff 2%, transparent);
   --tasks-calendar-completed-opacity: 0.42;
   display: flex;
@@ -209,7 +210,6 @@
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  scrollbar-gutter: stable;
 }
 
 .tasks-calendar-grid.is-week {
@@ -247,6 +247,15 @@
 .tasks-calendar-day.is-drop-target {
   outline: 2px dashed var(--interactive-accent);
   outline-offset: -3px;
+}
+
+.tasks-calendar-day.is-selected {
+  outline: 3px solid var(--tasks-calendar-selected-accent);
+  outline-offset: -3px;
+}
+
+.tasks-calendar-day.is-selected .tasks-calendar-day-number {
+  box-shadow: 0 0 0 2px var(--tasks-calendar-selected-accent);
 }
 
 .tasks-calendar-day-heading {
@@ -311,7 +320,7 @@
   background-clip: padding-box;
   box-shadow: inset 3px 0 var(--tasks-calendar-task-accent);
   cursor: default;
-  font-size: var(--font-ui-smaller);
+  font-size: calc(var(--font-ui-smaller) + 1px);
   line-height: 1.3;
   transition: background-color 100ms ease, outline-color 100ms ease;
   user-select: none;

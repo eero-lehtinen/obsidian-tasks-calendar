@@ -38,7 +38,8 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       query: initial.query ?? plugin.settings.defaultQuery,
       showCompleted: initial.showCompleted ?? plugin.settings.showCompleted,
       search: initial.search ?? "",
-      weekHeight: initial.weekHeight ?? null
+      weekHeight: initial.weekHeight ?? null,
+      selectedDate: initial.selectedDate ?? null
     };
   }
 
@@ -85,6 +86,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     navigation.createEl("button", { text: "Today", cls: "tasks-calendar-today-button" })
       .addEventListener("click", () => {
         this.state.anchor = toDateKey(new Date());
+        this.state.selectedDate = null;
         this.notifyStateChange();
         this.render();
       });
@@ -275,12 +277,14 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       cls: [
         "tasks-calendar-day",
         key === today ? "is-today" : "",
+        key === this.state.selectedDate ? "is-selected" : "",
         isOutside ? "is-outside" : ""
       ].filter(Boolean).join(" "),
       attr: {
         role: "gridcell",
         "aria-label": `${day.toDateString()}, ${tasks.length} tasks`,
-        "data-date": key
+        "data-date": key,
+        "aria-selected": String(key === this.state.selectedDate)
       }
     });
     cell.addEventListener("dragover", (event) => {
@@ -317,6 +321,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     dayButton.addEventListener("click", () => {
       this.state.anchor = key;
       this.state.mode = "week";
+      this.state.selectedDate = key;
       this.notifyStateChange();
       this.render();
     });
@@ -334,6 +339,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     moreButton.addEventListener("click", () => {
       this.state.anchor = key;
       this.state.mode = "week";
+      this.state.selectedDate = key;
       this.notifyStateChange();
       this.render();
     });
@@ -515,6 +521,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
 
   private navigate(direction: -1 | 1): void {
     this.state.anchor = toDateKey(moveAnchor(fromDateKey(this.state.anchor), this.state.mode, direction));
+    this.state.selectedDate = null;
     this.notifyStateChange();
     this.render();
   }

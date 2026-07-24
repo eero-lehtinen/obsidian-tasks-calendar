@@ -40,6 +40,7 @@ export interface CalendarState {
   showCompleted: boolean;
   search: string;
   weekHeight: number | null;
+  selectedDate: string | null;
 }
 
 export interface QueryResult {
