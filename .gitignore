@@ -7,8 +7,9 @@
 node_modules/
 
 # Generated build and release artifacts
-main.js
-dist/
+/main.js
+/styles.css
+/dist/
 *.map
 
 # Local Obsidian plugin data

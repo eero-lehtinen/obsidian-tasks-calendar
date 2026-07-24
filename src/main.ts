@@ -116,13 +116,15 @@ export default class TasksCalendarPlugin extends Plugin {
     await this.app.workspace.revealLeaf(leaf);
   }
 
-  async toggleTask(task: CalendarTask): Promise<void> {
+  async toggleTask(task: CalendarTask): Promise<boolean> {
     try {
       const replacement =
         this.tasksApi?.executeToggleTaskDoneCommand(task.raw, task.path) ?? fallbackToggleLine(task.raw);
       await this.taskStore.replaceTask(task, replacement);
+      return true;
     } catch (error) {
       new Notice(`Could not update task: ${messageFrom(error)}`);
+      return false;
     }
   }
 

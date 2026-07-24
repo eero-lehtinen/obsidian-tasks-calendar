@@ -13,7 +13,8 @@ Tasks Calendar is an Obsidian community plugin that displays Markdown tasks in a
 - Scheduled, due, and start date support using Tasks emoji syntax
 - Completed tasks shown after active tasks with muted, configurable styling
 - A toolbar filter editor and instant text search
-- Checkbox completion directly from the calendar with a chime and celebration effect
+- Checkbox completion directly from the calendar with a chime, haptic tick, gravity-driven confetti, and card sheen
+- A larger day-completion celebration when the final visible active task for a day is completed
 - Recurring-task completion through the Tasks API when Tasks is installed
 - Click a task to edit it through Tasks; right-click, or tap on touch, for edit, source, and hold-to-delete actions
 - Drag a task onto another day to reschedule its active calendar date
@@ -106,13 +107,13 @@ Available scripts:
 - `npm run format:check`: verify formatting without changing files
 - `npm run check`: verify formatting and type-check without emitting files
 - `npm test`: run the unit test suite
-- `npm run build`: verify formatting, type-check, and create a minified production `main.js`
+- `npm run build`: verify formatting, type-check, and create minified production `main.js` and `styles.css`
 - `npm run clean`: remove generated build and release artifacts
 - `npm run deploy -- <vault-path>`: build and copy the runtime files to `<vault-path>/.obsidian/plugins/tasks-calendar/`
 - `npm run release`: clean, test, build, and assemble the three release assets under `dist/tasks-calendar-<version>/`
 - `npm version patch|minor|major`: synchronize `package.json`, `manifest.json`, and `versions.json`
 
-Generated `main.js` and `dist/` contents are intentionally ignored. Obsidian installations receive these files from GitHub release assets; they are not committed to the source repository.
+Generated `main.js`, `styles.css`, and `dist/` contents are intentionally ignored. Obsidian installations receive these files from GitHub release assets; they are not committed to the source repository.
 
 For example:
 

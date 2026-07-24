@@ -134,6 +134,7 @@ const CalendarApp = forwardRef(function CalendarApp(
   const [queryOpen, setQueryOpen] = useState(false);
   const [revision, setRevision] = useState(0);
   const [activeTask, setActiveTask] = useState<CalendarTask | null>(null);
+  const [completionOverrides, setCompletionOverrides] = useState<Map<string, boolean>>(() => new Map());
   const [recurrencePreview, setRecurrencePreview] = useState<Set<string>>(() => new Set());
   const stateRef = useRef(state);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -167,10 +168,39 @@ const CalendarApp = forwardRef(function CalendarApp(
   const renderStartedAt = performance.now();
   const anchor = useMemo(() => fromDateKey(state.anchor), [state.anchor]);
   const tasks = plugin.taskStore.getTasks();
-  const model = useMemo(
-    () => createCalendarModel(tasks, state, plugin.settings, anchor),
-    [anchor, plugin.settings, revision, state, tasks],
+  const displayedTasks = useMemo(
+    () =>
+      tasks.map((task) => {
+        const completed = completionOverrides.get(task.id);
+        return completed === undefined ? task : { ...task, completed };
+      }),
+    [completionOverrides, tasks],
   );
+  const model = useMemo(
+    () => createCalendarModel(displayedTasks, state, plugin.settings, anchor),
+    [anchor, displayedTasks, plugin.settings, revision, state],
+  );
+
+  useEffect(() => {
+    setCompletionOverrides((current) => {
+      const sourceTasks = new Map(tasks.map((task) => [task.id, task]));
+      const next = new Map(current);
+      for (const [taskId, completed] of current) {
+        const source = sourceTasks.get(taskId);
+        if (!source || source.completed === completed) next.delete(taskId);
+      }
+      return next.size === current.size ? current : next;
+    });
+  }, [revision]);
+
+  const updateCompletionOverride = useCallback((taskId: string, completed: boolean | null) => {
+    setCompletionOverrides((current) => {
+      const next = new Map(current);
+      if (completed === null) next.delete(taskId);
+      else next.set(taskId, completed);
+      return next;
+    });
+  }, []);
 
   useLayoutEffect(() => {
     const layout = layoutRef.current;
@@ -227,12 +257,14 @@ const CalendarApp = forwardRef(function CalendarApp(
   };
 
   let taskIndex = 0;
-  const taskCard = (task: CalendarTask, showSource: boolean) => {
+  const taskCard = (task: CalendarTask, showSource: boolean, completesDay = false) => {
     const titleId = `tasks-calendar-${instanceId}-task-${taskIndex}`;
     taskIndex += 1;
     return (
       <TaskCard
+        completesDay={completesDay}
         key={task.id}
+        onCompletionChange={updateCompletionOverride}
         onRecurrencePreview={previewRecurrence}
         plugin={plugin}
         showSource={showSource}
@@ -294,6 +326,7 @@ const CalendarApp = forwardRef(function CalendarApp(
           {model.days.map((day, index) => {
             const key = toDateKey(day);
             const dayTasks = model.tasksByDate.get(key) ?? [];
+            const remainingDayTasks = dayTasks.filter((task) => !task.completed).length;
             const isOutside = state.mode === "month" && day.getMonth() !== anchor.getMonth();
             const dayClasses = [
               "tasks-calendar-day",
@@ -333,7 +366,9 @@ const CalendarApp = forwardRef(function CalendarApp(
                     {dayTasks.length > 0 ? <span className="tasks-calendar-day-count">{dayTasks.length}</span> : null}
                   </div>
                   <div className="tasks-calendar-task-list">
-                    {dayTasks.map((task) => taskCard(task, state.mode === "week"))}
+                    {dayTasks.map((task) =>
+                      taskCard(task, state.mode === "week", !task.completed && remainingDayTasks === 1),
+                    )}
                     {state.mode === "month" && dayTasks.length > 0 ? (
                       <button
                         className="tasks-calendar-more"
@@ -364,6 +399,7 @@ const CalendarApp = forwardRef(function CalendarApp(
                       {task.path.replace(/\.md$/i, "")}
                     </span>
                   }
+                  onCompletionChange={updateCompletionOverride}
                   onRecurrencePreview={previewRecurrence}
                   plugin={plugin}
                   showSource={false}

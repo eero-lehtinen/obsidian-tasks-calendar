@@ -1,6 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
+import { motion } from "motion/react";
 import { setIcon, setTooltip } from "obsidian";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent, PointerEvent, ReactNode, RefObject } from "react";
 import { playCompletionFeedback } from "./completion-feedback";
 import type TasksCalendarPlugin from "./main";
@@ -8,6 +9,8 @@ import { showTaskActions } from "./task-actions-menu";
 import type { CalendarTask } from "./types";
 
 interface TaskCardProps {
+  completesDay?: boolean;
+  onCompletionChange: (taskId: string, completed: boolean | null) => void;
   plugin: TasksCalendarPlugin;
   meta?: ReactNode;
   showSource: boolean;
@@ -17,11 +20,24 @@ interface TaskCardProps {
 }
 
 const tooltipOptions = { placement: "bottom" as const, delay: 200 };
+const layoutTransition = { type: "spring" as const, stiffness: 420, damping: 34, mass: 0.75 };
 
-export function TaskCard({ plugin, meta, showSource, task, titleId, onRecurrencePreview }: TaskCardProps) {
+export function TaskCard({
+  completesDay = false,
+  onCompletionChange,
+  plugin,
+  meta,
+  showSource,
+  task,
+  titleId,
+  onRecurrencePreview,
+}: TaskCardProps) {
   const itemRef = useRef<HTMLDivElement>(null);
+  const completionPending = useRef(false);
+  const pendingRaw = useRef<string | null>(null);
   const lastPointerType = useRef("mouse");
   const suppressClicksUntil = useRef(0);
+  const [optimisticCompleted, setOptimisticCompleted] = useState(task.completed);
   const taskName = task.description || "Untitled task";
   const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef } = useDraggable({
     id: task.id,
@@ -36,6 +52,13 @@ export function TaskCard({ plugin, meta, showSource, task, titleId, onRecurrence
   );
 
   useTooltip(itemRef, taskName);
+  useEffect(() => {
+    setOptimisticCompleted(task.completed);
+    if (completionPending.current && pendingRaw.current !== null && task.raw !== pendingRaw.current) {
+      completionPending.current = false;
+      pendingRaw.current = null;
+    }
+  }, [task.completed, task.raw]);
 
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
     if (performance.now() < suppressClicksUntil.current) {
@@ -67,24 +90,43 @@ export function TaskCard({ plugin, meta, showSource, task, titleId, onRecurrence
   };
 
   return (
-    <div
-      className={`tasks-calendar-task${task.completed ? " is-completed" : ""}${isDragging ? " is-dragging" : ""}`}
+    <motion.div
+      className={`tasks-calendar-task${optimisticCompleted ? " is-completed" : ""}${isDragging ? " is-dragging" : ""}`}
       data-priority={task.priority}
+      layout="position"
       onClick={handleClick}
       onContextMenu={handleContextMenu}
       onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
         lastPointerType.current = event.pointerType;
       }}
       ref={setItemRef}
+      transition={{ layout: layoutTransition }}
     >
       <input
-        aria-description={`${task.completed ? "Reopen" : "Complete"} this task`}
+        aria-description={`${optimisticCompleted ? "Reopen" : "Complete"} this task`}
         aria-labelledby={titleId}
-        checked={task.completed}
+        checked={optimisticCompleted}
         className="tasks-calendar-checkbox"
         onChange={(event) => {
-          if (!task.completed) playCompletionFeedback(event.currentTarget);
-          void plugin.toggleTask(task);
+          if (completionPending.current) {
+            event.currentTarget.checked = optimisticCompleted;
+            return;
+          }
+
+          const completed = !optimisticCompleted;
+          completionPending.current = true;
+          pendingRaw.current = task.raw;
+          setOptimisticCompleted(completed);
+          onCompletionChange(task.id, completed);
+          if (completed) playCompletionFeedback(event.currentTarget, completesDay);
+          void plugin.toggleTask(task).then((updated) => {
+            if (!updated) {
+              setOptimisticCompleted(!completed);
+              onCompletionChange(task.id, null);
+              completionPending.current = false;
+              pendingRaw.current = null;
+            }
+          });
         }}
         onClick={(event) => event.stopPropagation()}
         type="checkbox"
@@ -108,7 +150,7 @@ export function TaskCard({ plugin, meta, showSource, task, titleId, onRecurrence
       ) : null}
       {showSource ? <TaskSourceButton plugin={plugin} task={task} /> : null}
       {meta}
-    </div>
+    </motion.div>
   );
 }
 
