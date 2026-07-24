@@ -5,12 +5,19 @@ import type { CalendarTask } from "./types";
 
 export const TASKS_CHANGED_EVENT = "tasks-calendar:changed";
 const FILE_INDEX_CONCURRENCY = 8;
+const FILE_INDEX_RETRY_LIMIT = 2;
 const UPDATE_DEBOUNCE_MS = 120;
+
+interface IndexFailure {
+  file: TFile;
+  error: unknown;
+}
 
 export class TaskStore extends Events {
   private readonly tasksByPath = new Map<string, CalendarTask[]>();
   private readonly pendingFiles = new Map<string, TFile>();
   private readonly scheduledAt = new Map<string, number>();
+  private readonly retryCounts = new Map<string, number>();
   private refreshTimer: number | null = null;
   private batchRunning = false;
 
@@ -24,7 +31,13 @@ export class TaskStore extends Events {
   async initialize(): Promise<void> {
     const startedAt = performance.now();
     const files = this.vault.getMarkdownFiles();
-    await this.indexFiles(files);
+    const failures = await this.indexFiles(files);
+    if (failures.length > 0) {
+      throw new AggregateError(
+        failures.map(({ error }) => error),
+        `Could not index ${failures.length} task file${failures.length === 1 ? "" : "s"}.`
+      );
+    }
     this.performanceMonitor.record("index.initial", performance.now() - startedAt, {
       files: files.length,
       tasks: this.getTasks().length
@@ -44,6 +57,7 @@ export class TaskStore extends Events {
   removePath(path: string): void {
     this.pendingFiles.delete(path);
     this.scheduledAt.delete(path);
+    this.retryCounts.delete(path);
     if (this.tasksByPath.delete(path)) this.trigger(TASKS_CHANGED_EVENT);
   }
 
@@ -51,6 +65,7 @@ export class TaskStore extends Events {
     this.tasksByPath.delete(oldPath);
     this.pendingFiles.delete(oldPath);
     this.scheduledAt.delete(oldPath);
+    this.retryCounts.delete(oldPath);
     this.scheduleFile(file);
   }
 
@@ -73,7 +88,9 @@ export class TaskStore extends Events {
     if (this.refreshTimer !== null) window.clearTimeout(this.refreshTimer);
     this.refreshTimer = window.setTimeout(() => {
       this.refreshTimer = null;
-      void this.flushPendingFiles();
+      void this.flushPendingFiles().catch((error: unknown) => {
+        console.error("Tasks Calendar: unexpected indexing batch failure", error);
+      });
     }, UPDATE_DEBOUNCE_MS);
   }
 
@@ -83,38 +100,77 @@ export class TaskStore extends Events {
     if (files.length === 0) return;
 
     this.batchRunning = true;
-    const eventTimes = files
-      .map((file) => this.scheduledAt.get(file.path))
-      .filter((value): value is number => value !== undefined);
+    const eventTimes = new Map(files.map((file) => [file.path, this.scheduledAt.get(file.path)]));
     for (const file of files) {
       this.pendingFiles.delete(file.path);
       this.scheduledAt.delete(file.path);
     }
 
     try {
-      await this.indexFiles(files);
-      const earliestEvent = eventTimes.length > 0 ? Math.min(...eventTimes) : performance.now();
-      this.performanceMonitor.record("index.update-latency", performance.now() - earliestEvent, {
-        files: files.length
-      });
-      this.trigger(TASKS_CHANGED_EVENT);
+      const failures = await this.indexFiles(files);
+      const failedPaths = new Set(failures.map(({ file }) => file.path));
+      for (const file of files) {
+        if (!failedPaths.has(file.path)) this.retryCounts.delete(file.path);
+      }
+      for (const failure of failures) {
+        this.handleIndexFailure(failure, eventTimes.get(failure.file.path));
+      }
+
+      if (failures.length < files.length) {
+        const recordedEventTimes = Array.from(eventTimes.values())
+          .filter((value): value is number => value !== undefined);
+        const earliestEvent = recordedEventTimes.length > 0
+          ? Math.min(...recordedEventTimes)
+          : performance.now();
+        this.performanceMonitor.record("index.update-latency", performance.now() - earliestEvent, {
+          files: files.length - failures.length
+        });
+        this.trigger(TASKS_CHANGED_EVENT);
+      }
     } finally {
       this.batchRunning = false;
       if (this.pendingFiles.size > 0) this.scheduleBatch();
     }
   }
 
-  private async indexFiles(files: TFile[]): Promise<void> {
+  private handleIndexFailure(failure: IndexFailure, scheduledAt: number | undefined): void {
+    const { file, error } = failure;
+    console.error(`Tasks Calendar: could not index ${file.path}`, error);
+
+    const currentFile = this.vault.getAbstractFileByPath(file.path);
+    if (!(currentFile instanceof TFile)) {
+      this.retryCounts.delete(file.path);
+      return;
+    }
+
+    const retryCount = (this.retryCounts.get(file.path) ?? 0) + 1;
+    if (retryCount > FILE_INDEX_RETRY_LIMIT) {
+      this.retryCounts.delete(file.path);
+      return;
+    }
+
+    this.retryCounts.set(file.path, retryCount);
+    if (!this.pendingFiles.has(file.path)) this.pendingFiles.set(file.path, currentFile);
+    if (!this.scheduledAt.has(file.path)) this.scheduledAt.set(file.path, scheduledAt ?? performance.now());
+  }
+
+  private async indexFiles(files: TFile[]): Promise<IndexFailure[]> {
     let nextIndex = 0;
+    const failures: IndexFailure[] = [];
     const workerCount = Math.min(FILE_INDEX_CONCURRENCY, files.length);
     const workers = Array.from({ length: workerCount }, async () => {
       while (nextIndex < files.length) {
         const file = files[nextIndex];
         nextIndex += 1;
-        await this.indexFile(file);
+        try {
+          await this.indexFile(file);
+        } catch (error) {
+          failures.push({ file, error });
+        }
       }
     });
     await Promise.all(workers);
+    return failures;
   }
 
   async replaceTask(task: CalendarTask, replacement: string): Promise<void> {

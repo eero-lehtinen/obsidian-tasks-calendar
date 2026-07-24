@@ -180,15 +180,19 @@ export default class TasksCalendarPlugin extends Plugin {
       new Notice(`Task file not found: ${task.path}`);
       return;
     }
-    const leaf = this.app.workspace.getLeaf(false);
-    await leaf.openFile(file, { active: true, eState: { line: task.line } });
-    const view = leaf.view;
-    if (view instanceof MarkdownView) {
-      view.editor.setCursor({ line: task.line, ch: Math.max(0, task.raw.indexOf(task.description)) });
-      view.editor.scrollIntoView({
-        from: { line: task.line, ch: 0 },
-        to: { line: task.line, ch: task.raw.length }
-      }, true);
+    try {
+      const leaf = this.app.workspace.getLeaf(false);
+      await leaf.openFile(file, { active: true, eState: { line: task.line } });
+      const view = leaf.view;
+      if (view instanceof MarkdownView) {
+        view.editor.setCursor({ line: task.line, ch: Math.max(0, task.raw.indexOf(task.description)) });
+        view.editor.scrollIntoView({
+          from: { line: task.line, ch: 0 },
+          to: { line: task.line, ch: task.raw.length }
+        }, true);
+      }
+    } catch (error) {
+      new Notice(`Could not open task: ${messageFrom(error)}`);
     }
   }
 
