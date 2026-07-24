@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Platform, setIcon, setTooltip } from "obsidian";
+import { MarkdownRenderChild, Menu, Platform, setIcon, setTooltip } from "obsidian";
 import { calendarDays, fromDateKey, isoWeekNumber, moveAnchor, titleForRange, toDateKey } from "./date-utils";
 import { compileQuery } from "./query";
 import { recurrenceDateKeys } from "./recurrence";
@@ -357,6 +357,11 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       cls: `tasks-calendar-task${task.completed ? " is-completed" : ""}`,
       attr: { "data-priority": task.priority }
     });
+    let lastPointerType = "mouse";
+    let suppressClicksUntil = 0;
+    item.addEventListener("pointerdown", (event) => {
+      lastPointerType = event.pointerType;
+    });
     item.draggable = true;
     item.addEventListener("dragstart", (event) => {
       const target = event.target;
@@ -380,16 +385,34 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       this.clearDropTargets();
     });
     item.addEventListener("click", (event) => {
+      if (performance.now() < suppressClicksUntil) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       const target = event.target;
       if (
         target instanceof HTMLElement &&
         target.closest(".tasks-calendar-checkbox, .tasks-calendar-task-source")
       ) return;
+      const isTouch = lastPointerType === "touch";
+      lastPointerType = "mouse";
+      if (isTouch) {
+        event.preventDefault();
+        this.showTaskActions(task, { x: event.clientX, y: event.clientY });
+        return;
+      }
       void this.plugin.editTask(task);
     });
     item.addEventListener("contextmenu", (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (lastPointerType === "touch") {
+        lastPointerType = "mouse";
+        suppressClicksUntil = performance.now() + 750;
+        this.showTaskActions(task, { x: event.clientX, y: event.clientY });
+        return;
+      }
       void this.plugin.openTask(task);
     });
     setTooltip(item, taskName, tooltipOptions);
@@ -427,6 +450,17 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       source.addEventListener("click", () => void this.plugin.openTask(task));
     }
     return item;
+  }
+
+  private showTaskActions(task: CalendarTask, position: { x: number; y: number }): void {
+    const menu = new Menu();
+    menu.addItem((item) =>
+      item.setTitle("Edit task").setIcon("pencil").onClick(() => void this.plugin.editTask(task))
+    );
+    menu.addItem((item) =>
+      item.setTitle("Open source").setIcon("file-text").onClick(() => void this.plugin.openTask(task))
+    );
+    menu.showAtPosition(position);
   }
 
   private renderLateTasks(root: HTMLElement, tasks: CalendarTask[], today: string): void {
