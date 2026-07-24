@@ -1,0 +1,19 @@
+# Editors
+.vscode/
+.idea/
+*.iml
+
+# Dependencies
+node_modules/
+
+# Generated build and release artifacts
+main.js
+dist/
+*.map
+
+# Local Obsidian plugin data
+data.json
+
+# Operating system files
+.DS_Store
+Thumbs.db

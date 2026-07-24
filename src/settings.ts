@@ -1,0 +1,130 @@
+import { App, PluginSettingTab, Setting } from "obsidian";
+import type TasksCalendarPlugin from "./main";
+import type { DateField, TasksCalendarSettings } from "./types";
+
+export const DEFAULT_SETTINGS: TasksCalendarSettings = {
+  defaultView: "month",
+  weekStartsOn: 1,
+  showCompleted: true,
+  completedOpacity: 0.42,
+  defaultQuery: "",
+  datePreference: ["scheduled", "due", "start"],
+  undatedTasks: "hide",
+  compactMonthTasks: 4
+};
+
+export class TasksCalendarSettingTab extends PluginSettingTab {
+  constructor(app: App, private readonly plugin: TasksCalendarPlugin) {
+    super(app, plugin);
+  }
+
+  display(): void {
+    const { containerEl } = this;
+    containerEl.empty();
+
+    new Setting(containerEl)
+      .setName("Default calendar view")
+      .setDesc("The view used when a new Tasks Calendar is opened.")
+      .addDropdown((dropdown) => dropdown
+        .addOption("month", "Month")
+        .addOption("week", "Week")
+        .setValue(this.plugin.settings.defaultView)
+        .onChange(async (value) => {
+          this.plugin.settings.defaultView = value as "month" | "week";
+          await this.plugin.saveSettings();
+        }));
+
+    new Setting(containerEl)
+      .setName("First day of week")
+      .addDropdown((dropdown) => dropdown
+        .addOption("1", "Monday")
+        .addOption("0", "Sunday")
+        .setValue(String(this.plugin.settings.weekStartsOn))
+        .onChange(async (value) => {
+          this.plugin.settings.weekStartsOn = Number(value) as 0 | 1;
+          await this.plugin.saveSettings();
+          this.plugin.refreshCalendars();
+        }));
+
+    new Setting(containerEl)
+      .setName("Show completed tasks")
+      .setDesc("Completed tasks remain visible but are muted. The calendar toolbar can override this.")
+      .addToggle((toggle) => toggle
+        .setValue(this.plugin.settings.showCompleted)
+        .onChange(async (value) => {
+          this.plugin.settings.showCompleted = value;
+          await this.plugin.saveSettings();
+          this.plugin.refreshCalendars();
+        }));
+
+    new Setting(containerEl)
+      .setName("Completed task opacity")
+      .addSlider((slider) => slider
+        .setLimits(0.15, 0.8, 0.05)
+        .setValue(this.plugin.settings.completedOpacity)
+        .setDynamicTooltip()
+        .onChange(async (value) => {
+          this.plugin.settings.completedOpacity = value;
+          await this.plugin.saveSettings();
+          this.plugin.refreshCalendars();
+        }));
+
+    new Setting(containerEl)
+      .setName("Date priority")
+      .setDesc("First available field determines where a task appears. Use scheduled, due, and start once each.")
+      .addText((text) => text
+        .setPlaceholder("scheduled, due, start")
+        .setValue(this.plugin.settings.datePreference.join(", "))
+        .onChange(async (value) => {
+          const fields = value.split(",").map((item) => item.trim().toLowerCase());
+          if (isDatePreference(fields)) {
+            this.plugin.settings.datePreference = fields;
+            await this.plugin.saveSettings();
+            this.plugin.refreshCalendars();
+          }
+        }));
+
+    new Setting(containerEl)
+      .setName("Tasks without dates")
+      .setDesc("Optionally collect undated tasks on today.")
+      .addDropdown((dropdown) => dropdown
+        .addOption("hide", "Hide")
+        .addOption("today", "Show on today")
+        .setValue(this.plugin.settings.undatedTasks)
+        .onChange(async (value) => {
+          this.plugin.settings.undatedTasks = value as "hide" | "today";
+          await this.plugin.saveSettings();
+          this.plugin.refreshCalendars();
+        }));
+
+    new Setting(containerEl)
+      .setName("Tasks visible per day in month view")
+      .setDesc("Additional tasks are collapsed behind a “more” button.")
+      .addSlider((slider) => slider
+        .setLimits(1, 10, 1)
+        .setValue(this.plugin.settings.compactMonthTasks)
+        .setDynamicTooltip()
+        .onChange(async (value) => {
+          this.plugin.settings.compactMonthTasks = value;
+          await this.plugin.saveSettings();
+          this.plugin.refreshCalendars();
+        }));
+
+    new Setting(containerEl)
+      .setName("Default query")
+      .setDesc("Tasks-style filters applied when opening the full calendar view.")
+      .addTextArea((text) => text
+        .setPlaceholder("not done\npath includes Projects")
+        .setValue(this.plugin.settings.defaultQuery)
+        .onChange(async (value) => {
+          this.plugin.settings.defaultQuery = value;
+          await this.plugin.saveSettings();
+        }));
+  }
+}
+
+function isDatePreference(fields: string[]): fields is DateField[] {
+  return fields.length === 3 &&
+    new Set(fields).size === 3 &&
+    fields.every((field) => field === "scheduled" || field === "due" || field === "start");
+}
