@@ -49,6 +49,7 @@ interface CalendarHandle {
 }
 
 interface CalendarAppProps {
+  constrainHeightToContainer: boolean;
   initial: CalendarState;
   instanceId: number;
   onStateChange?: (state: CalendarState) => void;
@@ -86,6 +87,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     private readonly plugin: TasksCalendarPlugin,
     initial: Partial<CalendarState> = {},
     private readonly onStateChange?: (state: CalendarState) => void,
+    private readonly constrainHeightToContainer = false,
   ) {
     super(containerEl);
     this.initial = {
@@ -94,6 +96,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       query: initial.query ?? plugin.settings.defaultQuery,
       showCompleted: initial.showCompleted ?? plugin.settings.showCompleted,
       search: initial.search ?? "",
+      monthHeight: initial.monthHeight ?? null,
       weekHeight: initial.weekHeight ?? null,
       selectedDate: initial.selectedDate ?? null,
     };
@@ -110,6 +113,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
           instanceId={this.instanceId}
           onStateChange={this.onStateChange}
           plugin={this.plugin}
+          constrainHeightToContainer={this.constrainHeightToContainer}
           ref={this.calendarRef}
         />
       </StrictMode>,
@@ -136,7 +140,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
 }
 
 const CalendarApp = forwardRef(function CalendarApp(
-  { initial, instanceId, onStateChange, plugin }: CalendarAppProps,
+  { constrainHeightToContainer, initial, instanceId, onStateChange, plugin }: CalendarAppProps,
   ref: Ref<CalendarHandle>,
 ) {
   const [state, setState] = useState(initial);
@@ -253,11 +257,21 @@ const CalendarApp = forwardRef(function CalendarApp(
     if (!grid) return;
     layout.reset();
 
-    if (state.mode === "week") {
-      layout.observeWeek(grid, state.weekHeight, (height) => {
-        if (height !== stateRef.current.weekHeight) updateState({ weekHeight: height });
-      });
-    } else {
+    const heightKey = state.mode === "week" ? "weekHeight" : "monthHeight";
+    const desiredHeight = state[heightKey];
+    layout.observeHeight(
+      grid,
+      desiredHeight,
+      (height) => {
+        if (height !== stateRef.current[heightKey]) updateState({ [heightKey]: height });
+      },
+      constrainHeightToContainer
+        ? () =>
+            Math.max(0, (grid.parentElement?.getBoundingClientRect().bottom ?? 0) - grid.getBoundingClientRect().top)
+        : null,
+    );
+
+    if (state.mode === "month") {
       const layouts = Array.from(grid.querySelectorAll<HTMLElement>(".tasks-calendar-day"))
         .map((cell): MonthCellLayout | null => {
           const list = cell.querySelector<HTMLElement>(".tasks-calendar-task-list");
@@ -265,7 +279,6 @@ const CalendarApp = forwardRef(function CalendarApp(
           if (!list || !moreButton) return null;
           return {
             cell,
-            list,
             moreButton,
             taskElements: Array.from(list.querySelectorAll<HTMLElement>(":scope > .tasks-calendar-task")),
           };
@@ -274,7 +287,7 @@ const CalendarApp = forwardRef(function CalendarApp(
       layout.observeMonth(grid, layouts);
     }
     return () => layout.reset();
-  }, [model, state.mode, state.weekHeight, updateState]);
+  }, [constrainHeightToContainer, model, queryOpen, state.mode, state.monthHeight, state.weekHeight, updateState]);
 
   useEffect(() => {
     plugin.performanceMonitor.record("render.calendar", performance.now() - renderStartedAt, {

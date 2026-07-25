@@ -39,6 +39,7 @@ export class TasksCalendarView extends ItemView {
         this.plugin.rememberCalendarState(state);
         this.app.workspace.requestSaveLayout();
       },
+      true,
     );
     this.addChild(this.renderer);
   }

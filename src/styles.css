@@ -227,12 +227,12 @@
 }
 
 .tasks-calendar-grid.is-month .tasks-calendar-day {
-  min-height: 118px;
+  min-height: 0;
 }
 
 .tasks-calendar-grid.is-month {
   grid-template-rows: auto;
-  grid-auto-rows: minmax(118px, 1fr);
+  grid-auto-rows: minmax(0, 1fr);
 }
 
 .tasks-calendar-grid.is-week .tasks-calendar-day {
@@ -243,14 +243,17 @@
   overflow-y: auto;
 }
 
+.tasks-calendar-grid.is-month,
 .tasks-calendar-grid.is-week {
-  grid-template-rows: auto minmax(0, 1fr);
   flex: 0 0 auto;
   height: min(620px, calc(100vh - 180px));
   min-height: 260px;
-  max-height: calc(100vh - 80px);
   overflow: hidden;
   resize: vertical;
+}
+
+.tasks-calendar-grid.is-week {
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .tasks-calendar-day.is-outside {
@@ -748,7 +751,7 @@
   }
 
   .tasks-calendar-grid.is-month .tasks-calendar-day {
-    min-height: 82px;
+    min-height: 0;
   }
 
 }

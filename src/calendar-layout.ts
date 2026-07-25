@@ -1,68 +1,109 @@
 export interface MonthCellLayout {
   cell: HTMLElement;
-  list: HTMLElement;
   taskElements: HTMLElement[];
   moreButton: HTMLButtonElement;
 }
 
 export class CalendarLayoutController {
-  private resizeObserver: ResizeObserver | null = null;
+  private heightObserver: ResizeObserver | null = null;
+  private monthObserver: ResizeObserver | null = null;
   private layoutFrame: number | null = null;
+  private heightGrid: HTMLElement | null = null;
+  private monthPointerUp: (() => void) | null = null;
+  private resizeStart: { pointerId: number } | null = null;
+  private readonly onPointerDown = (event: PointerEvent) => {
+    const grid = event.currentTarget as HTMLElement;
+    const bounds = grid.getBoundingClientRect();
+    if (event.clientX < bounds.right - 24 || event.clientY < bounds.bottom - 24) return;
+    this.resizeStart = { pointerId: event.pointerId };
+  };
+  private onPointerUp: ((event: PointerEvent) => void) | null = null;
 
   reset(): void {
-    this.resizeObserver?.disconnect();
-    this.resizeObserver = null;
+    this.heightObserver?.disconnect();
+    this.heightObserver = null;
+    this.monthObserver?.disconnect();
+    this.monthObserver = null;
+    if (this.monthPointerUp) window.removeEventListener("pointerup", this.monthPointerUp);
+    this.monthPointerUp = null;
     if (this.layoutFrame !== null) window.cancelAnimationFrame(this.layoutFrame);
     this.layoutFrame = null;
+    this.resizeStart = null;
+    this.heightGrid?.removeEventListener("pointerdown", this.onPointerDown);
+    this.heightGrid = null;
+    if (this.onPointerUp) window.removeEventListener("pointerup", this.onPointerUp);
+    this.onPointerUp = null;
   }
 
-  observeWeek(grid: HTMLElement, savedHeight: number | null, onHeightChange: (height: number) => void): void {
-    if (savedHeight !== null) grid.style.height = `${savedHeight}px`;
-    this.resizeObserver = new ResizeObserver((entries) => {
-      const height = Math.round(entries[0]?.contentRect.height ?? 0);
-      if (height > 0 && Math.abs(height - (savedHeight ?? 0)) > 1) onHeightChange(height);
-    });
-    this.resizeObserver.observe(grid);
+  observeHeight(
+    grid: HTMLElement,
+    desiredHeight: number | null,
+    onHeightChange: (height: number) => void,
+    availableHeight: (() => number | null) | null,
+  ): void {
+    const applyHeight = () => {
+      if (desiredHeight === null) {
+        grid.style.removeProperty("height");
+        grid.style.removeProperty("min-height");
+        return;
+      }
+      const available = availableHeight?.();
+      grid.style.height = `${Math.min(desiredHeight, available ?? desiredHeight)}px`;
+      if (available !== undefined && available !== null) grid.style.minHeight = "0";
+    };
+    applyHeight();
+
+    if (availableHeight) {
+      this.heightObserver = new ResizeObserver(applyHeight);
+      const parent = grid.parentElement;
+      if (parent) this.heightObserver.observe(parent);
+    }
+
+    this.onPointerUp = (event) => {
+      if (event.pointerId !== this.resizeStart?.pointerId) return;
+      const height = Math.round(grid.getBoundingClientRect().height);
+      this.resizeStart = null;
+      if (height > 0) onHeightChange(height);
+    };
+    this.heightGrid = grid;
+    grid.addEventListener("pointerdown", this.onPointerDown);
+    window.addEventListener("pointerup", this.onPointerUp);
   }
 
   observeMonth(grid: HTMLElement, layouts: MonthCellLayout[]): void {
-    const fit = () => {
-      for (const layout of layouts) fitMonthCell(layout);
+    const scheduleFit = () => {
+      if (this.layoutFrame !== null) return;
+      this.layoutFrame = window.requestAnimationFrame(() => {
+        this.layoutFrame = null;
+        for (const layout of layouts) fitMonthCell(layout);
+      });
     };
-    this.layoutFrame = window.requestAnimationFrame(() => {
-      this.layoutFrame = null;
-      fit();
-    });
-    this.resizeObserver = new ResizeObserver(fit);
-    this.resizeObserver.observe(grid);
+    scheduleFit();
+    this.monthObserver = new ResizeObserver(scheduleFit);
+    this.monthObserver.observe(grid);
+    for (const { cell } of layouts) this.monthObserver.observe(cell);
+    this.monthPointerUp = scheduleFit;
+    window.addEventListener("pointerup", this.monthPointerUp);
   }
 }
 
 function fitMonthCell(layout: MonthCellLayout): void {
-  const { cell, list, taskElements, moreButton } = layout;
+  const { cell, taskElements, moreButton } = layout;
   for (const task of taskElements) task.hidden = false;
   moreButton.hidden = true;
 
-  const listTop = list.offsetTop - cell.offsetTop;
-  const availableHeight = Math.max(0, cell.clientHeight - listTop - 5);
-  if (list.scrollHeight <= availableHeight) return;
+  const cellBottom = cell.getBoundingClientRect().bottom - 5;
+  const lastTask = taskElements.at(-1);
+  if (!lastTask || lastTask.getBoundingClientRect().bottom <= cellBottom) return;
 
   moreButton.hidden = false;
   const moreHeight = moreButton.getBoundingClientRect().height;
-  const taskHeightLimit = Math.max(0, availableHeight - moreHeight);
-  let usedHeight = 0;
+  const taskBottomLimit = cellBottom - moreHeight;
   let visibleCount = 0;
-  let overflowed = false;
   for (const task of taskElements) {
-    const height = task.getBoundingClientRect().height;
-    const fits = !overflowed && usedHeight + height <= taskHeightLimit;
+    const fits = task.getBoundingClientRect().bottom <= taskBottomLimit;
     task.hidden = !fits;
-    if (fits) {
-      usedHeight += height;
-      visibleCount += 1;
-    } else {
-      overflowed = true;
-    }
+    if (fits) visibleCount += 1;
   }
 
   const hiddenCount = taskElements.length - visibleCount;

@@ -39,6 +39,7 @@ export interface CalendarState {
   query: string;
   showCompleted: boolean;
   search: string;
+  monthHeight: number | null;
   weekHeight: number | null;
   selectedDate: string | null;
 }
