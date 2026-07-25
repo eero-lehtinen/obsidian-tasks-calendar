@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseTaskLine } from "../src/task-parser";
-import { taskVisualKey } from "../src/task-visual-key";
+import { createTaskVisualKeyFactory, taskVisualKey } from "../src/task-visual-key";
 
 describe("taskVisualKey", () => {
   it("survives completion and source line shifts", () => {
@@ -22,5 +22,13 @@ describe("taskVisualKey", () => {
     const completed = parseTaskLine("- [x] Take out bins 📅 2026-07-25 ✅ 2026-07-25 ^bins", "Tasks.md", 7)!;
 
     expect(taskVisualKey(completed)).toBe(taskVisualKey(pending));
+  });
+
+  it("assigns distinct render keys to identical tasks", () => {
+    const first = parseTaskLine("- [ ] Take out bins 📅 2026-07-25", "Tasks.md", 4)!;
+    const second = parseTaskLine("- [ ] Take out bins 📅 2026-07-25", "Tasks.md", 5)!;
+    const nextKey = createTaskVisualKeyFactory();
+
+    expect(nextKey(first)).not.toBe(nextKey(second));
   });
 });

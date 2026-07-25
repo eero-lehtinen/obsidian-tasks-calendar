@@ -37,7 +37,7 @@ import { fromDateKey, isoWeekNumber, moveAnchor, titleForRange, toDateKey } from
 import type TasksCalendarPlugin from "./main";
 import { recurrenceDateKeys } from "./recurrence";
 import { TaskCard } from "./task-card";
-import { taskVisualKey } from "./task-visual-key";
+import { createTaskVisualKeyFactory } from "./task-visual-key";
 import type { CalendarMode, CalendarState, CalendarTask } from "./types";
 
 interface CalendarHandle {
@@ -262,13 +262,14 @@ const CalendarApp = forwardRef(function CalendarApp(
   };
 
   let taskIndex = 0;
+  const nextTaskVisualKey = createTaskVisualKeyFactory();
   const taskCard = (task: CalendarTask, showSource: boolean, completesDay = false) => {
     const titleId = `tasks-calendar-${instanceId}-task-${taskIndex}`;
     taskIndex += 1;
     return (
       <TaskCard
         completesDay={completesDay}
-        key={`${state.mode}:${taskVisualKey(task)}`}
+        key={`${state.mode}:${nextTaskVisualKey(task)}`}
         onCompletionChange={updateCompletionOverride}
         onRecurrencePreview={previewRecurrence}
         plugin={plugin}
@@ -405,7 +406,7 @@ const CalendarApp = forwardRef(function CalendarApp(
             <div className="tasks-calendar-task-list tasks-calendar-late-list">
               {model.lateTasks.map((task) => (
                 <TaskCard
-                  key={`late-${state.mode}:${taskVisualKey(task)}`}
+                  key={`late-${state.mode}:${nextTaskVisualKey(task)}`}
                   meta={
                     <span className="tasks-calendar-late-meta">
                       {calendarTaskDate(task, plugin.settings, model.today) ?? "No date"} ·{" "}

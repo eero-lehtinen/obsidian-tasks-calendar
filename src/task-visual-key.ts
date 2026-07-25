@@ -14,3 +14,14 @@ export function taskVisualKey(task: CalendarTask): string {
     task.recurrence,
   ]);
 }
+
+export function createTaskVisualKeyFactory(): (task: CalendarTask) => string {
+  const occurrences = new Map<string, number>();
+
+  return (task) => {
+    const baseKey = taskVisualKey(task);
+    const occurrence = occurrences.get(baseKey) ?? 0;
+    occurrences.set(baseKey, occurrence + 1);
+    return JSON.stringify([baseKey, occurrence]);
+  };
+}
