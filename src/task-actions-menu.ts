@@ -2,7 +2,7 @@ import { Menu } from "obsidian";
 import type TasksCalendarPlugin from "./main";
 import type { CalendarTask } from "./types";
 
-const DELETE_HOLD_DURATION_MS = 1200;
+const DELETE_HOLD_DURATION_MS = 800;
 
 export function showTaskActions(
   plugin: TasksCalendarPlugin,
