@@ -403,7 +403,7 @@
 }
 
 .tasks-calendar-task:hover,
-.tasks-calendar-task:focus-within {
+.tasks-calendar-task:active {
   background: color-mix(in srgb, var(--tasks-calendar-task-background) 86%, var(--tasks-calendar-task-accent));
   background-clip: padding-box;
 }
