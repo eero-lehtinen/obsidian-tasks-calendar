@@ -332,6 +332,7 @@
   row-gap: 4px;
   min-width: 0;
   padding: 5px;
+  position: relative;
   border: 3px solid transparent;
   border-radius: 6px;
   background: var(--tasks-calendar-task-background);
@@ -341,6 +342,8 @@
   line-height: 1.3;
   transition:
     background-color 100ms ease,
+    filter 320ms ease,
+    opacity 320ms ease,
     outline-color 100ms ease;
   user-select: none;
 }
@@ -437,12 +440,16 @@
 }
 
 .tasks-calendar-completion-overlay {
-  position: fixed;
-  z-index: var(--layer-popover, 1000);
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  box-sizing: border-box;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--interactive-accent) 70%, white);
+  border-radius: 3px;
+  opacity: 0;
   background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
   pointer-events: none;
+  transform-origin: center;
   will-change: transform, opacity, box-shadow;
 }
 

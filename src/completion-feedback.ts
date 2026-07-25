@@ -2,6 +2,7 @@ import { animate } from "motion/mini";
 
 const PARTICLE_COUNT = 18;
 const PARTICLE_FRAME_COUNT = 11;
+export const TASK_COMPLETION_FEEDBACK_DURATION_MS = 1620;
 
 let audioContext: AudioContext | null = null;
 
@@ -56,12 +57,27 @@ export function celebrationParticlePosition(
   };
 }
 
-export function playCompletionFeedback(origin: HTMLElement, completesDay = false): void {
+export function playCompletionFeedback(
+  origin: HTMLElement,
+  taskOutline: HTMLElement | null,
+  completesDay = false,
+): void {
   playCompletionSound(completesDay);
   playHapticTick(completesDay);
-  showTaskCompletion(origin);
+  if (taskOutline) showTaskCompletion(taskOutline);
+  showTaskShake(origin);
   showCelebration(origin);
   if (completesDay) showDayCompletion(origin);
+}
+
+function showTaskShake(origin: HTMLElement): void {
+  const task = origin.closest<HTMLElement>(".tasks-calendar-task");
+  if (!task) return;
+
+  task.animate(
+    { translate: ["0 0", "-2px 0", "2px 0", "-1px 0", "1px 0", "0 0"] },
+    { duration: 320, easing: "ease-out" },
+  );
 }
 
 function playCompletionSound(completesDay: boolean): void {
@@ -116,65 +132,29 @@ function playHapticTick(completesDay: boolean): void {
   }
 }
 
-function showTaskCompletion(origin: HTMLElement): void {
-  const task = origin.closest<HTMLElement>(".tasks-calendar-task");
-  if (!task) return;
-
-  const bounds = task.getBoundingClientRect();
-  const overlay = document.createElement("span");
-  const sheen = document.createElement("span");
-  overlay.ariaHidden = "true";
-  overlay.className = "tasks-calendar-completion-overlay";
-  sheen.className = "tasks-calendar-completion-sheen";
-  overlay.style.left = `${bounds.left}px`;
-  overlay.style.top = `${bounds.top}px`;
-  overlay.style.width = `${bounds.width}px`;
-  overlay.style.height = `${bounds.height}px`;
-  overlay.style.borderRadius = getComputedStyle(task).borderRadius;
-  overlay.append(sheen);
-  document.body.append(overlay);
-
-  const stopFollowing = followElement(task, overlay);
+function showTaskCompletion(outline: HTMLElement): void {
   animate(
-    overlay,
+    outline,
     {
       boxShadow: [
-        "0 0 0 0 color-mix(in srgb, var(--interactive-accent) 70%, transparent)",
-        "0 0 0 3px color-mix(in srgb, var(--interactive-accent) 55%, transparent)",
-        "0 0 18px 2px color-mix(in srgb, var(--interactive-accent) 18%, transparent)",
+        "0 0 0 0 color-mix(in srgb, var(--interactive-accent) 45%, transparent)",
+        "0 0 9px 2px color-mix(in srgb, var(--interactive-accent) 42%, transparent)",
+        "0 0 18px 1px color-mix(in srgb, var(--interactive-accent) 18%, transparent)",
         "0 0 0 0 transparent",
       ],
-      opacity: [0, 1, 1, 0],
+      opacity: [0, 1, 0.78, 0],
       transform: ["scale(0.98)", "scale(1.015)", "scale(1.005)", "scale(1)"],
     },
-    { duration: 1.62, ease: "easeOut", times: [0, 0.1, 0.88, 1] },
-  ).then(() => {
-    stopFollowing();
-    overlay.remove();
-  });
+    { duration: TASK_COMPLETION_FEEDBACK_DURATION_MS / 1000, ease: "easeOut", times: [0, 0.12, 0.58, 1] },
+  );
+
+  const sheen = outline.querySelector<HTMLElement>(".tasks-calendar-completion-sheen");
+  if (!sheen) return;
   animate(
     sheen,
     { transform: ["translateX(-170%) skewX(-18deg)", "translateX(340%) skewX(-18deg)"] },
     { delay: 0.04, duration: 1.38, ease: [0.22, 1, 0.36, 1] },
   );
-}
-
-function followElement(target: HTMLElement, follower: HTMLElement): () => void {
-  let frameId = 0;
-
-  const update = () => {
-    if (target.isConnected) {
-      const bounds = target.getBoundingClientRect();
-      follower.style.left = `${bounds.left}px`;
-      follower.style.top = `${bounds.top}px`;
-      follower.style.width = `${bounds.width}px`;
-      follower.style.height = `${bounds.height}px`;
-    }
-    frameId = window.requestAnimationFrame(update);
-  };
-
-  frameId = window.requestAnimationFrame(update);
-  return () => window.cancelAnimationFrame(frameId);
 }
 
 function showCelebration(origin: HTMLElement): void {
