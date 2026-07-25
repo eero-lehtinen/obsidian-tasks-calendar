@@ -263,8 +263,13 @@
 }
 
 .tasks-calendar-day.is-today {
+  --tasks-calendar-today-border: color-mix(in srgb, var(--tasks-calendar-accent) 50%, transparent);
   background-image: linear-gradient(var(--tasks-calendar-today), var(--tasks-calendar-today));
-  box-shadow: inset 0 3px 0 var(--tasks-calendar-accent);
+  box-shadow:
+    inset 0 3px 0 var(--tasks-calendar-accent),
+    inset 1px 0 0 var(--tasks-calendar-today-border),
+    inset -1px 0 0 var(--tasks-calendar-today-border),
+    inset 0 -1px 0 var(--tasks-calendar-today-border);
 }
 
 .tasks-calendar-day.is-recurrence-preview {
