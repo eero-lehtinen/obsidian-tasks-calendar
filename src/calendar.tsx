@@ -452,19 +452,19 @@ const CalendarApp = forwardRef(function CalendarApp(
             );
           })}
         </div>
-        {model.lateTasks.length > 0 ? (
-          <section className="tasks-calendar-late-tasks">
-            <header className="tasks-calendar-late-header">
-              <h3>Very late tasks</h3>
-              <span className="tasks-calendar-late-count">{model.lateTasks.length}</span>
+        {model.overdueTasks.length > 0 ? (
+          <section className="tasks-calendar-overdue-tasks">
+            <header className="tasks-calendar-overdue-header">
+              <h3>Overdue tasks</h3>
+              <span className="tasks-calendar-overdue-count">{model.overdueTasks.length}</span>
             </header>
-            <div className="tasks-calendar-task-list tasks-calendar-late-list">
-              {model.lateTasks.map((task) => (
+            <div className="tasks-calendar-task-list tasks-calendar-overdue-list">
+              {model.overdueTasks.map((task) => (
                 <TaskCard
                   highlightNewRecurrence={highlightedRecurrences.has(taskVisualKey(task))}
-                  key={`late-${state.mode}:${nextTaskVisualKey(task)}`}
+                  key={`overdue-${state.mode}:${nextTaskVisualKey(task)}`}
                   meta={
-                    <span className="tasks-calendar-late-meta">
+                    <span className="tasks-calendar-overdue-meta">
                       {calendarTaskDate(task, plugin.settings, model.today) ?? "No date"} ·{" "}
                       {task.path.replace(/\.md$/i, "")}
                     </span>

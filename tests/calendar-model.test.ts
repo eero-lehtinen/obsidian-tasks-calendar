@@ -24,14 +24,14 @@ describe("createCalendarModel", () => {
   it("groups visible tasks and separates tasks before the current view", () => {
     const tasks = [
       parseTaskLine("- [ ] In range ⏳ 2026-07-24", "Tasks.md", 0)!,
-      parseTaskLine("- [ ] Very late ⏳ 2026-06-01", "Tasks.md", 1)!,
+      parseTaskLine("- [ ] Overdue ⏳ 2026-06-01", "Tasks.md", 1)!,
       parseTaskLine("- [x] Completed ⏳ 2026-07-24", "Tasks.md", 2)!,
     ];
 
     const model = createCalendarModel(tasks, state, settings, new Date(2026, 6, 24), new Date(2026, 6, 24));
 
     expect(model.tasksByDate.get("2026-07-24")?.map((task) => task.description)).toEqual(["In range"]);
-    expect(model.lateTasks.map((task) => task.description)).toEqual(["Very late"]);
+    expect(model.overdueTasks.map((task) => task.description)).toEqual(["Overdue"]);
     expect(model.visibleTasks).toBe(2);
   });
 

@@ -636,7 +636,7 @@
   color: var(--text-normal);
 }
 
-.tasks-calendar-late-tasks {
+.tasks-calendar-overdue-tasks {
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
@@ -646,20 +646,20 @@
   background: var(--background-secondary);
 }
 
-.tasks-calendar-late-header {
+.tasks-calendar-overdue-header {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 7px 12px 5px;
 }
 
-.tasks-calendar-late-header h3 {
+.tasks-calendar-overdue-header h3 {
   margin: 0;
   font-size: var(--font-ui-small);
   font-weight: var(--font-semibold);
 }
 
-.tasks-calendar-late-count {
+.tasks-calendar-overdue-count {
   min-width: 20px;
   padding: 1px 6px;
   border-radius: 999px;
@@ -669,13 +669,13 @@
   text-align: center;
 }
 
-.tasks-calendar-late-list {
+.tasks-calendar-overdue-list {
   min-height: 0;
   padding: 0 10px 8px;
   overflow-y: auto;
 }
 
-.tasks-calendar-late-meta {
+.tasks-calendar-overdue-meta {
   grid-column: 2 / -1;
   overflow: hidden;
   color: var(--text-muted);
@@ -684,7 +684,7 @@
   white-space: nowrap;
 }
 
-.tasks-calendar:has(.tasks-calendar-late-tasks) .tasks-calendar-grid.is-week {
+.tasks-calendar:has(.tasks-calendar-overdue-tasks) .tasks-calendar-grid.is-week {
   max-height: calc(100vh - 280px);
 }
 

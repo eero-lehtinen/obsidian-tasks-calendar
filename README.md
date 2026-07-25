@@ -27,7 +27,7 @@ Tasks Calendar is an Obsidian community plugin that displays Markdown tasks in m
 - Right-click empty day space to create a due-dated task with the Tasks popup
 - Automatic updates when Markdown files are created, edited, renamed, or deleted
 - In-session performance measurements for indexing, update latency, and rendering
-- A bounded “Very late tasks” backlog for incomplete tasks older than today’s visible calendar range
+- A bounded “Overdue tasks” backlog for incomplete tasks older than today’s visible calendar range
 - Full workspace calendar and embeddable `tasks-calendar` code blocks
 
 ## Installation

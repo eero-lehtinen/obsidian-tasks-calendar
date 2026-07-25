@@ -5,7 +5,7 @@ import type { CalendarState, CalendarTask, TasksCalendarSettings } from "./types
 
 export interface CalendarModel {
   days: Date[];
-  lateTasks: CalendarTask[];
+  overdueTasks: CalendarTask[];
   queryError: string | null;
   tasksByDate: Map<string, CalendarTask[]>;
   today: string;
@@ -37,7 +37,7 @@ export function createCalendarModel(
   const todayViewStart = toDateKey(calendarDays(now, state.mode, settings.weekStartsOn)[0]);
   const visibleDateKeys = new Set(days.map(toDateKey));
   const tasksByDate = new Map<string, CalendarTask[]>();
-  const lateTasks: CalendarTask[] = [];
+  const overdueTasks: CalendarTask[] = [];
   const search = state.search.trim().toLowerCase();
   let visibleTasks = 0;
 
@@ -47,7 +47,7 @@ export function createCalendarModel(
 
     const key = calendarTaskDate(task, settings, today);
     if (!key) continue;
-    if (!task.completed && key < todayViewStart && !visibleDateKeys.has(key)) lateTasks.push(task);
+    if (!task.completed && key < todayViewStart && !visibleDateKeys.has(key)) overdueTasks.push(task);
 
     const bucket = tasksByDate.get(key) ?? [];
     bucket.push(task);
@@ -56,7 +56,7 @@ export function createCalendarModel(
   }
 
   for (const bucket of tasksByDate.values()) bucket.sort(compareCalendarTasks);
-  lateTasks.sort((left, right) => {
+  overdueTasks.sort((left, right) => {
     const leftDate = calendarTaskDate(left, settings, today) ?? "";
     const rightDate = calendarTaskDate(right, settings, today) ?? "";
     return leftDate.localeCompare(rightDate) || compareCalendarTasks(left, right);
@@ -64,7 +64,7 @@ export function createCalendarModel(
 
   return {
     days,
-    lateTasks,
+    overdueTasks,
     queryError: query.error,
     tasksByDate,
     today,
