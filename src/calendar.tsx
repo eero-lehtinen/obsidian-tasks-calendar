@@ -145,6 +145,7 @@ const CalendarApp = forwardRef(function CalendarApp(
   const [activeTask, setActiveTask] = useState<CalendarTask | null>(null);
   const [completionOverrides, setCompletionOverrides] = useState<Map<string, CompletionOverride>>(() => new Map());
   const [highlightedRecurrences, setHighlightedRecurrences] = useState<Set<string>>(() => new Set());
+  const [highlightedRecurrenceDays, setHighlightedRecurrenceDays] = useState<Set<string>>(() => new Set());
   const [recurrencePreview, setRecurrencePreview] = useState<Set<string>>(() => new Set());
   const pendingRecurrences = useRef<PendingRecurrenceCreation[]>([]);
   const stateRef = useRef(state);
@@ -193,19 +194,29 @@ const CalendarApp = forwardRef(function CalendarApp(
 
     const unresolved: PendingRecurrenceCreation[] = [];
     const createdKeys: string[] = [];
+    const createdDayKeys: string[] = [];
     for (const pending of pendingRecurrences.current) {
       const created = findCreatedRecurrence(tasks, pending);
-      if (created) createdKeys.push(taskVisualKey(created));
-      else unresolved.push(pending);
+      if (created) {
+        createdKeys.push(taskVisualKey(created));
+        const date = calendarTaskDate(created, plugin.settings, model.today);
+        if (date) createdDayKeys.push(date);
+      } else unresolved.push(pending);
     }
     pendingRecurrences.current = unresolved;
 
     if (createdKeys.length > 0) {
       setHighlightedRecurrences((current) => new Set([...current, ...createdKeys]));
+      setHighlightedRecurrenceDays((current) => new Set([...current, ...createdDayKeys]));
       window.setTimeout(() => {
         setHighlightedRecurrences((current) => {
           const next = new Set(current);
           for (const key of createdKeys) next.delete(key);
+          return next;
+        });
+        setHighlightedRecurrenceDays((current) => {
+          const next = new Set(current);
+          for (const key of createdDayKeys) next.delete(key);
           return next;
         });
       }, RECURRENCE_CREATED_FEEDBACK_DURATION_MS);
@@ -370,7 +381,7 @@ const CalendarApp = forwardRef(function CalendarApp(
               key === model.today ? "is-today" : "",
               key === state.selectedDate ? "is-selected" : "",
               isOutside ? "is-outside" : "",
-              recurrencePreview.has(key) ? "is-recurrence-preview" : "",
+              recurrencePreview.has(key) || highlightedRecurrenceDays.has(key) ? "is-recurrence-preview" : "",
             ]
               .filter(Boolean)
               .join(" ");
