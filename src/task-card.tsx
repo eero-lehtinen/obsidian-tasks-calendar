@@ -10,7 +10,7 @@ import type { CalendarTask } from "./types";
 
 interface TaskCardProps {
   completesDay?: boolean;
-  onCompletionChange: (taskId: string, completed: boolean | null) => void;
+  onCompletionChange: (taskId: string, completed: boolean | null, raw?: string) => void;
   plugin: TasksCalendarPlugin;
   meta?: ReactNode;
   showSource: boolean;
@@ -117,7 +117,7 @@ export function TaskCard({
           completionPending.current = true;
           pendingRaw.current = task.raw;
           setOptimisticCompleted(completed);
-          onCompletionChange(task.id, completed);
+          onCompletionChange(task.id, completed, task.raw);
           if (completed) playCompletionFeedback(event.currentTarget, completesDay);
           void plugin.toggleTask(task).then((updated) => {
             if (!updated) {

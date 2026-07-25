@@ -28,6 +28,11 @@ import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import { CalendarLayoutController, type MonthCellLayout } from "./calendar-layout";
 import { createCalendarModel, calendarTaskDate } from "./calendar-model";
+import {
+  applyCompletionOverrides,
+  reconcileCompletionOverrides,
+  type CompletionOverride,
+} from "./completion-overrides";
 import { fromDateKey, isoWeekNumber, moveAnchor, titleForRange, toDateKey } from "./date-utils";
 import type TasksCalendarPlugin from "./main";
 import { recurrenceDateKeys } from "./recurrence";
@@ -135,7 +140,7 @@ const CalendarApp = forwardRef(function CalendarApp(
   const [queryOpen, setQueryOpen] = useState(false);
   const [revision, setRevision] = useState(0);
   const [activeTask, setActiveTask] = useState<CalendarTask | null>(null);
-  const [completionOverrides, setCompletionOverrides] = useState<Map<string, boolean>>(() => new Map());
+  const [completionOverrides, setCompletionOverrides] = useState<Map<string, CompletionOverride>>(() => new Map());
   const [recurrencePreview, setRecurrencePreview] = useState<Set<string>>(() => new Set());
   const stateRef = useRef(state);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -170,11 +175,7 @@ const CalendarApp = forwardRef(function CalendarApp(
   const anchor = useMemo(() => fromDateKey(state.anchor), [state.anchor]);
   const tasks = plugin.taskStore.getTasks();
   const displayedTasks = useMemo(
-    () =>
-      tasks.map((task) => {
-        const completed = completionOverrides.get(task.id);
-        return completed === undefined ? task : { ...task, completed };
-      }),
+    () => applyCompletionOverrides(tasks, completionOverrides),
     [completionOverrides, tasks],
   );
   const model = useMemo(
@@ -183,15 +184,7 @@ const CalendarApp = forwardRef(function CalendarApp(
   );
 
   useEffect(() => {
-    setCompletionOverrides((current) => {
-      const sourceTasks = new Map(tasks.map((task) => [task.id, task]));
-      const next = new Map(current);
-      for (const [taskId, completed] of current) {
-        const source = sourceTasks.get(taskId);
-        if (!source || source.completed === completed) next.delete(taskId);
-      }
-      return next.size === current.size ? current : next;
-    });
+    setCompletionOverrides((current) => reconcileCompletionOverrides(tasks, current));
   }, [revision]);
 
   useEffect(() => {
@@ -204,11 +197,11 @@ const CalendarApp = forwardRef(function CalendarApp(
     return () => window.clearTimeout(timeoutId);
   }, [state.selectedDate, updateState]);
 
-  const updateCompletionOverride = useCallback((taskId: string, completed: boolean | null) => {
+  const updateCompletionOverride = useCallback((taskId: string, completed: boolean | null, raw?: string) => {
     setCompletionOverrides((current) => {
       const next = new Map(current);
       if (completed === null) next.delete(taskId);
-      else next.set(taskId, completed);
+      else if (raw) next.set(taskId, { completed, raw });
       return next;
     });
   }, []);
