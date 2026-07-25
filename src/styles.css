@@ -444,27 +444,11 @@
   z-index: 1;
   inset: 0;
   box-sizing: border-box;
-  overflow: hidden;
+  border: 2px solid transparent;
   border-radius: 3px;
   opacity: 0;
-  background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
   pointer-events: none;
-  transform-origin: center;
-  will-change: transform, opacity, box-shadow;
-}
-
-.tasks-calendar-completion-sheen {
-  position: absolute;
-  inset: -30% auto -30% 0;
-  width: 55%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--text-on-accent) 75%, transparent),
-    transparent
-  );
-  filter: blur(1px);
-  will-change: transform;
+  will-change: opacity;
 }
 
 .tasks-calendar-day-complete-overlay {

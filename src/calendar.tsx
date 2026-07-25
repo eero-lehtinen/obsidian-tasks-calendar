@@ -33,11 +33,13 @@ import {
   reconcileCompletionOverrides,
   type CompletionOverride,
 } from "./completion-overrides";
+import { RECURRENCE_CREATED_FEEDBACK_DURATION_MS } from "./completion-feedback";
 import { fromDateKey, isoWeekNumber, moveAnchor, titleForRange, toDateKey } from "./date-utils";
 import type TasksCalendarPlugin from "./main";
+import { capturePendingRecurrence, findCreatedRecurrence, type PendingRecurrenceCreation } from "./recurrence-created";
 import { recurrenceDateKeys } from "./recurrence";
 import { TaskCard } from "./task-card";
-import { createTaskVisualKeyFactory } from "./task-visual-key";
+import { createTaskVisualKeyFactory, taskVisualKey } from "./task-visual-key";
 import type { CalendarMode, CalendarState, CalendarTask } from "./types";
 
 interface CalendarHandle {
@@ -142,7 +144,9 @@ const CalendarApp = forwardRef(function CalendarApp(
   const [revision, setRevision] = useState(0);
   const [activeTask, setActiveTask] = useState<CalendarTask | null>(null);
   const [completionOverrides, setCompletionOverrides] = useState<Map<string, CompletionOverride>>(() => new Map());
+  const [highlightedRecurrences, setHighlightedRecurrences] = useState<Set<string>>(() => new Set());
   const [recurrencePreview, setRecurrencePreview] = useState<Set<string>>(() => new Set());
+  const pendingRecurrences = useRef<PendingRecurrenceCreation[]>([]);
   const stateRef = useRef(state);
   const gridRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef(new CalendarLayoutController());
@@ -186,6 +190,26 @@ const CalendarApp = forwardRef(function CalendarApp(
 
   useEffect(() => {
     setCompletionOverrides((current) => reconcileCompletionOverrides(tasks, current));
+
+    const unresolved: PendingRecurrenceCreation[] = [];
+    const createdKeys: string[] = [];
+    for (const pending of pendingRecurrences.current) {
+      const created = findCreatedRecurrence(tasks, pending);
+      if (created) createdKeys.push(taskVisualKey(created));
+      else unresolved.push(pending);
+    }
+    pendingRecurrences.current = unresolved;
+
+    if (createdKeys.length > 0) {
+      setHighlightedRecurrences((current) => new Set([...current, ...createdKeys]));
+      window.setTimeout(() => {
+        setHighlightedRecurrences((current) => {
+          const next = new Set(current);
+          for (const key of createdKeys) next.delete(key);
+          return next;
+        });
+      }, RECURRENCE_CREATED_FEEDBACK_DURATION_MS);
+    }
   }, [revision]);
 
   useEffect(() => {
@@ -206,6 +230,11 @@ const CalendarApp = forwardRef(function CalendarApp(
       return next;
     });
   }, []);
+
+  const expectRecurringTask = (task: CalendarTask) => {
+    const pending = capturePendingRecurrence(task, tasks);
+    if (pending) pendingRecurrences.current.push(pending);
+  };
 
   useLayoutEffect(() => {
     const layout = layoutRef.current;
@@ -269,8 +298,10 @@ const CalendarApp = forwardRef(function CalendarApp(
     return (
       <TaskCard
         completesDay={completesDay}
+        highlightNewRecurrence={highlightedRecurrences.has(taskVisualKey(task))}
         key={`${state.mode}:${nextTaskVisualKey(task)}`}
         onCompletionChange={updateCompletionOverride}
+        onRecurringCompletion={expectRecurringTask}
         onRecurrencePreview={previewRecurrence}
         plugin={plugin}
         showSource={showSource}
@@ -406,6 +437,7 @@ const CalendarApp = forwardRef(function CalendarApp(
             <div className="tasks-calendar-task-list tasks-calendar-late-list">
               {model.lateTasks.map((task) => (
                 <TaskCard
+                  highlightNewRecurrence={highlightedRecurrences.has(taskVisualKey(task))}
                   key={`late-${state.mode}:${nextTaskVisualKey(task)}`}
                   meta={
                     <span className="tasks-calendar-late-meta">
@@ -414,6 +446,7 @@ const CalendarApp = forwardRef(function CalendarApp(
                     </span>
                   }
                   onCompletionChange={updateCompletionOverride}
+                  onRecurringCompletion={expectRecurringTask}
                   onRecurrencePreview={previewRecurrence}
                   plugin={plugin}
                   showSource={false}

@@ -3,6 +3,7 @@ import { animate } from "motion/mini";
 const PARTICLE_COUNT = 18;
 const PARTICLE_FRAME_COUNT = 11;
 export const TASK_COMPLETION_FEEDBACK_DURATION_MS = 1620;
+export const RECURRENCE_CREATED_FEEDBACK_DURATION_MS = 1800;
 
 let audioContext: AudioContext | null = null;
 
@@ -70,6 +71,10 @@ export function playCompletionFeedback(
   if (completesDay) showDayCompletion(origin);
 }
 
+export function playRecurrenceCreatedFeedback(taskOutline: HTMLElement): void {
+  showFadingOutline(taskOutline, "var(--tasks-calendar-recurrence-accent)", RECURRENCE_CREATED_FEEDBACK_DURATION_MS);
+}
+
 function showTaskShake(origin: HTMLElement): void {
   const task = origin.closest<HTMLElement>(".tasks-calendar-task");
   if (!task) return;
@@ -133,27 +138,17 @@ function playHapticTick(completesDay: boolean): void {
 }
 
 function showTaskCompletion(outline: HTMLElement): void {
+  showFadingOutline(outline, "var(--interactive-accent)", TASK_COMPLETION_FEEDBACK_DURATION_MS);
+}
+
+function showFadingOutline(outline: HTMLElement, color: string, duration: number): void {
   animate(
     outline,
     {
-      boxShadow: [
-        "0 0 0 0 color-mix(in srgb, var(--interactive-accent) 45%, transparent)",
-        "0 0 9px 2px color-mix(in srgb, var(--interactive-accent) 42%, transparent)",
-        "0 0 18px 1px color-mix(in srgb, var(--interactive-accent) 18%, transparent)",
-        "0 0 0 0 transparent",
-      ],
-      opacity: [0, 1, 0.78, 0],
-      transform: ["scale(0.98)", "scale(1.015)", "scale(1.005)", "scale(1)"],
+      borderColor: [color, color],
+      opacity: [1, 0],
     },
-    { duration: TASK_COMPLETION_FEEDBACK_DURATION_MS / 1000, ease: "easeOut", times: [0, 0.12, 0.58, 1] },
-  );
-
-  const sheen = outline.querySelector<HTMLElement>(".tasks-calendar-completion-sheen");
-  if (!sheen) return;
-  animate(
-    sheen,
-    { transform: ["translateX(-170%) skewX(-18deg)", "translateX(340%) skewX(-18deg)"] },
-    { delay: 0.04, duration: 1.38, ease: [0.22, 1, 0.36, 1] },
+    { duration: duration / 1000, ease: "easeOut" },
   );
 }
 

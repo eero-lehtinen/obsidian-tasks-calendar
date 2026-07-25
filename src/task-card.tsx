@@ -3,14 +3,20 @@ import { motion } from "motion/react";
 import { setIcon, setTooltip } from "obsidian";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent, PointerEvent, ReactNode, RefObject } from "react";
-import { playCompletionFeedback, TASK_COMPLETION_FEEDBACK_DURATION_MS } from "./completion-feedback";
+import {
+  playCompletionFeedback,
+  playRecurrenceCreatedFeedback,
+  TASK_COMPLETION_FEEDBACK_DURATION_MS,
+} from "./completion-feedback";
 import type TasksCalendarPlugin from "./main";
 import { showTaskActions } from "./task-actions-menu";
 import type { CalendarTask } from "./types";
 
 interface TaskCardProps {
   completesDay?: boolean;
+  highlightNewRecurrence: boolean;
   onCompletionChange: (taskId: string, completed: boolean | null, raw?: string) => void;
+  onRecurringCompletion: (task: CalendarTask) => void;
   plugin: TasksCalendarPlugin;
   meta?: ReactNode;
   showSource: boolean;
@@ -26,7 +32,9 @@ const completionMoveDelayMs = 200;
 
 export function TaskCard({
   completesDay = false,
+  highlightNewRecurrence,
   onCompletionChange,
+  onRecurringCompletion,
   plugin,
   meta,
   showSource,
@@ -71,6 +79,11 @@ export function TaskCard({
     },
     [],
   );
+  useEffect(() => {
+    if (highlightNewRecurrence && completionOutlineRef.current) {
+      playRecurrenceCreatedFeedback(completionOutlineRef.current);
+    }
+  }, [highlightNewRecurrence]);
 
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
     if (performance.now() < suppressClicksUntil.current) {
@@ -134,6 +147,7 @@ export function TaskCard({
             completionStyleTimer.current = null;
           }
           if (completed) {
+            if (task.recurrence) onRecurringCompletion(task);
             playCompletionFeedback(event.currentTarget, completionOutlineRef.current, completesDay);
             completionStyleTimer.current = window.setTimeout(() => {
               completionStyleTimer.current = null;
@@ -185,9 +199,7 @@ export function TaskCard({
       ) : null}
       {showSource ? <TaskSourceButton plugin={plugin} task={task} /> : null}
       {meta}
-      <span aria-hidden="true" className="tasks-calendar-completion-overlay" ref={completionOutlineRef}>
-        <span className="tasks-calendar-completion-sheen" />
-      </span>
+      <span aria-hidden="true" className="tasks-calendar-completion-overlay" ref={completionOutlineRef} />
     </motion.div>
   );
 }
