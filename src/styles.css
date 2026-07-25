@@ -326,7 +326,7 @@
   --tasks-calendar-task-accent: color-mix(in srgb, var(--interactive-accent) 55%, var(--text-muted));
   --tasks-calendar-task-background: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-secondary));
   display: grid;
-  grid-template-columns: 16px minmax(0, 1fr) auto;
+  grid-template-columns: 16px minmax(0, 1fr);
   align-items: center;
   column-gap: 6px;
   row-gap: 4px;
@@ -347,6 +347,10 @@
 
 .tasks-calendar-task.is-dragging {
   opacity: 0.35;
+}
+
+.tasks-calendar-task.has-recurrence {
+  grid-template-columns: 16px minmax(0, 1fr) auto;
 }
 
 .tasks-calendar-drag-overlay {
@@ -516,7 +520,6 @@
 }
 
 .tasks-calendar-grid.is-week .tasks-calendar-task {
-  grid-template-columns: 16px minmax(0, 1fr) auto;
   padding: 7px;
 }
 

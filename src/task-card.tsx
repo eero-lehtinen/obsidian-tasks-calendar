@@ -91,7 +91,7 @@ export function TaskCard({
 
   return (
     <motion.div
-      className={`tasks-calendar-task${optimisticCompleted ? " is-completed" : ""}${isDragging ? " is-dragging" : ""}`}
+      className={`tasks-calendar-task${task.recurrence ? " has-recurrence" : ""}${optimisticCompleted ? " is-completed" : ""}${isDragging ? " is-dragging" : ""}`}
       data-priority={task.priority}
       layout="position"
       onClick={handleClick}
