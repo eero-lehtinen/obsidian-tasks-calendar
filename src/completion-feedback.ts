@@ -5,7 +5,7 @@ const PARTICLE_FRAME_COUNT = 11;
 export const TASK_COMPLETION_FEEDBACK_DURATION_MS = 1620;
 export const RECURRENCE_CREATED_FEEDBACK_DURATION_MS = 1800;
 
-let audioContext: AudioContext | null = null;
+let audioContext = createAudioContext();
 
 export interface CelebrationParticle {
   color: string;
@@ -87,8 +87,9 @@ function showTaskShake(origin: HTMLElement): void {
 
 function playCompletionSound(completesDay: boolean): void {
   try {
-    if (!audioContext || audioContext.state === "closed") audioContext = new AudioContext();
+    if (!audioContext || audioContext.state === "closed") audioContext = createAudioContext();
     const context = audioContext;
+    if (!context) return;
     if (context.state === "suspended") {
       void context
         .resume()
@@ -99,6 +100,14 @@ function playCompletionSound(completesDay: boolean): void {
     }
   } catch {
     // Audio can be unavailable or disabled by the host; task completion must still proceed.
+  }
+}
+
+function createAudioContext(): AudioContext | null {
+  try {
+    return new AudioContext();
+  } catch {
+    return null;
   }
 }
 

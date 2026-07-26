@@ -1,5 +1,26 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { celebrationParticlePosition, createCelebrationParticles } from "../src/completion-feedback";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe("audio context", () => {
+  it("is created when the completion feedback module loads", async () => {
+    let constructionCount = 0;
+    class AudioContextStub {
+      constructor() {
+        constructionCount += 1;
+      }
+    }
+    vi.stubGlobal("AudioContext", AudioContextStub);
+    vi.resetModules();
+
+    await import("../src/completion-feedback");
+
+    expect(constructionCount).toBe(1);
+  });
+});
 
 describe("createCelebrationParticles", () => {
   it("creates sharp rectangular particles with bounded projectile values", () => {
