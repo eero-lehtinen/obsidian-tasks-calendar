@@ -1,7 +1,7 @@
 {
   "id": "tasks-calendar",
   "name": "Tasks Calendar",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "minAppVersion": "1.8.7",
   "description": "View and manage Obsidian Tasks in a flexible month or week calendar.",
   "author": "Obsidian Tasks Calendar contributors",
