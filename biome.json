@@ -38,10 +38,5 @@
   ],
   "assist": {
     "enabled": false
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "double"
-    }
   }
 }
