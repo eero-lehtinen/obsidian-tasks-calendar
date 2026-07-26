@@ -9,6 +9,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { MotionConfig } from "motion/react";
 import type { CSSProperties, Ref } from "react";
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -177,86 +178,88 @@ export function CalendarApp({
   };
 
   return (
-    <DndContext
-      accessibility={{ announcements: dragAnnouncements }}
-      collisionDetection={closestCenter}
-      onDragCancel={() => setActiveTask(null)}
-      onDragEnd={(event) => {
-        const task = event.active.data.current?.task as CalendarTask | undefined;
-        const date = event.over?.data.current?.date as string | undefined;
-        setActiveTask(null);
-        if (task && date) void plugin.rescheduleTask(task, date);
-      }}
-      onDragStart={(event) => {
-        setActiveTask((event.active.data.current?.task as CalendarTask | undefined) ?? null);
-      }}
-      sensors={sensors}
-    >
-      <div
-        className="tasks-calendar-react-root"
-        style={{ "--tasks-calendar-completed-opacity": String(plugin.settings.completedOpacity) } as CSSProperties}
+    <MotionConfig reducedMotion={plugin.settings.forceAnimations ? "never" : "user"}>
+      <DndContext
+        accessibility={{ announcements: dragAnnouncements }}
+        collisionDetection={closestCenter}
+        onDragCancel={() => setActiveTask(null)}
+        onDragEnd={(event) => {
+          const task = event.active.data.current?.task as CalendarTask | undefined;
+          const date = event.over?.data.current?.date as string | undefined;
+          setActiveTask(null);
+          if (task && date) void plugin.rescheduleTask(task, date);
+        }}
+        onDragStart={(event) => {
+          setActiveTask((event.active.data.current?.task as CalendarTask | undefined) ?? null);
+        }}
+        sensors={sensors}
       >
-        <CalendarToolbar
-          onNavigate={(direction) =>
-            updateState({
-              anchor: toDateKey(moveAnchor(fromDateKey(state.anchor), state.mode, direction)),
-              selectedDate: null,
-            })
-          }
-          onQueryToggle={() => setQueryOpen((open) => !open)}
-          onToday={() => updateState({ anchor: toDateKey(new Date()), selectedDate: null })}
-          plugin={plugin}
-          state={state}
-          updateState={updateState}
-        />
-        {queryOpen ? <QueryEditor state={state} updateState={updateState} /> : null}
-        {model.queryError ? <div className="tasks-calendar-error">{model.queryError}</div> : null}
-        <CalendarGrid
-          anchor={anchor}
-          gridRef={gridRef}
-          highlightedDays={highlightedDays}
-          model={model}
-          plugin={plugin}
-          recurrencePreview={previewDays}
-          renderTask={renderTask}
-          state={state}
-          updateState={updateState}
-        />
-        {model.overdueTasks.length > 0 ? (
-          <section className="tasks-calendar-overdue-tasks">
-            <header className="tasks-calendar-overdue-header">
-              <h3>Overdue tasks</h3>
-              <span className="tasks-calendar-overdue-count">{model.overdueTasks.length}</span>
-            </header>
-            <div className="tasks-calendar-task-list tasks-calendar-overdue-list">
-              {model.overdueTasks.map((task) => (
-                <TaskCard
-                  highlightNewRecurrence={highlightedTasks.has(taskVisualKey(task))}
-                  key={`overdue-${state.mode}:${nextTaskVisualKey(task)}`}
-                  meta={
-                    <span className="tasks-calendar-overdue-meta">
-                      {calendarTaskDate(task, plugin.settings, model.today) ?? "No date"} ·{" "}
-                      {task.path.replace(/\.md$/i, "")}
-                    </span>
-                  }
-                  onCompletionChange={updateCompletionOverride}
-                  onRecurringCompletion={expectRecurringTask}
-                  onRecurrencePreview={previewRecurrence}
-                  plugin={plugin}
-                  showSource={false}
-                  task={task}
-                  titleId={`tasks-calendar-${instanceId}-task-${taskIndex++}`}
-                />
-              ))}
-            </div>
-          </section>
-        ) : null}
-      </div>
-      {createPortal(
-        <TaskDragOverlay task={activeTask} completedOpacity={plugin.settings.completedOpacity} />,
-        document.body,
-      )}
-    </DndContext>
+        <div
+          className={`tasks-calendar-react-root${plugin.settings.forceAnimations ? " tasks-calendar-force-animations" : ""}`}
+          style={{ "--tasks-calendar-completed-opacity": String(plugin.settings.completedOpacity) } as CSSProperties}
+        >
+          <CalendarToolbar
+            onNavigate={(direction) =>
+              updateState({
+                anchor: toDateKey(moveAnchor(fromDateKey(state.anchor), state.mode, direction)),
+                selectedDate: null,
+              })
+            }
+            onQueryToggle={() => setQueryOpen((open) => !open)}
+            onToday={() => updateState({ anchor: toDateKey(new Date()), selectedDate: null })}
+            plugin={plugin}
+            state={state}
+            updateState={updateState}
+          />
+          {queryOpen ? <QueryEditor state={state} updateState={updateState} /> : null}
+          {model.queryError ? <div className="tasks-calendar-error">{model.queryError}</div> : null}
+          <CalendarGrid
+            anchor={anchor}
+            gridRef={gridRef}
+            highlightedDays={highlightedDays}
+            model={model}
+            plugin={plugin}
+            recurrencePreview={previewDays}
+            renderTask={renderTask}
+            state={state}
+            updateState={updateState}
+          />
+          {model.overdueTasks.length > 0 ? (
+            <section className="tasks-calendar-overdue-tasks">
+              <header className="tasks-calendar-overdue-header">
+                <h3>Overdue tasks</h3>
+                <span className="tasks-calendar-overdue-count">{model.overdueTasks.length}</span>
+              </header>
+              <div className="tasks-calendar-task-list tasks-calendar-overdue-list">
+                {model.overdueTasks.map((task) => (
+                  <TaskCard
+                    highlightNewRecurrence={highlightedTasks.has(taskVisualKey(task))}
+                    key={`overdue-${state.mode}:${nextTaskVisualKey(task)}`}
+                    meta={
+                      <span className="tasks-calendar-overdue-meta">
+                        {calendarTaskDate(task, plugin.settings, model.today) ?? "No date"} ·{" "}
+                        {task.path.replace(/\.md$/i, "")}
+                      </span>
+                    }
+                    onCompletionChange={updateCompletionOverride}
+                    onRecurringCompletion={expectRecurringTask}
+                    onRecurrencePreview={previewRecurrence}
+                    plugin={plugin}
+                    showSource={false}
+                    task={task}
+                    titleId={`tasks-calendar-${instanceId}-task-${taskIndex++}`}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </div>
+        {createPortal(
+          <TaskDragOverlay task={activeTask} completedOpacity={plugin.settings.completedOpacity} />,
+          document.body,
+        )}
+      </DndContext>
+    </MotionConfig>
   );
 }
 

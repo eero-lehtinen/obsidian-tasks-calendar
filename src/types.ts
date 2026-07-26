@@ -25,6 +25,7 @@ export interface TasksCalendarSettings {
   weekStartsOn: 0 | 1;
   showCompleted: boolean;
   completedOpacity: number;
+  forceAnimations: boolean;
   defaultQuery: string;
   datePreference: DateField[];
   undatedTasks: "hide" | "today";

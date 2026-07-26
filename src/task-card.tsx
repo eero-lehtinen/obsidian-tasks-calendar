@@ -46,11 +46,13 @@ export function TaskCard({
   const completionOutlineRef = useRef<HTMLSpanElement>(null);
   const completionPending = useRef(false);
   const completionStyleTimer = useRef<number | null>(null);
+  const checkboxAnimationTimer = useRef<number | null>(null);
   const pendingRaw = useRef<string | null>(null);
   const lastPointerType = useRef("mouse");
   const suppressClicksUntil = useRef(0);
   const [optimisticCompleted, setOptimisticCompleted] = useState(task.completed);
   const [styledCompleted, setStyledCompleted] = useState(task.completed);
+  const [isChecking, setIsChecking] = useState(false);
   const taskName = task.description || "Untitled task";
   const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef } = useDraggable({
     id: task.id,
@@ -76,14 +78,15 @@ export function TaskCard({
   useEffect(
     () => () => {
       if (completionStyleTimer.current !== null) window.clearTimeout(completionStyleTimer.current);
+      if (checkboxAnimationTimer.current !== null) window.clearTimeout(checkboxAnimationTimer.current);
     },
     [],
   );
   useEffect(() => {
     if (highlightNewRecurrence && completionOutlineRef.current) {
-      playRecurrenceCreatedFeedback(completionOutlineRef.current);
+      playRecurrenceCreatedFeedback(completionOutlineRef.current, plugin.settings.forceAnimations);
     }
-  }, [highlightNewRecurrence]);
+  }, [highlightNewRecurrence, plugin.settings.forceAnimations]);
 
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
     if (performance.now() < suppressClicksUntil.current) {
@@ -127,59 +130,86 @@ export function TaskCard({
       ref={setItemRef}
       transition={{ layout: layoutTransition }}
     >
-      <input
-        aria-description={`${optimisticCompleted ? "Reopen" : "Complete"} this task`}
-        aria-labelledby={titleId}
-        checked={optimisticCompleted}
-        className="tasks-calendar-checkbox"
-        onChange={(event) => {
-          if (completionPending.current) {
-            event.currentTarget.checked = optimisticCompleted;
-            return;
-          }
+      <span
+        className={`tasks-calendar-checkbox-control${optimisticCompleted ? " is-checked" : ""}${isChecking ? " is-checking" : ""}`}
+      >
+        <input
+          aria-description={`${optimisticCompleted ? "Reopen" : "Complete"} this task`}
+          aria-labelledby={titleId}
+          checked={optimisticCompleted}
+          className="tasks-calendar-checkbox"
+          onChange={(event) => {
+            if (completionPending.current) {
+              event.currentTarget.checked = optimisticCompleted;
+              return;
+            }
 
-          const completed = !optimisticCompleted;
-          completionPending.current = true;
-          pendingRaw.current = task.raw;
-          setOptimisticCompleted(completed);
-          if (completionStyleTimer.current !== null) {
-            window.clearTimeout(completionStyleTimer.current);
-            completionStyleTimer.current = null;
-          }
-          if (completed) {
-            if (task.recurrence) onRecurringCompletion(task);
-            playCompletionFeedback(event.currentTarget, completionOutlineRef.current, completesDay);
-            completionStyleTimer.current = window.setTimeout(() => {
+            const completed = !optimisticCompleted;
+            completionPending.current = true;
+            pendingRaw.current = task.raw;
+            setOptimisticCompleted(completed);
+            if (completionStyleTimer.current !== null) {
+              window.clearTimeout(completionStyleTimer.current);
               completionStyleTimer.current = null;
-              setStyledCompleted(true);
-            }, completionStyleDelayMs);
-          } else {
-            setStyledCompleted(false);
-          }
+            }
+            if (checkboxAnimationTimer.current !== null) {
+              window.clearTimeout(checkboxAnimationTimer.current);
+              checkboxAnimationTimer.current = null;
+            }
+            if (completed) {
+              setIsChecking(true);
+              checkboxAnimationTimer.current = window.setTimeout(() => {
+                checkboxAnimationTimer.current = null;
+                setIsChecking(false);
+              }, 750);
+              if (task.recurrence) onRecurringCompletion(task);
+              playCompletionFeedback(
+                event.currentTarget,
+                completionOutlineRef.current,
+                completesDay,
+                plugin.settings.forceAnimations,
+              );
+              completionStyleTimer.current = window.setTimeout(() => {
+                completionStyleTimer.current = null;
+                setStyledCompleted(true);
+              }, completionStyleDelayMs);
+            } else {
+              setIsChecking(false);
+              setStyledCompleted(false);
+            }
 
-          const applyCompletion = () => {
-            onCompletionChange(task.id, completed, task.raw);
-            void plugin.toggleTask(task).then((updated) => {
-              if (!updated) {
-                if (completionStyleTimer.current !== null) {
-                  window.clearTimeout(completionStyleTimer.current);
-                  completionStyleTimer.current = null;
+            const applyCompletion = () => {
+              onCompletionChange(task.id, completed, task.raw);
+              void plugin.toggleTask(task).then((updated) => {
+                if (!updated) {
+                  if (completionStyleTimer.current !== null) {
+                    window.clearTimeout(completionStyleTimer.current);
+                    completionStyleTimer.current = null;
+                  }
+                  if (checkboxAnimationTimer.current !== null) {
+                    window.clearTimeout(checkboxAnimationTimer.current);
+                    checkboxAnimationTimer.current = null;
+                  }
+                  setIsChecking(false);
+                  setOptimisticCompleted(!completed);
+                  setStyledCompleted(!completed);
+                  onCompletionChange(task.id, null);
+                  completionPending.current = false;
+                  pendingRaw.current = null;
                 }
-                setOptimisticCompleted(!completed);
-                setStyledCompleted(!completed);
-                onCompletionChange(task.id, null);
-                completionPending.current = false;
-                pendingRaw.current = null;
-              }
-            });
-          };
+              });
+            };
 
-          if (completed) window.setTimeout(applyCompletion, completionMoveDelayMs);
-          else applyCompletion();
-        }}
-        onClick={(event) => event.stopPropagation()}
-        type="checkbox"
-      />
+            if (completed) window.setTimeout(applyCompletion, completionMoveDelayMs);
+            else applyCompletion();
+          }}
+          onClick={(event) => event.stopPropagation()}
+          type="checkbox"
+        />
+        <svg aria-hidden="true" className="tasks-calendar-checkbox-check" viewBox="0 0 16 16">
+          <path d="M3.2 8.2 6.5 11.3 12.9 4.8" pathLength="1" />
+        </svg>
+      </span>
       <button
         className="tasks-calendar-task-title"
         id={titleId}

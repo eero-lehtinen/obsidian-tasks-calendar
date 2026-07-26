@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { celebrationParticlePosition, createCelebrationParticles } from "../src/completion-feedback";
+import {
+  celebrationParticlePosition,
+  createCelebrationParticles,
+  shouldPlayAnimations,
+} from "../src/completion-feedback";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -50,5 +54,25 @@ describe("createCelebrationParticles", () => {
 
     expect(end.x - middle.x).toBeCloseTo(middle.x - start.x);
     expect(end.y - 2 * middle.y + start.y).toBeCloseTo(particle.gravity * 0.2 ** 2);
+  });
+});
+
+describe("shouldPlayAnimations", () => {
+  it("respects the system reduced-motion preference by default", () => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({ matches: true })),
+    );
+
+    expect(shouldPlayAnimations(false)).toBe(false);
+  });
+
+  it("allows the setting to override the system preference", () => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({ matches: true })),
+    );
+
+    expect(shouldPlayAnimations(true)).toBe(true);
   });
 });

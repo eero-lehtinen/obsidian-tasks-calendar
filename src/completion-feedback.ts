@@ -62,17 +62,24 @@ export function playCompletionFeedback(
   origin: HTMLElement,
   taskOutline: HTMLElement | null,
   completesDay = false,
+  forceAnimations = false,
 ): void {
   playCompletionSound(completesDay);
   playHapticTick(completesDay);
+  if (!shouldPlayAnimations(forceAnimations)) return;
   if (taskOutline) showTaskCompletion(taskOutline);
   showTaskShake(origin);
   showCelebration(origin);
   if (completesDay) showDayCompletion(origin);
 }
 
-export function playRecurrenceCreatedFeedback(taskOutline: HTMLElement): void {
+export function playRecurrenceCreatedFeedback(taskOutline: HTMLElement, forceAnimations = false): void {
+  if (!shouldPlayAnimations(forceAnimations)) return;
   showFadingOutline(taskOutline, "var(--tasks-calendar-recurrence-accent)", RECURRENCE_CREATED_FEEDBACK_DURATION_MS);
+}
+
+export function shouldPlayAnimations(forceAnimations: boolean): boolean {
+  return forceAnimations || !globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
 
 function showTaskShake(origin: HTMLElement): void {

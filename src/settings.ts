@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS: TasksCalendarSettings = {
   weekStartsOn: 1,
   showCompleted: true,
   completedOpacity: 0.42,
+  forceAnimations: false,
   defaultQuery: "",
   datePreference: ["scheduled", "due", "start"],
   undatedTasks: "hide",
@@ -75,6 +76,17 @@ export class TasksCalendarSettingTab extends PluginSettingTab {
           this.plugin.refreshCalendars();
         }),
     );
+
+    new Setting(containerEl)
+      .setName("Always animate")
+      .setDesc("Play checkbox and task animations even when your system requests reduced motion.")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.forceAnimations).onChange(async (value) => {
+          this.plugin.settings.forceAnimations = value;
+          await this.plugin.saveSettings();
+          this.plugin.refreshCalendars();
+        }),
+      );
 
     new Setting(containerEl)
       .setName("Date priority")
