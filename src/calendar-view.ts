@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf } from "obsidian";
+import { ItemView, type WorkspaceLeaf } from "obsidian";
 import { TasksCalendarRenderer } from "./calendar";
 import type TasksCalendarPlugin from "./main";
 import type { CalendarState } from "./types";

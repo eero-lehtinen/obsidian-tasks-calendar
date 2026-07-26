@@ -1,3 +1,5 @@
+// biome-ignore-all lint/a11y/useSemanticElements: The ARIA grid must remain a flat CSS grid for draggable day cells.
+// biome-ignore-all lint/a11y/useFocusableInteractive: Grid headers describe cells and are not interaction targets.
 import { useDroppable } from "@dnd-kit/core";
 import type { HTMLAttributes, ReactNode, RefObject } from "react";
 import { isoWeekNumber, toDateKey } from "./date-utils";

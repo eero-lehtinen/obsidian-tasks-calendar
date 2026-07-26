@@ -9,7 +9,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import type { Announcements } from "@dnd-kit/core";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { CSSProperties, Ref } from "react";
 import { createPortal } from "react-dom";
 import { CalendarGrid } from "./calendar-grid";
@@ -37,6 +37,7 @@ interface CalendarAppProps {
   instanceId: number;
   onStateChange?: (state: CalendarState) => void;
   plugin: TasksCalendarPlugin;
+  ref?: Ref<CalendarHandle>;
 }
 
 const SELECTION_DISPLAY_DURATION_MS = 1_200;
@@ -58,10 +59,14 @@ const dragAnnouncements: Announcements = {
   onDragCancel: ({ active }) => `Cancelled moving ${dragTaskName(active.data.current?.task)}.`,
 };
 
-export const CalendarApp = forwardRef(function CalendarApp(
-  { constrainHeightToContainer, initial, instanceId, onStateChange, plugin }: CalendarAppProps,
-  ref: Ref<CalendarHandle>,
-) {
+export function CalendarApp({
+  constrainHeightToContainer,
+  initial,
+  instanceId,
+  onStateChange,
+  plugin,
+  ref,
+}: CalendarAppProps) {
   const [state, setState] = useState(initial);
   const [queryOpen, setQueryOpen] = useState(false);
   const [revision, setRevision] = useState(0);
@@ -97,27 +102,27 @@ export const CalendarApp = forwardRef(function CalendarApp(
 
   const renderStartedAt = performance.now();
   const anchor = useMemo(() => fromDateKey(state.anchor), [state.anchor]);
-  const tasks = plugin.taskStore.getTasks();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Revision invalidates the mutable task store snapshot.
+  const tasks = useMemo(() => plugin.taskStore.getTasks(), [plugin.taskStore, revision]);
   const displayedTasks = useMemo(
     () => applyCompletionOverrides(tasks, completionOverrides),
     [completionOverrides, tasks],
   );
   const model = useMemo(
     () => createCalendarModel(displayedTasks, state, plugin.settings, anchor),
-    [anchor, displayedTasks, plugin.settings, revision, state],
+    [anchor, displayedTasks, plugin.settings, state],
   );
   const { expectRecurringTask, highlightedDays, highlightedTasks, previewDays, previewRecurrence } =
     useRecurrenceFeedback({
       days: model.days,
       plugin,
-      revision,
       tasks,
       today: model.today,
     });
 
   useEffect(() => {
     setCompletionOverrides((current) => reconcileCompletionOverrides(tasks, current));
-  }, [revision]);
+  }, [tasks]);
 
   useEffect(() => {
     if (!state.selectedDate) return;
@@ -253,7 +258,7 @@ export const CalendarApp = forwardRef(function CalendarApp(
       )}
     </DndContext>
   );
-});
+}
 
 function TaskDragOverlay({ completedOpacity, task }: { completedOpacity: number; task: CalendarTask | null }) {
   return (

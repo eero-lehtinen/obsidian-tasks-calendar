@@ -1,4 +1,4 @@
-import { MarkdownView, Notice, Plugin, TFile, WorkspaceLeaf, normalizePath } from "obsidian";
+import { MarkdownView, Notice, Plugin, TFile, type WorkspaceLeaf, normalizePath } from "obsidian";
 import { TasksCalendarRenderer } from "./calendar";
 import { TASKS_CALENDAR_VIEW, TasksCalendarView } from "./calendar-view";
 import { DEFAULT_SETTINGS, TasksCalendarSettingTab } from "./settings";

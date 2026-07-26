@@ -21,15 +21,19 @@ export function useCalendarLayout({
   updateState: CalendarStateUpdate;
 }): void {
   const layoutRef = useRef(new CalendarLayoutController());
+  const { mode, monthHeight, weekHeight } = state;
 
   useLayoutEffect(() => {
+    // Both values change the rendered grid dimensions even though measurement only reads the DOM.
+    void model;
+    void queryOpen;
     const layout = layoutRef.current;
     const grid = gridRef.current;
     if (!grid) return;
     layout.reset();
 
-    const heightKey = state.mode === "week" ? "weekHeight" : "monthHeight";
-    const desiredHeight = state[heightKey];
+    const heightKey = mode === "week" ? "weekHeight" : "monthHeight";
+    const desiredHeight = mode === "week" ? weekHeight : monthHeight;
     layout.observeHeight(
       grid,
       desiredHeight,
@@ -42,7 +46,7 @@ export function useCalendarLayout({
         : null,
     );
 
-    if (state.mode === "month") {
+    if (mode === "month") {
       const layouts = Array.from(grid.querySelectorAll<HTMLElement>(".tasks-calendar-day"))
         .map((cell): MonthCellLayout | null => {
           const list = cell.querySelector<HTMLElement>(".tasks-calendar-task-list");
@@ -58,14 +62,5 @@ export function useCalendarLayout({
       layout.observeMonth(grid, layouts);
     }
     return () => layout.reset();
-  }, [
-    constrainHeightToContainer,
-    gridRef,
-    model,
-    queryOpen,
-    state.mode,
-    state.monthHeight,
-    state.weekHeight,
-    updateState,
-  ]);
+  }, [constrainHeightToContainer, gridRef, model, mode, monthHeight, queryOpen, updateState, weekHeight]);
 }

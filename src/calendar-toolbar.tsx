@@ -1,5 +1,5 @@
 import { Platform, setIcon } from "obsidian";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
 import { fromDateKey, titleForRange } from "./date-utils";
 import type TasksCalendarPlugin from "./main";
@@ -68,14 +68,17 @@ export function CalendarToolbar({
 }
 
 export function QueryEditor({ state, updateState }: { state: CalendarState; updateState: CalendarStateUpdate }) {
+  const queryId = useId();
+
   return (
     <div className="tasks-calendar-query-panel">
-      <label>
+      <label htmlFor={queryId}>
         Task filters
         <span>One Tasks-style instruction per line</span>
       </label>
       <textarea
         className="tasks-calendar-query"
+        id={queryId}
         onChange={(event) => updateState({ query: event.target.value })}
         placeholder={"not done\npath includes Projects\nscheduled before tomorrow"}
         rows={3}

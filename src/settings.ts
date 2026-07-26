@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { type App, PluginSettingTab, Setting } from "obsidian";
 import type TasksCalendarPlugin from "./main";
 import type { DateField, TasksCalendarSettings } from "./types";
 

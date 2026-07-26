@@ -12,13 +12,11 @@ import type { CalendarTask } from "./types";
 export function useRecurrenceFeedback({
   days,
   plugin,
-  revision,
   tasks,
   today,
 }: {
   days: Date[];
   plugin: TasksCalendarPlugin;
-  revision: number;
   tasks: CalendarTask[];
   today: string;
 }) {
@@ -48,7 +46,7 @@ export function useRecurrenceFeedback({
       setHighlightedTasks((current) => withoutKeys(current, createdTaskKeys));
       setHighlightedDays((current) => withoutKeys(current, createdDayKeys));
     }, RECURRENCE_CREATED_FEEDBACK_DURATION_MS);
-  }, [revision]);
+  }, [plugin.settings, tasks, today]);
 
   const expectRecurringTask = useCallback(
     (task: CalendarTask) => {

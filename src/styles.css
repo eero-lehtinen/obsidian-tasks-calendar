@@ -585,8 +585,12 @@
   height: 16px;
   margin: -4px;
   padding: 4px;
+  border: 0;
   color: var(--text-muted);
   box-sizing: content-box;
+  appearance: none;
+  background: transparent;
+  box-shadow: none;
   cursor: default;
   border-radius: 4px;
   transition:

@@ -213,7 +213,7 @@ function RecurrenceIcon({
   onPreviewEnd: () => void;
   onPreviewStart: () => void;
 }) {
-  const ref = useRef<HTMLSpanElement>(null);
+  const ref = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!ref.current) return;
     setIcon(ref.current, "repeat-2");
@@ -221,14 +221,15 @@ function RecurrenceIcon({
   }, [recurrence]);
 
   return (
-    <span
+    <button
+      aria-label={`Preview recurrence: ${recurrence}`}
       className="tasks-calendar-recurrence"
       onBlur={onPreviewEnd}
       onFocus={onPreviewStart}
       onPointerEnter={onPreviewStart}
       onPointerLeave={onPreviewEnd}
       ref={ref}
-      tabIndex={0}
+      type="button"
     />
   );
 }

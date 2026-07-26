@@ -1,4 +1,4 @@
-import { Events, TFile, Vault } from "obsidian";
+import { Events, TFile, type Vault } from "obsidian";
 import { deleteTaskLine } from "./file-content";
 import type { PerformanceMonitor } from "./performance";
 import { parseTaskLine } from "./task-parser";
