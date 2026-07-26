@@ -406,7 +406,7 @@ const CalendarApp = forwardRef(function CalendarApp(
                   model.days.slice(index, index + 7).some((weekDay) => toDateKey(weekDay) === model.today)
                 }
                 index={index}
-                key={key}
+                key={`${state.mode}:${state.anchor}:${key}`}
                 weekNumber={isoWeekNumber(model.days[index + 3] ?? day)}
               >
                 <DroppableDay
