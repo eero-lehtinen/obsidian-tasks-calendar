@@ -28,7 +28,7 @@ export class PerformanceMonitor {
 
   record(metric: PerformanceMetric, duration: number, details?: Record<string, number>): void {
     const samples = this.measurements.get(metric) ?? [];
-    samples.push({ duration, timestamp: Date.now(), details });
+    samples.push({ duration, timestamp: Date.now(), ...(details ? { details } : {}) });
     if (samples.length > MAX_SAMPLES_PER_METRIC) {
       samples.splice(0, samples.length - MAX_SAMPLES_PER_METRIC);
     }
@@ -47,7 +47,7 @@ export class PerformanceMonitor {
         p95: percentile(sorted, 0.95),
         maximum: sorted[sorted.length - 1],
         latest: latest.duration,
-        latestDetails: latest.details,
+        ...(latest.details ? { latestDetails: latest.details } : {}),
       };
     });
   }
@@ -94,7 +94,7 @@ export class PerformanceReportModal extends Modal {
     super(app);
   }
 
-  onOpen(): void {
+  override onOpen(): void {
     this.setTitle("Tasks Calendar performance");
     this.render();
   }

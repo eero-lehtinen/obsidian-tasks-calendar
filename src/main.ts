@@ -16,7 +16,7 @@ interface ObsidianAppWithPlugins {
 }
 
 export default class TasksCalendarPlugin extends Plugin {
-  settings: TasksCalendarSettings = DEFAULT_SETTINGS;
+  override settings: TasksCalendarSettings = DEFAULT_SETTINGS;
   taskStore!: TaskStore;
   readonly performanceMonitor = new PerformanceMonitor();
   private embeddedCalendars = new Set<TasksCalendarRenderer>();
@@ -27,7 +27,7 @@ export default class TasksCalendarPlugin extends Plugin {
     return app.plugins?.plugins?.["obsidian-tasks-plugin"]?.apiV1 ?? null;
   }
 
-  async onload(): Promise<void> {
+  override async onload(): Promise<void> {
     await this.loadSettings();
     this.taskStore = new TaskStore(this.app.vault, this.performanceMonitor);
     await this.taskStore.initialize();
@@ -89,7 +89,7 @@ export default class TasksCalendarPlugin extends Plugin {
     this.addSettingTab(new TasksCalendarSettingTab(this.app, this));
   }
 
-  onunload(): void {
+  override onunload(): void {
     if (this.stateSaveTimer !== null) {
       window.clearTimeout(this.stateSaveTimer);
       this.stateSaveTimer = null;

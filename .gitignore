@@ -11,6 +11,7 @@ node_modules/
 /styles.css
 /dist/
 *.map
+*.tsbuildinfo
 
 # Local Obsidian plugin data
 data.json

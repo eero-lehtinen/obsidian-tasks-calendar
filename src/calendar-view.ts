@@ -16,19 +16,19 @@ export class TasksCalendarView extends ItemView {
     super(leaf);
   }
 
-  getViewType(): string {
+  override getViewType(): string {
     return TASKS_CALENDAR_VIEW;
   }
 
-  getDisplayText(): string {
+  override getDisplayText(): string {
     return "Tasks Calendar";
   }
 
-  getIcon(): string {
+  override getIcon(): string {
     return "calendar-check";
   }
 
-  async onOpen(): Promise<void> {
+  override async onOpen(): Promise<void> {
     this.contentEl.empty();
     this.contentEl.addClass("tasks-calendar-view");
     this.renderer = new TasksCalendarRenderer(
@@ -44,15 +44,15 @@ export class TasksCalendarView extends ItemView {
     this.addChild(this.renderer);
   }
 
-  async onClose(): Promise<void> {
+  override async onClose(): Promise<void> {
     this.renderer = null;
   }
 
-  getState(): Record<string, unknown> {
+  override getState(): Record<string, unknown> {
     return (this.renderer?.getState() as unknown as Record<string, unknown>) ?? {};
   }
 
-  async setState(state: Partial<CalendarState>): Promise<void> {
+  override async setState(state: Partial<CalendarState>): Promise<void> {
     this.pendingState = state;
     this.renderer?.setState(state);
   }

@@ -36,7 +36,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     };
   }
 
-  onload(): void {
+  override onload(): void {
     this.containerEl.addClass("tasks-calendar");
     this.root = createRoot(this.containerEl);
     this.registerEvent(this.plugin.taskStore.on("tasks-calendar:changed", () => this.calendarRef.current?.refresh()));
@@ -45,7 +45,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
         <CalendarApp
           initial={this.initial}
           instanceId={this.instanceId}
-          onStateChange={this.onStateChange}
+          {...(this.onStateChange ? { onStateChange: this.onStateChange } : {})}
           plugin={this.plugin}
           constrainHeightToContainer={this.constrainHeightToContainer}
           ref={this.calendarRef}
@@ -54,7 +54,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
     );
   }
 
-  onunload(): void {
+  override onunload(): void {
     this.root?.unmount();
     this.root = null;
     this.containerEl.removeClass("tasks-calendar");

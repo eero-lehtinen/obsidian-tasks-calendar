@@ -2,8 +2,13 @@
   "name": "obsidian-tasks-calendar",
   "version": "1.0.5",
   "description": "A calendar view for tasks in an Obsidian vault.",
+  "private": true,
   "main": "main.js",
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "npm@11.18.0",
   "scripts": {
     "build": "npm run check && node esbuild.config.mjs production",
     "dev": "node esbuild.config.mjs",
@@ -11,7 +16,7 @@
     "format:check": "biome format .",
     "lint": "biome lint .",
     "test": "vitest run",
-    "check": "npm run format:check && npm run lint && tsc --noEmit",
+    "check": "npm run format:check && npm run lint && tsc --build",
     "clean": "node scripts/clean.mjs",
     "deploy": "node scripts/deploy.mjs",
     "release": "npm run clean && npm run test && npm run build && node scripts/package-release.mjs",
@@ -31,9 +36,8 @@
     "@types/react-dom": "^19.2.3",
     "esbuild": "0.28.1",
     "obsidian": "^1.8.7",
-    "tslib": "^2.8.0",
-    "typescript": "^5.8.0",
-    "vitest": "^3.2.0"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
