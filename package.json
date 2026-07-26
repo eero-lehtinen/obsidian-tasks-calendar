@@ -9,6 +9,9 @@
     "node": ">=24"
   },
   "packageManager": "npm@11.18.0",
+  "allowScripts": {
+    "esbuild@0.28.1": true
+  },
   "scripts": {
     "build": "npm run check && node esbuild.config.mjs production",
     "dev": "node esbuild.config.mjs",
