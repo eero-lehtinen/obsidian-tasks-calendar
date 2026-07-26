@@ -1,9 +1,9 @@
-import { useLayoutEffect, useRef } from "react";
 import type { RefObject } from "react";
-import { CalendarLayoutController } from "./calendar-layout";
+import { useLayoutEffect, useRef } from "react";
 import type { MonthCellLayout } from "./calendar-layout";
-import type { CalendarState } from "./types";
+import { CalendarLayoutController } from "./calendar-layout";
 import type { CalendarStateUpdate } from "./calendar-toolbar";
+import type { CalendarState } from "./types";
 
 export function useCalendarLayout({
   constrainHeightToContainer,

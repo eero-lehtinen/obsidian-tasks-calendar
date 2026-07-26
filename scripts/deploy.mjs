@@ -1,6 +1,6 @@
+import { spawn } from "node:child_process";
 import { copyFile, mkdir, readFile, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { spawn } from "node:child_process";
 
 const vaultArgument = process.argv[2];
 if (!vaultArgument) {

@@ -2,11 +2,11 @@
 // biome-ignore-all lint/a11y/useFocusableInteractive: Grid headers describe cells and are not interaction targets.
 import { useDroppable } from "@dnd-kit/core";
 import type { HTMLAttributes, ReactNode, RefObject } from "react";
-import { isoWeekNumber, toDateKey } from "./date-utils";
 import type { CalendarModel } from "./calendar-model";
+import type { CalendarStateUpdate } from "./calendar-toolbar";
+import { isoWeekNumber, toDateKey } from "./date-utils";
 import type TasksCalendarPlugin from "./main";
 import type { CalendarState, CalendarTask } from "./types";
-import type { CalendarStateUpdate } from "./calendar-toolbar";
 
 export function CalendarGrid({
   anchor,

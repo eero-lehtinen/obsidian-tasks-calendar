@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { compareCalendarTasks } from "../src/task-sort";
 import { parseTaskLine } from "../src/task-parser";
+import { compareCalendarTasks } from "../src/task-sort";
 
 describe("compareCalendarTasks", () => {
   it("orders otherwise-equal tasks from bottom to top within a file", () => {

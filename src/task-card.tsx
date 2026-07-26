@@ -1,8 +1,8 @@
 import { useDraggable } from "@dnd-kit/core";
 import { motion } from "motion/react";
 import { setIcon, setTooltip } from "obsidian";
-import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent, PointerEvent, ReactNode, RefObject } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   playCompletionFeedback,
   playRecurrenceCreatedFeedback,

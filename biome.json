@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["src/**/*.{ts,tsx}", "tests/**/*.{ts,tsx}", "scripts/**/*.mjs", "*.{json,jsonc,mjs}"]
+    "includes": ["src/**/*.{css,ts,tsx}", "tests/**/*.{ts,tsx}", "scripts/**/*.mjs", "*.{json,jsonc,mjs}"]
   },
   "formatter": {
     "enabled": true,
@@ -16,6 +16,10 @@
   },
   "linter": {
     "enabled": true,
+    "domains": {
+      "react": "recommended",
+      "test": "recommended"
+    },
     "rules": {
       "preset": "recommended",
       "suspicious": {
@@ -25,6 +29,19 @@
     }
   },
   "overrides": [
+    {
+      "includes": ["src/**/*.css"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noImportantStyles": "off"
+          },
+          "style": {
+            "noDescendingSpecificity": "off"
+          }
+        }
+      }
+    },
     {
       "includes": ["tests/**/*.{ts,tsx}"],
       "linter": {
@@ -37,6 +54,11 @@
     }
   ],
   "assist": {
-    "enabled": false
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   }
 }

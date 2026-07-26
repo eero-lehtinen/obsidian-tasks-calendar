@@ -1,22 +1,22 @@
+import type { Announcements } from "@dnd-kit/core";
 import {
+  closestCenter,
   DndContext,
   DragOverlay,
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
-  closestCenter,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import type { Announcements } from "@dnd-kit/core";
-import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { CSSProperties, Ref } from "react";
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CalendarGrid } from "./calendar-grid";
 import { calendarTaskDate, createCalendarModel } from "./calendar-model";
 import { CalendarToolbar, QueryEditor } from "./calendar-toolbar";
-import { applyCompletionOverrides, reconcileCompletionOverrides } from "./completion-overrides";
 import type { CompletionOverride } from "./completion-overrides";
+import { applyCompletionOverrides, reconcileCompletionOverrides } from "./completion-overrides";
 import { fromDateKey, moveAnchor, toDateKey } from "./date-utils";
 import type TasksCalendarPlugin from "./main";
 import { TaskCard } from "./task-card";

@@ -1,13 +1,19 @@
-import { MarkdownView, Notice, Plugin, TFile, type WorkspaceLeaf, normalizePath } from "obsidian";
+import { MarkdownView, Notice, normalizePath, Plugin, TFile, type WorkspaceLeaf } from "obsidian";
 import { TasksCalendarRenderer } from "./calendar";
 import { TASKS_CALENDAR_VIEW, TasksCalendarView } from "./calendar-view";
-import { DEFAULT_SETTINGS, TasksCalendarSettingTab } from "./settings";
-import { PerformanceMonitor, PerformanceReportModal } from "./performance";
 import { insertTaskAtTop } from "./file-content";
+import { PerformanceMonitor, PerformanceReportModal } from "./performance";
+import { DEFAULT_SETTINGS, TasksCalendarSettingTab } from "./settings";
 import { fallbackToggleLine, rescheduleTaskLine } from "./task-parser";
 import { TaskStore } from "./task-store";
-import type { CalendarTask, DateField, TasksApiV1, TasksCalendarSettings, TasksPluginLike } from "./types";
-import type { CalendarState } from "./types";
+import type {
+  CalendarState,
+  CalendarTask,
+  DateField,
+  TasksApiV1,
+  TasksCalendarSettings,
+  TasksPluginLike,
+} from "./types";
 
 interface ObsidianAppWithPlugins {
   plugins?: {

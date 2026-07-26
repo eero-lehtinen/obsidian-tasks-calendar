@@ -1,6 +1,6 @@
 import { Platform, setIcon } from "obsidian";
-import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
+import { useEffect, useId, useRef } from "react";
 import { fromDateKey, titleForRange } from "./date-utils";
 import type TasksCalendarPlugin from "./main";
 import type { CalendarMode, CalendarState } from "./types";

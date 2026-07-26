@@ -1,5 +1,5 @@
-import { Modal, Setting } from "obsidian";
 import type { App } from "obsidian";
+import { Modal, Setting } from "obsidian";
 
 export type PerformanceMetric = "index.initial" | "index.file" | "index.update-latency" | "render.calendar";
 

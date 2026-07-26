@@ -8,8 +8,8 @@ import {
   lightFormat,
   max,
   parseISO,
-  startOfMonth,
   startOfWeek as startDateWeek,
+  startOfMonth,
 } from "date-fns";
 import type { CalendarMode } from "./types";
 
