@@ -1,6 +1,5 @@
 import type { Announcements } from "@dnd-kit/core";
 import {
-  closestCenter,
   DndContext,
   DragOverlay,
   KeyboardSensor,
@@ -20,6 +19,7 @@ import { CalendarToolbar, QueryEditor } from "./calendar-toolbar";
 import type { CompletionOverride } from "./completion-overrides";
 import { applyCompletionOverrides, reconcileCompletionOverrides } from "./completion-overrides";
 import { fromDateKey, moveAnchor, toDateKey } from "./date-utils";
+import { calendarCollisionDetection } from "./drag-collision";
 import type TasksCalendarPlugin from "./main";
 import { SortableTaskCard, TaskCard } from "./task-card";
 import { reorderTaskGroup, taskOrderKey } from "./task-order";
@@ -71,6 +71,7 @@ export function CalendarApp({
   const [queryOpen, setQueryOpen] = useState(false);
   const [revision, setRevision] = useState(0);
   const [activeTask, setActiveTask] = useState<CalendarTask | null>(null);
+  const [dropTargetDate, setDropTargetDate] = useState<string | null>(null);
   const [completionOverrides, setCompletionOverrides] = useState<Map<string, CompletionOverride>>(() => new Map());
   const stateRef = useRef(state);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -180,14 +181,18 @@ export function CalendarApp({
     <MotionConfig reducedMotion={plugin.settings.forceAnimations ? "never" : "user"}>
       <DndContext
         accessibility={{ announcements: dragAnnouncements }}
-        collisionDetection={closestCenter}
-        onDragCancel={() => setActiveTask(null)}
+        collisionDetection={calendarCollisionDetection}
+        onDragCancel={() => {
+          setActiveTask(null);
+          setDropTargetDate(null);
+        }}
         onDragEnd={(event) => {
           const task = event.active.data.current?.task as CalendarTask | undefined;
           const over = event.over;
           const date = over?.data.current?.date as string | undefined;
           const overTask = over?.data.current?.task as CalendarTask | undefined;
           setActiveTask(null);
+          setDropTargetDate(null);
           if (!task || !date || !over) return;
 
           const sourceDate = calendarTaskDate(task, plugin.settings, model.today);
@@ -201,9 +206,13 @@ export function CalendarApp({
           const reorderedTasks = reorderTaskGroup(targetTasks, task.id, overTask?.id ?? null);
           if (reorderedTasks) plugin.rememberTaskOrder(date, reorderedTasks.map(taskOrderKey));
         }}
+        onDragOver={(event) => {
+          setDropTargetDate((event.over?.data.current?.date as string | undefined) ?? null);
+        }}
         onDragStart={(event) => {
           const task = (event.active.data.current?.task as CalendarTask | undefined) ?? null;
           setActiveTask(task);
+          setDropTargetDate(null);
         }}
         sensors={sensors}
       >
@@ -227,6 +236,7 @@ export function CalendarApp({
           {model.queryError ? <div className="tasks-calendar-error">{model.queryError}</div> : null}
           <CalendarGrid
             anchor={anchor}
+            dropTargetDate={dropTargetDate}
             gridRef={gridRef}
             highlightedDays={highlightedDays}
             model={model}

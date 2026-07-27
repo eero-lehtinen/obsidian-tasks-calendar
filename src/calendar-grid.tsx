@@ -15,6 +15,7 @@ const dayTooltipOptions = { placement: "bottom" as const, delay: 200 };
 
 export function CalendarGrid({
   anchor,
+  dropTargetDate,
   gridRef,
   highlightedDays,
   model,
@@ -25,6 +26,7 @@ export function CalendarGrid({
   updateState,
 }: {
   anchor: Date;
+  dropTargetDate: string | null;
   gridRef: RefObject<HTMLDivElement | null>;
   highlightedDays: Set<string>;
   model: CalendarModel;
@@ -81,6 +83,7 @@ export function CalendarGrid({
               aria-label={dayTooltip}
               className={dayClasses}
               date={key}
+              isDropTarget={dropTargetDate === key}
               onContextMenu={(event) => {
                 if ((event.target as Element).closest(".tasks-calendar-task, .tasks-calendar-more, button, input"))
                   return;
@@ -145,15 +148,17 @@ function DroppableDay({
   children,
   className,
   date,
+  isDropTarget,
   tooltip,
   ...props
 }: {
   children: ReactNode;
   className: string;
   date: string;
+  isDropTarget: boolean;
   tooltip: string;
 } & Omit<HTMLAttributes<HTMLDivElement>, "children" | "className">) {
-  const { isOver, setNodeRef } = useDroppable({
+  const { setNodeRef } = useDroppable({
     id: `date:${date}`,
     data: { date },
   });
@@ -166,7 +171,7 @@ function DroppableDay({
   );
 
   return (
-    <div {...props} className={`${className}${isOver ? " is-drop-target" : ""}`} data-date={date} ref={setDayRef}>
+    <div {...props} className={`${className}${isDropTarget ? " is-drop-target" : ""}`} data-date={date} ref={setDayRef}>
       {children}
     </div>
   );
