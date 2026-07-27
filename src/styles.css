@@ -746,6 +746,10 @@
   white-space: normal;
 }
 
+.tasks-calendar-grid.is-week .tasks-calendar-task-source {
+  color: color-mix(in srgb, var(--text-muted) 70%, var(--text-faint));
+}
+
 .tasks-calendar-task-source {
   display: block;
   grid-column: 2 / -1;
