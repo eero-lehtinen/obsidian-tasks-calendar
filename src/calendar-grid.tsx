@@ -1,6 +1,7 @@
 // biome-ignore-all lint/a11y/useSemanticElements: The ARIA grid must remain a flat CSS grid for draggable day cells.
 // biome-ignore-all lint/a11y/useFocusableInteractive: Grid headers describe cells and are not interaction targets.
 import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { setTooltip } from "obsidian";
 import type { HTMLAttributes, ReactNode, RefObject } from "react";
 import { useCallback } from "react";
@@ -29,7 +30,7 @@ export function CalendarGrid({
   model: CalendarModel;
   plugin: TasksCalendarPlugin;
   recurrencePreview: Set<string>;
-  renderTask: (task: CalendarTask, showSource: boolean, completesDay?: boolean) => ReactNode;
+  renderTask: (task: CalendarTask, date: string, showSource: boolean, completesDay?: boolean) => ReactNode;
   state: CalendarState;
   updateState: CalendarStateUpdate;
 }) {
@@ -105,9 +106,15 @@ export function CalendarGrid({
                 {dayTasks.length > 0 ? <span className="tasks-calendar-day-count">{dayTasks.length}</span> : null}
               </div>
               <div className="tasks-calendar-task-list">
-                {dayTasks.map((task) =>
-                  renderTask(task, state.mode !== "month", !task.completed && remainingDayTasks === 1),
-                )}
+                <SortableContext
+                  id={`tasks:${key}`}
+                  items={dayTasks.map((task) => task.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {dayTasks.map((task) =>
+                    renderTask(task, key, state.mode !== "month", !task.completed && remainingDayTasks === 1),
+                  )}
+                </SortableContext>
                 {state.mode === "month" && dayTasks.length > 0 ? (
                   <button
                     className="tasks-calendar-more"

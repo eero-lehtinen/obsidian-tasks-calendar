@@ -30,6 +30,7 @@ export interface TasksCalendarSettings {
   datePreference: DateField[];
   undatedTasks: "hide" | "today";
   newTaskFile: string;
+  taskOrder: Record<string, string[]>;
   lastViewState: CalendarState | null;
   embeddedViewStates: Record<string, CalendarState>;
 }

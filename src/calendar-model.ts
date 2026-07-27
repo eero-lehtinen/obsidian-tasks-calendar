@@ -1,6 +1,6 @@
 import { calendarDays, toDateKey } from "./date-utils";
 import { compileQuery } from "./query";
-import { compareCalendarTasks } from "./task-sort";
+import { compareTasksInOrder, orderCalendarTasks } from "./task-order";
 import type { CalendarState, CalendarTask, TasksCalendarSettings } from "./types";
 
 export interface CalendarModel {
@@ -27,7 +27,7 @@ export function calendarTaskDate(
 export function createCalendarModel(
   tasks: CalendarTask[],
   state: CalendarState,
-  settings: Pick<TasksCalendarSettings, "datePreference" | "undatedTasks" | "weekStartsOn">,
+  settings: Pick<TasksCalendarSettings, "datePreference" | "taskOrder" | "undatedTasks" | "weekStartsOn">,
   anchor: Date,
   now = new Date(),
 ): CalendarModel {
@@ -55,11 +55,11 @@ export function createCalendarModel(
     visibleTasks += 1;
   }
 
-  for (const bucket of tasksByDate.values()) bucket.sort(compareCalendarTasks);
+  for (const [date, bucket] of tasksByDate) tasksByDate.set(date, orderCalendarTasks(bucket, settings.taskOrder[date]));
   overdueTasks.sort((left, right) => {
     const leftDate = calendarTaskDate(left, settings, today) ?? "";
     const rightDate = calendarTaskDate(right, settings, today) ?? "";
-    return leftDate.localeCompare(rightDate) || compareCalendarTasks(left, right);
+    return leftDate.localeCompare(rightDate) || compareTasksInOrder(left, right, settings.taskOrder[leftDate]);
   });
 
   return {

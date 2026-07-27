@@ -4,6 +4,7 @@ import { TASKS_CALENDAR_VIEW, TasksCalendarView } from "./calendar-view";
 import { insertTaskAtTop } from "./file-content";
 import { PerformanceMonitor, PerformanceReportModal } from "./performance";
 import { DEFAULT_SETTINGS, TasksCalendarSettingTab } from "./settings";
+import { withoutTaskOrderKey } from "./task-order";
 import { fallbackToggleLine, rescheduleTaskLine } from "./task-parser";
 import { TaskStore } from "./task-store";
 import type {
@@ -173,6 +174,18 @@ export default class TasksCalendarPlugin extends Plugin {
     } catch (error) {
       new Notice(`Could not reschedule task: ${messageFrom(error)}`);
     }
+  }
+
+  rememberTaskOrder(date: string, taskKeys: string[]): void {
+    this.settings.taskOrder[date] = taskKeys;
+    this.scheduleSettingsSave();
+    this.refreshCalendars();
+  }
+
+  forgetTaskOrder(taskKey: string): void {
+    this.settings.taskOrder = withoutTaskOrderKey(this.settings.taskOrder, taskKey);
+    this.scheduleSettingsSave();
+    this.refreshCalendars();
   }
 
   async createTask(date: string): Promise<void> {

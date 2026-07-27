@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS: TasksCalendarSettings = {
   datePreference: ["scheduled", "due", "start"],
   undatedTasks: "hide",
   newTaskFile: "Tasks.md",
+  taskOrder: {},
   lastViewState: null,
   embeddedViewStates: {},
 };

@@ -3,8 +3,9 @@ import { createCalendarModel } from "../src/calendar-model";
 import { parseTaskLine } from "../src/task-parser";
 import type { CalendarState, TasksCalendarSettings } from "../src/types";
 
-const settings: Pick<TasksCalendarSettings, "datePreference" | "undatedTasks" | "weekStartsOn"> = {
+const settings: Pick<TasksCalendarSettings, "datePreference" | "taskOrder" | "undatedTasks" | "weekStartsOn"> = {
   datePreference: ["scheduled", "due", "start"],
+  taskOrder: {},
   undatedTasks: "hide",
   weekStartsOn: 1,
 };
