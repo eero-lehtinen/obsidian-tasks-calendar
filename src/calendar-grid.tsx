@@ -1,12 +1,16 @@
 // biome-ignore-all lint/a11y/useSemanticElements: The ARIA grid must remain a flat CSS grid for draggable day cells.
 // biome-ignore-all lint/a11y/useFocusableInteractive: Grid headers describe cells and are not interaction targets.
 import { useDroppable } from "@dnd-kit/core";
+import { setTooltip } from "obsidian";
 import type { HTMLAttributes, ReactNode, RefObject } from "react";
+import { useCallback } from "react";
 import type { CalendarModel } from "./calendar-model";
 import type { CalendarStateUpdate } from "./calendar-toolbar";
 import { isoWeekNumber, toDateKey } from "./date-utils";
 import type TasksCalendarPlugin from "./main";
 import type { CalendarState, CalendarTask } from "./types";
+
+const dayTooltipOptions = { placement: "bottom" as const, delay: 200 };
 
 export function CalendarGrid({
   anchor,
@@ -48,6 +52,7 @@ export function CalendarGrid({
       {model.days.map((day, index) => {
         const key = toDateKey(day);
         const dayTasks = model.tasksByDate.get(key) ?? [];
+        const dayTooltip = `${day.toDateString()}, ${dayTasks.length} tasks`;
         const remainingDayTasks = dayTasks.filter((task) => !task.completed).length;
         const dayClasses = [
           "tasks-calendar-day",
@@ -70,7 +75,7 @@ export function CalendarGrid({
             weekNumber={isoWeekNumber(model.days[index + 3] ?? day)}
           >
             <DroppableDay
-              aria-label={`${day.toDateString()}, ${dayTasks.length} tasks`}
+              aria-label={dayTooltip}
               className={dayClasses}
               date={key}
               onContextMenu={(event) => {
@@ -79,7 +84,13 @@ export function CalendarGrid({
                 event.preventDefault();
                 void plugin.createTask(key);
               }}
+              onDoubleClick={(event) => {
+                if ((event.target as Element).closest(".tasks-calendar-task, .tasks-calendar-more, button, input"))
+                  return;
+                updateState({ anchor: key, mode: "day" });
+              }}
               role="gridcell"
+              tooltip={dayTooltip}
             >
               <div className="tasks-calendar-day-heading">
                 <button
@@ -118,19 +129,28 @@ function DroppableDay({
   children,
   className,
   date,
+  tooltip,
   ...props
 }: {
   children: ReactNode;
   className: string;
   date: string;
+  tooltip: string;
 } & Omit<HTMLAttributes<HTMLDivElement>, "children" | "className">) {
   const { isOver, setNodeRef } = useDroppable({
     id: `date:${date}`,
     data: { date },
   });
+  const setDayRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      setNodeRef(element);
+      if (element) setTooltip(element, tooltip, dayTooltipOptions);
+    },
+    [setNodeRef, tooltip],
+  );
 
   return (
-    <div {...props} className={`${className}${isOver ? " is-drop-target" : ""}`} data-date={date} ref={setNodeRef}>
+    <div {...props} className={`${className}${isOver ? " is-drop-target" : ""}`} data-date={date} ref={setDayRef}>
       {children}
     </div>
   );
