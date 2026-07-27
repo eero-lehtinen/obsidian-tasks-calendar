@@ -9,12 +9,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { MotionConfig } from "motion/react";
 import type { CSSProperties, Ref } from "react";
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
@@ -26,9 +21,9 @@ import type { CompletionOverride } from "./completion-overrides";
 import { applyCompletionOverrides, reconcileCompletionOverrides } from "./completion-overrides";
 import { fromDateKey, moveAnchor, toDateKey } from "./date-utils";
 import type TasksCalendarPlugin from "./main";
-import { TaskCard } from "./task-card";
-import { taskOrderKey } from "./task-order";
-import { createTaskVisualKeyFactory, taskVisualKey } from "./task-visual-key";
+import { SortableTaskCard, TaskCard } from "./task-card";
+import { reorderTaskGroup, taskOrderKey } from "./task-order";
+import { taskVisualKey } from "./task-visual-key";
 import type { CalendarState, CalendarTask } from "./types";
 import { useCalendarLayout } from "./use-calendar-layout";
 import { useRecurrenceFeedback } from "./use-recurrence-feedback";
@@ -129,6 +124,12 @@ export function CalendarApp({
     setCompletionOverrides((current) => reconcileCompletionOverrides(tasks, current));
   }, [tasks]);
 
+  useEffect(() => {
+    if (!activeTask) return;
+    document.body.classList.add("tasks-calendar-is-dragging");
+    return () => document.body.classList.remove("tasks-calendar-is-dragging");
+  }, [activeTask]);
+
   useCalendarLayout({
     constrainHeightToContainer,
     gridRef,
@@ -156,15 +157,14 @@ export function CalendarApp({
   }, []);
 
   let taskIndex = 0;
-  const nextTaskVisualKey = createTaskVisualKeyFactory();
   const renderTask = (task: CalendarTask, date: string, showSource: boolean, completesDay = false) => {
     const titleId = `tasks-calendar-${instanceId}-task-${taskIndex++}`;
     return (
-      <TaskCard
+      <SortableTaskCard
         calendarDate={date}
         completesDay={completesDay}
         highlightNewRecurrence={highlightedTasks.has(taskVisualKey(task))}
-        key={`${state.mode}:${nextTaskVisualKey(task)}`}
+        key={task.id}
         onCompletionChange={updateCompletionOverride}
         onRecurringCompletion={expectRecurringTask}
         onRecurrencePreview={previewRecurrence}
@@ -198,13 +198,8 @@ export function CalendarApp({
           }
 
           const targetTasks = model.tasksByDate.get(date) ?? [];
-          const oldIndex = targetTasks.findIndex((candidate) => candidate.id === task.id);
-          const newIndex =
-            overTask === undefined
-              ? targetTasks.length - 1
-              : targetTasks.findIndex((candidate) => candidate.id === overTask.id);
-          if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
-          plugin.rememberTaskOrder(date, arrayMove(targetTasks, oldIndex, newIndex).map(taskOrderKey));
+          const reorderedTasks = reorderTaskGroup(targetTasks, task.id, overTask?.id ?? null);
+          if (reorderedTasks) plugin.rememberTaskOrder(date, reorderedTasks.map(taskOrderKey));
         }}
         onDragStart={(event) => {
           const task = (event.active.data.current?.task as CalendarTask | undefined) ?? null;
@@ -248,32 +243,26 @@ export function CalendarApp({
                 <span className="tasks-calendar-overdue-count">{model.overdueTasks.length}</span>
               </header>
               <div className="tasks-calendar-task-list tasks-calendar-overdue-list">
-                <SortableContext
-                  id="tasks:overdue"
-                  items={model.overdueTasks.map((task) => task.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {model.overdueTasks.map((task) => (
-                    <TaskCard
-                      calendarDate={calendarTaskDate(task, plugin.settings, model.today) ?? model.today}
-                      highlightNewRecurrence={highlightedTasks.has(taskVisualKey(task))}
-                      key={`overdue-${state.mode}:${nextTaskVisualKey(task)}`}
-                      meta={
-                        <span className="tasks-calendar-overdue-meta">
-                          {calendarTaskDate(task, plugin.settings, model.today) ?? "No date"} ·{" "}
-                          {task.path.replace(/\.md$/i, "")}
-                        </span>
-                      }
-                      onCompletionChange={updateCompletionOverride}
-                      onRecurringCompletion={expectRecurringTask}
-                      onRecurrencePreview={previewRecurrence}
-                      plugin={plugin}
-                      showSource={false}
-                      task={task}
-                      titleId={`tasks-calendar-${instanceId}-task-${taskIndex++}`}
-                    />
-                  ))}
-                </SortableContext>
+                {model.overdueTasks.map((task) => (
+                  <TaskCard
+                    calendarDate={calendarTaskDate(task, plugin.settings, model.today) ?? model.today}
+                    highlightNewRecurrence={highlightedTasks.has(taskVisualKey(task))}
+                    key={task.id}
+                    meta={
+                      <span className="tasks-calendar-overdue-meta">
+                        {calendarTaskDate(task, plugin.settings, model.today) ?? "No date"} ·{" "}
+                        {task.path.replace(/\.md$/i, "")}
+                      </span>
+                    }
+                    onCompletionChange={updateCompletionOverride}
+                    onRecurringCompletion={expectRecurringTask}
+                    onRecurrencePreview={previewRecurrence}
+                    plugin={plugin}
+                    showSource={false}
+                    task={task}
+                    titleId={`tasks-calendar-${instanceId}-task-${taskIndex++}`}
+                  />
+                ))}
               </div>
             </section>
           ) : null}

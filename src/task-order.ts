@@ -23,6 +23,26 @@ export function withoutTaskOrderKey(
   return remainingOrders;
 }
 
+export function reorderTaskGroup(
+  tasks: readonly CalendarTask[],
+  activeId: string,
+  overId: string | null,
+): CalendarTask[] | null {
+  const activeTask = tasks.find((task) => task.id === activeId);
+  if (!activeTask) return null;
+
+  const group = tasks.filter((task) => task.completed === activeTask.completed);
+  const oldIndex = group.findIndex((task) => task.id === activeId);
+  const newIndex = overId === null ? group.length - 1 : group.findIndex((task) => task.id === overId);
+  if (newIndex === -1 || oldIndex === newIndex) return null;
+
+  const reorderedGroup = [...group];
+  const [movedTask] = reorderedGroup.splice(oldIndex, 1);
+  reorderedGroup.splice(newIndex, 0, movedTask);
+  const otherGroup = tasks.filter((task) => task.completed !== activeTask.completed);
+  return activeTask.completed ? [...otherGroup, ...reorderedGroup] : [...reorderedGroup, ...otherGroup];
+}
+
 export const taskOrderKey = taskVisualKey;
 
 function compareTaskPositions(left: CalendarTask, right: CalendarTask, positions: ReadonlyMap<string, number>): number {

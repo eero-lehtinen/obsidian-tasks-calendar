@@ -53,6 +53,8 @@ export function CalendarGrid({
       {model.days.map((day, index) => {
         const key = toDateKey(day);
         const dayTasks = model.tasksByDate.get(key) ?? [];
+        const activeTasks = dayTasks.filter((task) => !task.completed);
+        const completedTasks = dayTasks.filter((task) => task.completed);
         const dayTooltip = `${day.toDateString()}, ${dayTasks.length} tasks`;
         const remainingDayTasks = dayTasks.filter((task) => !task.completed).length;
         const dayClasses = [
@@ -107,13 +109,20 @@ export function CalendarGrid({
               </div>
               <div className="tasks-calendar-task-list">
                 <SortableContext
-                  id={`tasks:${key}`}
-                  items={dayTasks.map((task) => task.id)}
+                  id={`tasks:${key}:active`}
+                  items={activeTasks.map((task) => task.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {dayTasks.map((task) =>
+                  {activeTasks.map((task) =>
                     renderTask(task, key, state.mode !== "month", !task.completed && remainingDayTasks === 1),
                   )}
+                </SortableContext>
+                <SortableContext
+                  id={`tasks:${key}:completed`}
+                  items={completedTasks.map((task) => task.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {completedTasks.map((task) => renderTask(task, key, state.mode !== "month"))}
                 </SortableContext>
                 {state.mode === "month" && dayTasks.length > 0 ? (
                   <button

@@ -351,7 +351,7 @@
   border-radius: 6px;
   background: var(--tasks-calendar-task-background);
   background-clip: padding-box;
-  cursor: default;
+  cursor: grab;
   font-size: calc(var(--font-ui-smaller) + 1px);
   line-height: 1.3;
   transition:
@@ -360,6 +360,11 @@
     opacity 320ms ease,
     outline-color 100ms ease;
   user-select: none;
+}
+
+.tasks-calendar-is-dragging,
+.tasks-calendar-is-dragging * {
+  cursor: grabbing !important;
 }
 
 .tasks-calendar-task.is-dragging {
@@ -710,7 +715,7 @@
   background: transparent !important;
   box-shadow: none !important;
   color: var(--text-normal);
-  cursor: default;
+  cursor: grab;
   font: inherit;
   text-align: left;
   text-overflow: ellipsis;

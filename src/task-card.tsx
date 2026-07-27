@@ -1,7 +1,8 @@
+import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { setIcon, setTooltip } from "obsidian";
-import type { MouseEvent, PointerEvent, ReactNode, RefObject } from "react";
+import type { CSSProperties, KeyboardEventHandler, MouseEvent, PointerEvent, ReactNode, RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   playCompletionFeedback,
@@ -26,12 +27,49 @@ interface TaskCardProps {
   onRecurrencePreview: (task: CalendarTask | null) => void;
 }
 
+interface TaskDragBinding {
+  attributes: DraggableAttributes;
+  isDragging: boolean;
+  listeners: DraggableSyntheticListeners;
+  setActivatorNodeRef: (element: HTMLElement | null) => void;
+  setNodeRef: (element: HTMLElement | null) => void;
+  style: CSSProperties;
+}
+
 const tooltipOptions = { placement: "bottom" as const, delay: 200 };
 const completionStyleDelayMs = TASK_COMPLETION_FEEDBACK_DURATION_MS * 0.65;
 const completionMoveDelayMs = 200;
 
-export function TaskCard({
-  calendarDate,
+export function SortableTaskCard(props: TaskCardProps) {
+  const { task, calendarDate } = props;
+  const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef, transform, transition } = useSortable({
+    id: task.id,
+    data: { date: calendarDate, task },
+  });
+  return (
+    <TaskCardView
+      {...props}
+      drag={{
+        attributes,
+        isDragging,
+        listeners,
+        setActivatorNodeRef,
+        setNodeRef,
+        style: {
+          opacity: isDragging ? 0 : undefined,
+          transform: CSS.Transform.toString(transform),
+          transition,
+        },
+      }}
+    />
+  );
+}
+
+export function TaskCard(props: TaskCardProps) {
+  return <TaskCardView {...props} />;
+}
+
+function TaskCardView({
   completesDay = false,
   highlightNewRecurrence,
   onCompletionChange,
@@ -42,7 +80,8 @@ export function TaskCard({
   task,
   titleId,
   onRecurrencePreview,
-}: TaskCardProps) {
+  drag,
+}: TaskCardProps & { drag?: TaskDragBinding }) {
   const itemRef = useRef<HTMLDivElement>(null);
   const completionOutlineRef = useRef<HTMLSpanElement>(null);
   const completionPending = useRef(false);
@@ -55,18 +94,16 @@ export function TaskCard({
   const [styledCompleted, setStyledCompleted] = useState(task.completed);
   const [isChecking, setIsChecking] = useState(false);
   const taskName = task.description || "Untitled task";
-  const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef, transform, transition } = useSortable({
-    id: task.id,
-    data: { date: calendarDate, task },
-  });
+  const dragSetNodeRef = drag?.setNodeRef;
   const setItemRef = useCallback(
     (element: HTMLDivElement | null) => {
       itemRef.current = element;
-      setActivatorNodeRef(element);
-      setNodeRef(element);
+      dragSetNodeRef?.(element);
     },
-    [setActivatorNodeRef, setNodeRef],
+    [dragSetNodeRef],
   );
+  const { onKeyDown, ...pointerListeners } = drag?.listeners ?? {};
+  const keyboardDragProps = onKeyDown ? { onKeyDown: onKeyDown as KeyboardEventHandler<HTMLButtonElement> } : {};
 
   useTooltip(itemRef, taskName);
   useEffect(() => {
@@ -120,9 +157,9 @@ export function TaskCard({
   };
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: dnd-kit supplies the card's role and keyboard attributes.
+    // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: The title button provides the keyboard equivalent for card editing.
     <div
-      className={`tasks-calendar-task${task.recurrence ? " has-recurrence" : ""}${styledCompleted ? " is-completed" : ""}${isDragging ? " is-dragging" : ""}`}
+      className={`tasks-calendar-task${task.recurrence ? " has-recurrence" : ""}${styledCompleted ? " is-completed" : ""}${drag?.isDragging ? " is-dragging" : ""}`}
       data-priority={task.priority}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
@@ -130,19 +167,8 @@ export function TaskCard({
         lastPointerType.current = event.pointerType;
       }}
       ref={setItemRef}
-      {...attributes}
-      {...listeners}
-      role={attributes.role}
-      tabIndex={attributes.tabIndex}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget && (event.target as Element).closest("button, input")) return;
-        listeners?.onKeyDown?.(event);
-      }}
-      style={{
-        opacity: isDragging ? 0 : undefined,
-        transform: CSS.Transform.toString(transform),
-        transition,
-      }}
+      {...pointerListeners}
+      style={drag?.style}
     >
       <span
         className={`tasks-calendar-checkbox-control${optimisticCompleted ? " is-checked" : ""}${isChecking ? " is-checking" : ""}`}
@@ -224,7 +250,13 @@ export function TaskCard({
           <path d="M3.2 8.2 6.5 11.3 12.9 4.8" pathLength="1" />
         </svg>
       </span>
-      <button className="tasks-calendar-task-title" id={titleId} type="button">
+      <button
+        className="tasks-calendar-task-title"
+        id={titleId}
+        type="button"
+        {...(drag ? { ...drag.attributes, ref: drag.setActivatorNodeRef } : {})}
+        {...keyboardDragProps}
+      >
         {taskName}
       </button>
       {task.recurrence ? (

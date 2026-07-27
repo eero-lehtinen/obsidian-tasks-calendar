@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { orderCalendarTasks, taskOrderKey, withoutTaskOrderKey } from "../src/task-order";
+import { orderCalendarTasks, reorderTaskGroup, taskOrderKey, withoutTaskOrderKey } from "../src/task-order";
 import { parseTaskLine } from "../src/task-parser";
 
 const alpha = parseTaskLine("- [ ] Alpha 📅 2026-07-24", "Tasks.md", 1)!;
@@ -43,5 +43,21 @@ describe("withoutTaskOrderKey", () => {
       "2026-07-24": [beta.id],
       "2026-07-26": [gamma.id],
     });
+  });
+});
+
+describe("reorderTaskGroup", () => {
+  const completed = parseTaskLine("- [x] Completed 📅 2026-07-24", "Tasks.md", 4)!;
+
+  it("reorders within a completion group and preserves the group boundary", () => {
+    expect(reorderTaskGroup([alpha, beta, completed], alpha.id, beta.id)?.map((task) => task.description)).toEqual([
+      "Beta",
+      "Alpha",
+      "Completed",
+    ]);
+  });
+
+  it("rejects a target in the other completion group", () => {
+    expect(reorderTaskGroup([alpha, completed], alpha.id, completed.id)).toBeNull();
   });
 });
