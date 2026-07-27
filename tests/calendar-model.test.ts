@@ -16,6 +16,7 @@ const state: CalendarState = {
   search: "",
   selectedDate: null,
   showCompleted: false,
+  dayHeight: null,
   monthHeight: null,
   weekHeight: null,
 };

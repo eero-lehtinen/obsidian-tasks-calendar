@@ -1,4 +1,4 @@
-export type CalendarMode = "month" | "week";
+export type CalendarMode = "month" | "week" | "day";
 export type DateField = "scheduled" | "due" | "start";
 
 export interface CalendarTask {
@@ -40,6 +40,7 @@ export interface CalendarState {
   query: string;
   showCompleted: boolean;
   search: string;
+  dayHeight: number | null;
   monthHeight: number | null;
   weekHeight: number | null;
   selectedDate: string | null;

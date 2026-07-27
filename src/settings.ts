@@ -35,9 +35,10 @@ export class TasksCalendarSettingTab extends PluginSettingTab {
         dropdown
           .addOption("month", "Month")
           .addOption("week", "Week")
+          .addOption("day", "Day")
           .setValue(this.plugin.settings.defaultView)
           .onChange(async (value) => {
-            this.plugin.settings.defaultView = value as "month" | "week";
+            this.plugin.settings.defaultView = value as TasksCalendarSettings["defaultView"];
             await this.plugin.saveSettings();
           }),
       );

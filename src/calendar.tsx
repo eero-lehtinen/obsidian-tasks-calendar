@@ -30,6 +30,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       query: initial.query ?? plugin.settings.defaultQuery,
       showCompleted: initial.showCompleted ?? plugin.settings.showCompleted,
       search: initial.search ?? "",
+      dayHeight: initial.dayHeight ?? null,
       monthHeight: initial.monthHeight ?? null,
       weekHeight: initial.weekHeight ?? null,
       selectedDate: initial.selectedDate ?? null,

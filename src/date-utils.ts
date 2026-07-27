@@ -30,6 +30,8 @@ export function startOfWeek(date: Date, weekStartsOn: 0 | 1): Date {
 }
 
 export function calendarDays(anchor: Date, mode: CalendarMode, weekStartsOn: 0 | 1): Date[] {
+  if (mode === "day") return [anchor];
+
   if (mode === "week") {
     const start = startOfWeek(anchor, weekStartsOn);
     return eachDayOfInterval({ start, end: addDateDays(start, 6) });
@@ -43,6 +45,8 @@ export function calendarDays(anchor: Date, mode: CalendarMode, weekStartsOn: 0 |
 }
 
 export function moveAnchor(anchor: Date, mode: CalendarMode, direction: -1 | 1): Date {
+  if (mode === "day") return addDays(anchor, direction);
+
   if (mode === "week") {
     return addDays(anchor, direction * 7);
   }
@@ -54,6 +58,15 @@ export function isoWeekNumber(date: Date): number {
 }
 
 export function titleForRange(anchor: Date, mode: CalendarMode, weekStartsOn: 0 | 1, locale?: string): string {
+  if (mode === "day") {
+    return new Intl.DateTimeFormat(locale, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }).format(anchor);
+  }
+
   if (mode === "month") {
     return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(anchor);
   }

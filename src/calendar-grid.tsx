@@ -31,16 +31,18 @@ export function CalendarGrid({
 }) {
   return (
     <div aria-label="Tasks calendar" className={`tasks-calendar-grid is-${state.mode}`} ref={gridRef} role="grid">
-      <div
-        aria-label="ISO week number"
-        className="tasks-calendar-weekday tasks-calendar-week-number-header"
-        role="columnheader"
-      >
-        Wk
-      </div>
+      {state.mode !== "day" ? (
+        <div
+          aria-label="ISO week number"
+          className="tasks-calendar-weekday tasks-calendar-week-number-header"
+          role="columnheader"
+        >
+          Wk
+        </div>
+      ) : null}
       {model.days.slice(0, 7).map((day) => (
         <div className="tasks-calendar-weekday" key={`weekday-${day.getDay()}`} role="columnheader">
-          {new Intl.DateTimeFormat(undefined, { weekday: state.mode === "week" ? "long" : "short" }).format(day)}
+          {new Intl.DateTimeFormat(undefined, { weekday: state.mode === "month" ? "short" : "long" }).format(day)}
         </div>
       ))}
       {model.days.map((day, index) => {
@@ -65,6 +67,7 @@ export function CalendarGrid({
             }
             index={index}
             key={`${state.mode}:${state.anchor}:${key}`}
+            showWeekNumber={state.mode !== "day"}
             weekNumber={isoWeekNumber(model.days[index + 3] ?? day)}
           >
             <DroppableDay
@@ -82,11 +85,11 @@ export function CalendarGrid({
             >
               <div className="tasks-calendar-day-heading">
                 <button
-                  onClick={() => updateState({ anchor: key, mode: "week", selectedDate: key })}
+                  onClick={() => updateState({ anchor: key, mode: "day", selectedDate: key })}
                   className="tasks-calendar-day-number"
                   type="button"
                 >
-                  {state.mode === "week"
+                  {state.mode !== "month"
                     ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(day)
                     : day.getDate()}
                 </button>
@@ -94,13 +97,13 @@ export function CalendarGrid({
               </div>
               <div className="tasks-calendar-task-list">
                 {dayTasks.map((task) =>
-                  renderTask(task, state.mode === "week", !task.completed && remainingDayTasks === 1),
+                  renderTask(task, state.mode !== "month", !task.completed && remainingDayTasks === 1),
                 )}
                 {state.mode === "month" && dayTasks.length > 0 ? (
                   <button
                     className="tasks-calendar-more"
                     hidden
-                    onClick={() => updateState({ anchor: key, mode: "week", selectedDate: key })}
+                    onClick={() => updateState({ anchor: key, mode: "day", selectedDate: key })}
                     type="button"
                   />
                 ) : null}
@@ -139,16 +142,18 @@ function DayFragment({
   children,
   current,
   index,
+  showWeekNumber,
   weekNumber,
 }: {
   children: ReactNode;
   current: boolean;
   index: number;
+  showWeekNumber: boolean;
   weekNumber: number;
 }) {
   return (
     <>
-      {index % 7 === 0 ? (
+      {showWeekNumber && index % 7 === 0 ? (
         <div
           aria-current={current ? "true" : undefined}
           aria-label={`Week ${weekNumber}`}

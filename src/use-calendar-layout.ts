@@ -21,7 +21,7 @@ export function useCalendarLayout({
   updateState: CalendarStateUpdate;
 }): void {
   const layoutRef = useRef(new CalendarLayoutController());
-  const { mode, monthHeight, weekHeight } = state;
+  const { dayHeight, mode, monthHeight, weekHeight } = state;
 
   useLayoutEffect(() => {
     // Both values change the rendered grid dimensions even though measurement only reads the DOM.
@@ -32,8 +32,8 @@ export function useCalendarLayout({
     if (!grid) return;
     layout.reset();
 
-    const heightKey = mode === "week" ? "weekHeight" : "monthHeight";
-    const desiredHeight = mode === "week" ? weekHeight : monthHeight;
+    const heightKey = mode === "day" ? "dayHeight" : mode === "week" ? "weekHeight" : "monthHeight";
+    const desiredHeight = mode === "day" ? dayHeight : mode === "week" ? weekHeight : monthHeight;
     layout.observeHeight(
       grid,
       desiredHeight,
@@ -62,5 +62,5 @@ export function useCalendarLayout({
       layout.observeMonth(grid, layouts);
     }
     return () => layout.reset();
-  }, [constrainHeightToContainer, gridRef, model, mode, monthHeight, queryOpen, updateState, weekHeight]);
+  }, [constrainHeightToContainer, dayHeight, gridRef, model, mode, monthHeight, queryOpen, updateState, weekHeight]);
 }

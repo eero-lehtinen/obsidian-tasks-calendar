@@ -61,6 +61,9 @@ export function CalendarToolbar({
           <ModeButton mode="week" state={state} updateState={updateState}>
             Week
           </ModeButton>
+          <ModeButton mode="day" state={state} updateState={updateState}>
+            Day
+          </ModeButton>
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { DEFAULT_SETTINGS, TasksCalendarSettingTab } from "./settings";
 import { fallbackToggleLine, rescheduleTaskLine } from "./task-parser";
 import { TaskStore } from "./task-store";
 import type {
+  CalendarMode,
   CalendarState,
   CalendarTask,
   DateField,
@@ -49,6 +50,11 @@ export default class TasksCalendarPlugin extends Plugin {
       id: "open-tasks-calendar-week",
       name: "Open calendar in week view",
       callback: () => void this.activateView("week"),
+    });
+    this.addCommand({
+      id: "open-tasks-calendar-day",
+      name: "Open calendar in day view",
+      callback: () => void this.activateView("day"),
     });
     this.addCommand({
       id: "show-performance-report",
@@ -104,7 +110,7 @@ export default class TasksCalendarPlugin extends Plugin {
     this.app.workspace.detachLeavesOfType(TASKS_CALENDAR_VIEW);
   }
 
-  async activateView(mode?: "week" | "month"): Promise<void> {
+  async activateView(mode?: CalendarMode): Promise<void> {
     let leaf: WorkspaceLeaf | null = this.app.workspace.getLeavesOfType(TASKS_CALENDAR_VIEW)[0] ?? null;
     if (!leaf) {
       leaf = this.app.workspace.getLeaf("tab");

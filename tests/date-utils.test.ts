@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calendarDays, isoWeekNumber, startOfWeek, titleForRange, toDateKey } from "../src/date-utils";
+import { calendarDays, isoWeekNumber, moveAnchor, startOfWeek, titleForRange, toDateKey } from "../src/date-utils";
 
 describe("calendarDays", () => {
   it("builds a complete six-week month grid when required", () => {
@@ -14,6 +14,13 @@ describe("calendarDays", () => {
     expect(toDateKey(startOfWeek(date, 0))).toBe("2026-07-19");
     expect(toDateKey(startOfWeek(date, 1))).toBe("2026-07-20");
     expect(titleForRange(date, "week", 0, "en-US")).toContain("Jul 19");
+  });
+
+  it("builds and navigates a single-day range", () => {
+    const date = new Date(2026, 6, 24);
+    expect(calendarDays(date, "day", 1).map(toDateKey)).toEqual(["2026-07-24"]);
+    expect(toDateKey(moveAnchor(date, "day", 1))).toBe("2026-07-25");
+    expect(titleForRange(date, "day", 1, "en-US")).toBe("Friday, July 24, 2026");
   });
 });
 
