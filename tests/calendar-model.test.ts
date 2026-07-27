@@ -14,7 +14,6 @@ const state: CalendarState = {
   mode: "month",
   query: "",
   search: "",
-  selectedDate: null,
   showCompleted: false,
   dayHeight: null,
   monthHeight: null,

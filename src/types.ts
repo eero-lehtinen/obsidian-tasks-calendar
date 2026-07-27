@@ -43,7 +43,6 @@ export interface CalendarState {
   dayHeight: number | null;
   monthHeight: number | null;
   weekHeight: number | null;
-  selectedDate: string | null;
 }
 
 export interface QueryResult {

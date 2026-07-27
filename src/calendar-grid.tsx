@@ -52,7 +52,6 @@ export function CalendarGrid({
         const dayClasses = [
           "tasks-calendar-day",
           key === model.today ? "is-today" : "",
-          key === state.selectedDate ? "is-selected" : "",
           state.mode === "month" && day.getMonth() !== anchor.getMonth() ? "is-outside" : "",
           recurrencePreview.has(key) || highlightedDays.has(key) ? "is-recurrence-preview" : "",
         ]
@@ -72,7 +71,6 @@ export function CalendarGrid({
           >
             <DroppableDay
               aria-label={`${day.toDateString()}, ${dayTasks.length} tasks`}
-              aria-selected={key === state.selectedDate}
               className={dayClasses}
               date={key}
               onContextMenu={(event) => {
@@ -85,7 +83,7 @@ export function CalendarGrid({
             >
               <div className="tasks-calendar-day-heading">
                 <button
-                  onClick={() => updateState({ anchor: key, mode: "day", selectedDate: key })}
+                  onClick={() => updateState({ anchor: key, mode: "day" })}
                   className="tasks-calendar-day-number"
                   type="button"
                 >
@@ -103,7 +101,7 @@ export function CalendarGrid({
                   <button
                     className="tasks-calendar-more"
                     hidden
-                    onClick={() => updateState({ anchor: key, mode: "day", selectedDate: key })}
+                    onClick={() => updateState({ anchor: key, mode: "day" })}
                     type="button"
                   />
                 ) : null}

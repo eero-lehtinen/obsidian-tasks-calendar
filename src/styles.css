@@ -2,7 +2,6 @@
   --tasks-calendar-border: var(--background-modifier-border);
   --tasks-calendar-accent: var(--interactive-accent);
   --tasks-calendar-recurrence-accent: var(--color-cyan, #00b8d4);
-  --tasks-calendar-selected-accent: var(--color-orange, #f59e0b);
   --tasks-calendar-today: color-mix(in srgb, #fff 2%, transparent);
   --tasks-calendar-completed-opacity: 0.42;
   display: flex;
@@ -291,23 +290,6 @@
 .tasks-calendar-day.is-drop-target {
   outline: 2px dashed var(--interactive-accent);
   outline-offset: -3px;
-}
-
-.tasks-calendar-day.is-selected {
-  outline: 3px solid var(--tasks-calendar-selected-accent);
-  outline-offset: -3px;
-  animation: tasks-calendar-selection-outline 1.2s ease-out forwards;
-}
-
-@keyframes tasks-calendar-selection-outline {
-  0%,
-  55% {
-    outline-color: var(--tasks-calendar-selected-accent);
-  }
-
-  100% {
-    outline-color: transparent;
-  }
 }
 
 .tasks-calendar-day-heading {
@@ -622,7 +604,6 @@
     transition-duration: 0.01ms;
   }
 
-  .tasks-calendar-react-root:not(.tasks-calendar-force-animations) .tasks-calendar-day.is-selected,
   .tasks-calendar-react-root:not(.tasks-calendar-force-animations)
     .tasks-calendar-checkbox-control.is-checking
     .tasks-calendar-checkbox,

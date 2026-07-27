@@ -41,8 +41,6 @@ interface CalendarAppProps {
   ref?: Ref<CalendarHandle>;
 }
 
-const SELECTION_DISPLAY_DURATION_MS = 1_200;
-
 const dragAnnouncements: Announcements = {
   onDragStart: ({ active }) => `Picked up ${dragTaskName(active.data.current?.task)}.`,
   onDragOver: ({ active, over }) => {
@@ -125,12 +123,6 @@ export function CalendarApp({
     setCompletionOverrides((current) => reconcileCompletionOverrides(tasks, current));
   }, [tasks]);
 
-  useEffect(() => {
-    if (!state.selectedDate) return;
-    const timeoutId = window.setTimeout(() => updateState({ selectedDate: null }), SELECTION_DISPLAY_DURATION_MS);
-    return () => window.clearTimeout(timeoutId);
-  }, [state.selectedDate, updateState]);
-
   useCalendarLayout({
     constrainHeightToContainer,
     gridRef,
@@ -202,11 +194,10 @@ export function CalendarApp({
             onNavigate={(direction) =>
               updateState({
                 anchor: toDateKey(moveAnchor(fromDateKey(state.anchor), state.mode, direction)),
-                selectedDate: null,
               })
             }
             onQueryToggle={() => setQueryOpen((open) => !open)}
-            onToday={() => updateState({ anchor: toDateKey(new Date()), selectedDate: null })}
+            onToday={() => updateState({ anchor: toDateKey(new Date()) })}
             plugin={plugin}
             state={state}
             updateState={updateState}
