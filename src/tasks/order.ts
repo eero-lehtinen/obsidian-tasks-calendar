@@ -1,6 +1,6 @@
 import type { CalendarTask } from "../types";
-import { compareCalendarTasks } from "./task-sort";
-import { taskVisualKey } from "./task-visual-key";
+import { compareCalendarTasks } from "./sort";
+import { taskVisualKey } from "./visual-key";
 
 export function orderCalendarTasks(tasks: CalendarTask[], order: readonly string[] = []): CalendarTask[] {
   const positions = new Map(order.map((id, index) => [id, index]));

@@ -4,8 +4,8 @@ import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import type TasksCalendarPlugin from "../main";
 import type { CalendarState } from "../types";
-import type { CalendarHandle } from "./calendar-app";
-import { CalendarApp } from "./calendar-app";
+import type { CalendarHandle } from "./app";
+import { CalendarApp } from "./app";
 import { toDateKey } from "./date-utils";
 
 let nextCalendarInstanceId = 0;

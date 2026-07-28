@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { calendarTaskDate } from "../calendar/calendar-model";
 import { toDateKey } from "../calendar/date-utils";
+import { calendarTaskDate } from "../calendar/model";
 import type TasksCalendarPlugin from "../main";
 import type { CalendarTask } from "../types";
 import { RECURRENCE_CREATED_FEEDBACK_DURATION_MS } from "./completion-feedback";
 import { recurrenceDateKeys } from "./recurrence";
 import type { PendingRecurrenceCreation } from "./recurrence-created";
 import { capturePendingRecurrence, findCreatedRecurrence } from "./recurrence-created";
-import { taskVisualKey } from "./task-visual-key";
+import { taskVisualKey } from "./visual-key";
 
 export function useRecurrenceFeedback({
   days,

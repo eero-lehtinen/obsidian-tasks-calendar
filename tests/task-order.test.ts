@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { orderCalendarTasks, reorderTaskGroup, taskOrderKey, withoutTaskOrderKey } from "../src/tasks/task-order";
-import { parseTaskLine } from "../src/tasks/task-parser";
+import { orderCalendarTasks, reorderTaskGroup, taskOrderKey, withoutTaskOrderKey } from "../src/tasks/order";
+import { parseTaskLine } from "../src/tasks/parser";
 
 const alpha = parseTaskLine("- [ ] Alpha 📅 2026-07-24", "Tasks.md", 1)!;
 const beta = parseTaskLine("- [ ] Beta 📅 2026-07-24", "Tasks.md", 2)!;

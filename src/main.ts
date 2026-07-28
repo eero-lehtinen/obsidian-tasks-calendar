@@ -1,12 +1,12 @@
 import { MarkdownView, Notice, normalizePath, Plugin, TFile, type WorkspaceLeaf } from "obsidian";
-import { TasksCalendarRenderer } from "./calendar/calendar";
-import { TASKS_CALENDAR_VIEW, TasksCalendarView } from "./calendar/calendar-view";
+import { TasksCalendarRenderer } from "./calendar/renderer";
+import { TASKS_CALENDAR_VIEW, TasksCalendarView } from "./calendar/view";
 import { PerformanceMonitor, PerformanceReportModal } from "./plugin/performance";
 import { DEFAULT_SETTINGS, TasksCalendarSettingTab } from "./plugin/settings";
 import { insertTaskAtTop } from "./tasks/file-content";
-import { withoutTaskOrderKey } from "./tasks/task-order";
-import { fallbackToggleLine, rescheduleTaskLine } from "./tasks/task-parser";
-import { TaskStore } from "./tasks/task-store";
+import { withoutTaskOrderKey } from "./tasks/order";
+import { fallbackToggleLine, rescheduleTaskLine } from "./tasks/parser";
+import { TaskStore } from "./tasks/store";
 import type {
   CalendarMode,
   CalendarState,

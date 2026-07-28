@@ -7,9 +7,9 @@ import type { HTMLAttributes, ReactNode, RefObject } from "react";
 import { useCallback } from "react";
 import type TasksCalendarPlugin from "../main";
 import type { CalendarState, CalendarTask } from "../types";
-import type { CalendarModel } from "./calendar-model";
-import type { CalendarStateUpdate } from "./calendar-toolbar";
 import { isoWeekNumber, toDateKey } from "./date-utils";
+import type { CalendarModel } from "./model";
+import type { CalendarStateUpdate } from "./toolbar";
 
 const dayTooltipOptions = { placement: "bottom" as const, delay: 200 };
 

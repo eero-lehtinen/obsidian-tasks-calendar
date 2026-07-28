@@ -1,7 +1,7 @@
 import { ItemView, type WorkspaceLeaf } from "obsidian";
 import type TasksCalendarPlugin from "../main";
 import type { CalendarState } from "../types";
-import { TasksCalendarRenderer } from "./calendar";
+import { TasksCalendarRenderer } from "./renderer";
 
 export const TASKS_CALENDAR_VIEW = "tasks-calendar-view";
 

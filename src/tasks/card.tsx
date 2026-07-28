@@ -14,12 +14,12 @@ import type {
 import { useCallback, useEffect, useRef, useState } from "react";
 import type TasksCalendarPlugin from "../main";
 import type { CalendarTask } from "../types";
+import { showTaskActions } from "./actions-menu";
 import {
   playCompletionFeedback,
   playRecurrenceCreatedFeedback,
   TASK_COMPLETION_FEEDBACK_DURATION_MS,
 } from "./completion-feedback";
-import { showTaskActions } from "./task-actions-menu";
 
 interface TaskCardProps {
   calendarDate: string;

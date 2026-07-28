@@ -14,19 +14,19 @@ import type { CSSProperties, Ref } from "react";
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type TasksCalendarPlugin from "../main";
+import { SortableTaskCard, TaskCard, TaskDragPreview } from "../tasks/card";
 import type { CompletionOverride } from "../tasks/completion-overrides";
 import { applyCompletionOverrides, reconcileCompletionOverrides } from "../tasks/completion-overrides";
-import { SortableTaskCard, TaskCard, TaskDragPreview } from "../tasks/task-card";
-import { reorderTaskGroup, taskOrderKey } from "../tasks/task-order";
-import { taskVisualKey } from "../tasks/task-visual-key";
+import { reorderTaskGroup, taskOrderKey } from "../tasks/order";
 import { useRecurrenceFeedback } from "../tasks/use-recurrence-feedback";
+import { taskVisualKey } from "../tasks/visual-key";
 import type { CalendarState, CalendarTask } from "../types";
-import { CalendarGrid } from "./calendar-grid";
-import { calendarTaskDate, createCalendarModel } from "./calendar-model";
-import { CalendarToolbar, QueryEditor } from "./calendar-toolbar";
 import { fromDateKey, moveAnchor, toDateKey } from "./date-utils";
 import { calendarCollisionDetection } from "./drag-collision";
-import { useCalendarLayout } from "./use-calendar-layout";
+import { CalendarGrid } from "./grid";
+import { calendarTaskDate, createCalendarModel } from "./model";
+import { CalendarToolbar, QueryEditor } from "./toolbar";
+import { useCalendarLayout } from "./use-layout";
 
 export interface CalendarHandle {
   getState(): CalendarState;

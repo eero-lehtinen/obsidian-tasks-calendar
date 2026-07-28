@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { parseTaskLine } from "../src/tasks/parser";
 import { capturePendingRecurrence, findCreatedRecurrence } from "../src/tasks/recurrence-created";
-import { parseTaskLine } from "../src/tasks/task-parser";
 
 describe("recurrence creation detection", () => {
   it("finds the newly generated unchecked occurrence", () => {
