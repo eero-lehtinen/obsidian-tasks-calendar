@@ -21,7 +21,7 @@ import { applyCompletionOverrides, reconcileCompletionOverrides } from "./comple
 import { fromDateKey, moveAnchor, toDateKey } from "./date-utils";
 import { calendarCollisionDetection } from "./drag-collision";
 import type TasksCalendarPlugin from "./main";
-import { SortableTaskCard, TaskCard } from "./task-card";
+import { SortableTaskCard, TaskCard, TaskDragPreview } from "./task-card";
 import { reorderTaskGroup, taskOrderKey } from "./task-order";
 import { taskVisualKey } from "./task-visual-key";
 import type { CalendarState, CalendarTask } from "./types";
@@ -41,6 +41,11 @@ interface CalendarAppProps {
   onStateChange?: (state: CalendarState) => void;
   plugin: TasksCalendarPlugin;
   ref?: Ref<CalendarHandle>;
+}
+
+interface ActiveTaskDrag {
+  showSource: boolean;
+  task: CalendarTask;
 }
 
 const dragAnnouncements: Announcements = {
@@ -70,7 +75,7 @@ export function CalendarApp({
   const [state, setState] = useState(initial);
   const [queryOpen, setQueryOpen] = useState(false);
   const [revision, setRevision] = useState(0);
-  const [activeTask, setActiveTask] = useState<CalendarTask | null>(null);
+  const [activeDrag, setActiveDrag] = useState<ActiveTaskDrag | null>(null);
   const [dropTargetDate, setDropTargetDate] = useState<string | null>(null);
   const [completionOverrides, setCompletionOverrides] = useState<Map<string, CompletionOverride>>(() => new Map());
   const stateRef = useRef(state);
@@ -126,10 +131,10 @@ export function CalendarApp({
   }, [tasks]);
 
   useEffect(() => {
-    if (!activeTask) return;
+    if (!activeDrag) return;
     document.body.classList.add("tasks-calendar-is-dragging");
     return () => document.body.classList.remove("tasks-calendar-is-dragging");
-  }, [activeTask]);
+  }, [activeDrag]);
 
   useCalendarLayout({
     constrainHeightToContainer,
@@ -183,7 +188,7 @@ export function CalendarApp({
         accessibility={{ announcements: dragAnnouncements }}
         collisionDetection={calendarCollisionDetection}
         onDragCancel={() => {
-          setActiveTask(null);
+          setActiveDrag(null);
           setDropTargetDate(null);
         }}
         onDragEnd={(event) => {
@@ -191,7 +196,7 @@ export function CalendarApp({
           const over = event.over;
           const date = over?.data.current?.date as string | undefined;
           const overTask = over?.data.current?.task as CalendarTask | undefined;
-          setActiveTask(null);
+          setActiveDrag(null);
           setDropTargetDate(null);
           if (!task || !date || !over) return;
 
@@ -211,7 +216,14 @@ export function CalendarApp({
         }}
         onDragStart={(event) => {
           const task = (event.active.data.current?.task as CalendarTask | undefined) ?? null;
-          setActiveTask(task);
+          setActiveDrag(
+            task
+              ? {
+                  showSource: event.active.data.current?.showSource === true,
+                  task,
+                }
+              : null,
+          );
           setDropTargetDate(null);
         }}
         sensors={sensors}
@@ -278,7 +290,11 @@ export function CalendarApp({
           ) : null}
         </div>
         {createPortal(
-          <TaskDragOverlay task={activeTask} completedOpacity={plugin.settings.completedOpacity} />,
+          <TaskDragOverlay
+            activeDrag={activeDrag}
+            completedOpacity={plugin.settings.completedOpacity}
+            plugin={plugin}
+          />,
           document.body,
         )}
       </DndContext>
@@ -286,18 +302,24 @@ export function CalendarApp({
   );
 }
 
-function TaskDragOverlay({ completedOpacity, task }: { completedOpacity: number; task: CalendarTask | null }) {
+function TaskDragOverlay({
+  activeDrag,
+  completedOpacity,
+  plugin,
+}: {
+  activeDrag: ActiveTaskDrag | null;
+  completedOpacity: number;
+  plugin: TasksCalendarPlugin;
+}) {
   return (
     <DragOverlay dropAnimation={null}>
-      {task ? (
-        <div
-          className={`tasks-calendar-task tasks-calendar-drag-overlay${task.completed ? " is-completed" : ""}`}
-          data-priority={task.priority}
-          style={{ "--tasks-calendar-completed-opacity": String(completedOpacity) } as CSSProperties}
-        >
-          <span className="tasks-calendar-drag-checkbox">{task.completed ? "✓" : ""}</span>
-          <span className="tasks-calendar-task-title">{task.description || "Untitled task"}</span>
-        </div>
+      {activeDrag ? (
+        <TaskDragPreview
+          completedOpacity={completedOpacity}
+          plugin={plugin}
+          showSource={activeDrag.showSource}
+          task={activeDrag.task}
+        />
       ) : null}
     </DragOverlay>
   );

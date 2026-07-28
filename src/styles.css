@@ -384,15 +384,6 @@
   box-shadow: var(--shadow-s);
 }
 
-.tasks-calendar-drag-checkbox {
-  display: grid;
-  width: 14px;
-  height: 14px;
-  place-items: center;
-  align-self: center;
-  font-size: 10px;
-}
-
 .tasks-calendar-task[data-priority="highest"],
 .tasks-calendar-task[data-priority="high"] {
   --tasks-calendar-task-accent: var(--color-red);
