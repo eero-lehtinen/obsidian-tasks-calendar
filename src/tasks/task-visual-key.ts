@@ -1,4 +1,4 @@
-import type { CalendarTask } from "./types";
+import type { CalendarTask } from "../types";
 
 export function taskVisualKey(task: CalendarTask): string {
   const blockId = task.raw.match(/\s\^([\w-]+)$/u)?.[1];

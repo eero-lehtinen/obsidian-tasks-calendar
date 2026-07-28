@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { calendarDays, isoWeekNumber, moveAnchor, startOfWeek, titleForRange, toDateKey } from "../src/date-utils";
+import {
+  calendarDays,
+  isoWeekNumber,
+  moveAnchor,
+  startOfWeek,
+  titleForRange,
+  toDateKey,
+} from "../src/calendar/date-utils";
 
 describe("calendarDays", () => {
   it("builds a complete six-week month grid when required", () => {

@@ -1,7 +1,7 @@
 import type { CollisionDetection } from "@dnd-kit/core";
 import { closestCenter } from "@dnd-kit/core";
 import { describe, expect, it } from "vitest";
-import { calendarCollisionDetection } from "../src/drag-collision";
+import { calendarCollisionDetection } from "../src/calendar/drag-collision";
 
 type CollisionArguments = Parameters<CollisionDetection>[0];
 

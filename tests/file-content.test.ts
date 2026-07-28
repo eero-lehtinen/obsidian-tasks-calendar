@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deleteTaskLine, insertTaskAtTop } from "../src/file-content";
+import { deleteTaskLine, insertTaskAtTop } from "../src/tasks/file-content";
 
 describe("insertTaskAtTop", () => {
   it("prepends a task to a regular note", () => {

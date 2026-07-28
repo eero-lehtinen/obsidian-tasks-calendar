@@ -1,8 +1,8 @@
 import { Events, TFile, type Vault } from "obsidian";
+import type { PerformanceMonitor } from "../plugin/performance";
+import type { CalendarTask } from "../types";
 import { deleteTaskLine } from "./file-content";
-import type { PerformanceMonitor } from "./performance";
 import { parseTaskLine } from "./task-parser";
-import type { CalendarTask } from "./types";
 
 export const TASKS_CHANGED_EVENT = "tasks-calendar:changed";
 const FILE_INDEX_CONCURRENCY = 8;

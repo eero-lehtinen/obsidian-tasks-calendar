@@ -1,7 +1,7 @@
+import { compileQuery } from "../tasks/query";
+import { compareTasksInOrder, orderCalendarTasks } from "../tasks/task-order";
+import type { CalendarState, CalendarTask, TasksCalendarSettings } from "../types";
 import { calendarDays, toDateKey } from "./date-utils";
-import { compileQuery } from "./query";
-import { compareTasksInOrder, orderCalendarTasks } from "./task-order";
-import type { CalendarState, CalendarTask, TasksCalendarSettings } from "./types";
 
 export interface CalendarModel {
   days: Date[];

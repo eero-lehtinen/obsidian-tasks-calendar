@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { compileQuery } from "../src/query";
-import { parseTaskLine } from "../src/task-parser";
+import { compileQuery } from "../src/tasks/query";
+import { parseTaskLine } from "../src/tasks/task-parser";
 
 const task = parseTaskLine("- [ ] Write tests #work ⏳ 2026-07-24", "Projects/Test.md", 0)!;
 

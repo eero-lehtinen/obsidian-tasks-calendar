@@ -1,9 +1,9 @@
 import { Platform, setIcon } from "obsidian";
 import type { ReactNode } from "react";
 import { useEffect, useId, useRef } from "react";
+import type TasksCalendarPlugin from "../main";
+import type { CalendarMode, CalendarState } from "../types";
 import { fromDateKey, titleForRange } from "./date-utils";
-import type TasksCalendarPlugin from "./main";
-import type { CalendarMode, CalendarState } from "./types";
 
 export type CalendarStateUpdate = (state: Partial<CalendarState>) => void;
 

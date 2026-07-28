@@ -1,4 +1,4 @@
-import type { CalendarTask } from "./types";
+import type { CalendarTask } from "../types";
 
 export function compareCalendarTasks(left: CalendarTask, right: CalendarTask): number {
   if (left.completed !== right.completed) return left.completed ? 1 : -1;

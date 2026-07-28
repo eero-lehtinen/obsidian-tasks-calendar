@@ -1,6 +1,6 @@
 import { type App, PluginSettingTab, Setting } from "obsidian";
-import type TasksCalendarPlugin from "./main";
-import type { DateField, TasksCalendarSettings } from "./types";
+import type TasksCalendarPlugin from "../main";
+import type { DateField, TasksCalendarSettings } from "../types";
 
 export const DEFAULT_SETTINGS: TasksCalendarSettings = {
   defaultView: "month",

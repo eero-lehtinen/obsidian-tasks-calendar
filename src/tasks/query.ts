@@ -1,5 +1,5 @@
-import { toDateKey } from "./date-utils";
-import type { CalendarTask, QueryResult } from "./types";
+import { toDateKey } from "../calendar/date-utils";
+import type { CalendarTask, QueryResult } from "../types";
 
 type Predicate = (task: CalendarTask) => boolean;
 

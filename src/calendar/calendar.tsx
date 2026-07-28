@@ -2,11 +2,11 @@ import { MarkdownRenderChild } from "obsidian";
 import { StrictMode } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
+import type TasksCalendarPlugin from "../main";
+import type { CalendarState } from "../types";
 import type { CalendarHandle } from "./calendar-app";
 import { CalendarApp } from "./calendar-app";
 import { toDateKey } from "./date-utils";
-import type TasksCalendarPlugin from "./main";
-import type { CalendarState } from "./types";
 
 let nextCalendarInstanceId = 0;
 

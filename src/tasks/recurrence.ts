@@ -1,5 +1,5 @@
 import { RRule } from "rrule";
-import { fromDateKey, toDateKey } from "./date-utils";
+import { fromDateKey, toDateKey } from "../calendar/date-utils";
 
 export function recurrenceDateKeys(
   ruleText: string,

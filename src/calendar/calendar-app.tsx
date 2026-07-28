@@ -13,20 +13,20 @@ import { MotionConfig } from "motion/react";
 import type { CSSProperties, Ref } from "react";
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import type TasksCalendarPlugin from "../main";
+import type { CompletionOverride } from "../tasks/completion-overrides";
+import { applyCompletionOverrides, reconcileCompletionOverrides } from "../tasks/completion-overrides";
+import { SortableTaskCard, TaskCard, TaskDragPreview } from "../tasks/task-card";
+import { reorderTaskGroup, taskOrderKey } from "../tasks/task-order";
+import { taskVisualKey } from "../tasks/task-visual-key";
+import { useRecurrenceFeedback } from "../tasks/use-recurrence-feedback";
+import type { CalendarState, CalendarTask } from "../types";
 import { CalendarGrid } from "./calendar-grid";
 import { calendarTaskDate, createCalendarModel } from "./calendar-model";
 import { CalendarToolbar, QueryEditor } from "./calendar-toolbar";
-import type { CompletionOverride } from "./completion-overrides";
-import { applyCompletionOverrides, reconcileCompletionOverrides } from "./completion-overrides";
 import { fromDateKey, moveAnchor, toDateKey } from "./date-utils";
 import { calendarCollisionDetection } from "./drag-collision";
-import type TasksCalendarPlugin from "./main";
-import { SortableTaskCard, TaskCard, TaskDragPreview } from "./task-card";
-import { reorderTaskGroup, taskOrderKey } from "./task-order";
-import { taskVisualKey } from "./task-visual-key";
-import type { CalendarState, CalendarTask } from "./types";
 import { useCalendarLayout } from "./use-calendar-layout";
-import { useRecurrenceFeedback } from "./use-recurrence-feedback";
 
 export interface CalendarHandle {
   getState(): CalendarState;

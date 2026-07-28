@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recurrenceDateKeys } from "../src/recurrence";
+import { recurrenceDateKeys } from "../src/tasks/recurrence";
 
 describe("recurrenceDateKeys", () => {
   it("calculates weekly occurrences from the task date", () => {

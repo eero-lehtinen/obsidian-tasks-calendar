@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { applyCompletionOverrides, reconcileCompletionOverrides } from "../src/completion-overrides";
-import { parseTaskLine } from "../src/task-parser";
+import { applyCompletionOverrides, reconcileCompletionOverrides } from "../src/tasks/completion-overrides";
+import { parseTaskLine } from "../src/tasks/task-parser";
 
 describe("completion overrides", () => {
   it("clears an override when a recurring task is replaced at the same source line", () => {

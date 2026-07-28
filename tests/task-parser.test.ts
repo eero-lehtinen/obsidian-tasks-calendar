@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fallbackToggleLine, parseTaskLine, rescheduleTaskLine } from "../src/task-parser";
+import { fallbackToggleLine, parseTaskLine, rescheduleTaskLine } from "../src/tasks/task-parser";
 
 describe("parseTaskLine", () => {
   it("parses Tasks emoji fields", () => {

@@ -1,4 +1,4 @@
-import type { CalendarTask } from "./types";
+import type { CalendarTask } from "../types";
 
 export interface CompletionOverride {
   completed: boolean;

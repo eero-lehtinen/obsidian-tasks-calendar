@@ -1,4 +1,4 @@
-import type { CalendarTask, DateField } from "./types";
+import type { CalendarTask, DateField } from "../types";
 
 const TASK_PATTERN = /^([\s\t>]*)((?:[-*+]|\d+[.)]))\s+\[(.)\]\s*(.*)$/u;
 const DATE_MARKERS: Record<

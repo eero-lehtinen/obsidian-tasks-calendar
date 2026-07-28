@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createCalendarModel } from "../src/calendar-model";
-import { parseTaskLine } from "../src/task-parser";
+import { createCalendarModel } from "../src/calendar/calendar-model";
+import { parseTaskLine } from "../src/tasks/task-parser";
 import type { CalendarState, TasksCalendarSettings } from "../src/types";
 
 const settings: Pick<TasksCalendarSettings, "datePreference" | "taskOrder" | "undatedTasks" | "weekStartsOn"> = {

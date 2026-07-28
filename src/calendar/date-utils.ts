@@ -11,7 +11,7 @@ import {
   startOfWeek as startDateWeek,
   startOfMonth,
 } from "date-fns";
-import type { CalendarMode } from "./types";
+import type { CalendarMode } from "../types";
 
 export function toDateKey(date: Date): string {
   return lightFormat(date, "yyyy-MM-dd");

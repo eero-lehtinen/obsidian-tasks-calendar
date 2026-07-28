@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parseTaskLine } from "../src/task-parser";
-import { createTaskVisualKeyFactory, taskVisualKey } from "../src/task-visual-key";
+import { parseTaskLine } from "../src/tasks/task-parser";
+import { createTaskVisualKeyFactory, taskVisualKey } from "../src/tasks/task-visual-key";
 
 describe("taskVisualKey", () => {
   it("survives completion and source line shifts", () => {

@@ -3,7 +3,7 @@ import {
   celebrationParticlePosition,
   createCelebrationParticles,
   shouldPlayAnimations,
-} from "../src/completion-feedback";
+} from "../src/tasks/completion-feedback";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -20,7 +20,7 @@ describe("audio context", () => {
     vi.stubGlobal("AudioContext", AudioContextStub);
     vi.resetModules();
 
-    await import("../src/completion-feedback");
+    await import("../src/tasks/completion-feedback");
 
     expect(constructionCount).toBe(1);
   });
