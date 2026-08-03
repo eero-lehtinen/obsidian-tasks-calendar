@@ -47,6 +47,16 @@ interface TaskDragBinding {
 const tooltipOptions = { placement: "bottom" as const, delay: 200 };
 const completionStyleDelayMs = TASK_COMPLETION_FEEDBACK_DURATION_MS * 0.65;
 const completionMoveDelayMs = 200;
+const priorityMarker = /(?:^|\s)(?:🔺|⏫|🔼|🔽|⏬)(?=\s|$)/u;
+const priorityMarkers = /(?:^|\s)(?:🔺|⏫|🔼|🔽|⏬)(?=\s|$)/gu;
+
+const priorityLabels = {
+  highest: "Highest priority",
+  high: "High priority",
+  normal: "Medium priority",
+  low: "Low priority",
+  lowest: "Lowest priority",
+} as const;
 
 export function SortableTaskCard(props: TaskCardProps) {
   const { task, calendarDate } = props;
@@ -88,15 +98,17 @@ export function TaskDragPreview({
   showSource: boolean;
   task: CalendarTask;
 }) {
-  const taskName = task.description || "Untitled task";
+  const priority = getVisiblePriority(task);
+  const taskName = getTaskName(task);
   return (
     <div
-      className={`tasks-calendar-task tasks-calendar-drag-overlay${task.recurrence ? " has-recurrence" : ""}${task.completed ? " is-completed" : ""}`}
+      className={`tasks-calendar-task tasks-calendar-drag-overlay${task.recurrence ? " has-recurrence" : ""}${priority ? " has-priority" : ""}${task.completed ? " is-completed" : ""}`}
       data-priority={task.priority}
       style={{ "--tasks-calendar-completed-opacity": String(completedOpacity) } as CSSProperties}
     >
       <TaskCheckbox checked={task.completed} />
       <TaskTitle sourcePath={task.path} taskName={taskName} />
+      {priority ? <PriorityIcon priority={priority} /> : null}
       {task.recurrence ? <RecurrenceIcon interactive={false} recurrence={task.recurrence} /> : null}
       {showSource ? <TaskSourceButton interactive={false} plugin={plugin} task={task} /> : null}
       <span aria-hidden="true" className="tasks-calendar-completion-overlay" />
@@ -128,7 +140,8 @@ function TaskCardView({
   const [optimisticCompleted, setOptimisticCompleted] = useState(task.completed);
   const [styledCompleted, setStyledCompleted] = useState(task.completed);
   const [isChecking, setIsChecking] = useState(false);
-  const taskName = task.description || "Untitled task";
+  const priority = getVisiblePriority(task);
+  const taskName = getTaskName(task);
   const dragSetNodeRef = drag?.setNodeRef;
   const setItemRef = useCallback(
     (element: HTMLDivElement | null) => {
@@ -195,7 +208,7 @@ function TaskCardView({
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: The title button provides the keyboard equivalent for card editing.
     <div
-      className={`tasks-calendar-task${task.recurrence ? " has-recurrence" : ""}${styledCompleted ? " is-completed" : ""}${drag?.isDragging ? " is-dragging" : ""}`}
+      className={`tasks-calendar-task${task.recurrence ? " has-recurrence" : ""}${priority ? " has-priority" : ""}${styledCompleted ? " is-completed" : ""}${drag?.isDragging ? " is-dragging" : ""}`}
       data-priority={task.priority}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
@@ -283,6 +296,7 @@ function TaskCardView({
         taskName={taskName}
         titleId={titleId}
       />
+      {priority ? <PriorityIcon priority={priority} /> : null}
       {task.recurrence ? (
         <RecurrenceIcon
           interactive
@@ -295,6 +309,42 @@ function TaskCardView({
       {meta}
       <span aria-hidden="true" className="tasks-calendar-completion-overlay" ref={completionOutlineRef} />
     </div>
+  );
+}
+
+function getVisiblePriority(task: CalendarTask): CalendarTask["priority"] | null {
+  return priorityMarker.test(task.description) ? task.priority : null;
+}
+
+function getTaskName(task: CalendarTask): string {
+  return task.description.replace(priorityMarkers, " ").replace(/\s+/g, " ").trim() || "Untitled task";
+}
+
+function PriorityIcon({ priority }: { priority: CalendarTask["priority"] }) {
+  const pointsUp = priority === "highest" || priority === "high" || priority === "normal";
+  const isDouble = priority === "high" || priority === "lowest";
+  return (
+    <span aria-label={priorityLabels[priority]} className="tasks-calendar-priority" data-level={priority} role="img">
+      <svg aria-hidden="true" viewBox="0 0 14 14">
+        {isDouble ? (
+          pointsUp ? (
+            <>
+              <path d="M2.2 7 7 2.2 11.8 7Z" />
+              <path d="M2.2 12.2 7 7.4 11.8 12.2Z" />
+            </>
+          ) : (
+            <>
+              <path d="M2.2 1.8 7 6.6 11.8 1.8Z" />
+              <path d="M2.2 7 7 11.8 11.8 7Z" />
+            </>
+          )
+        ) : pointsUp ? (
+          <path d="M1.8 10.5 7 3.3 12.2 10.5Z" />
+        ) : (
+          <path d="M1.8 3.5 7 10.7 12.2 3.5Z" />
+        )}
+      </svg>
+    </span>
   );
 }
 

@@ -375,6 +375,14 @@
   grid-template-columns: 16px minmax(0, 1fr) auto;
 }
 
+.tasks-calendar-task.has-priority {
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+}
+
+.tasks-calendar-task.has-priority.has-recurrence {
+  grid-template-columns: 16px minmax(0, 1fr) auto auto;
+}
+
 .tasks-calendar-drag-overlay {
   width: 100%;
   height: 100%;
@@ -731,6 +739,28 @@
   cursor: pointer;
 }
 
+.tasks-calendar-priority {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  color: color-mix(in srgb, var(--tasks-calendar-task-accent) 45%, var(--text-faint));
+  pointer-events: none;
+}
+
+.tasks-calendar-priority svg {
+  width: 12px;
+  height: 12px;
+  overflow: visible;
+  fill: currentcolor;
+}
+
+.tasks-calendar-priority path {
+  opacity: 0.72;
+}
+
 .tasks-calendar-grid.is-week .tasks-calendar-task,
 .tasks-calendar-grid.is-day .tasks-calendar-task {
   padding: 7px;
@@ -781,7 +811,6 @@
 
 .tasks-calendar-recurrence {
   display: inline-flex;
-  grid-column: 3;
   align-items: center;
   align-self: center;
   justify-content: center;
