@@ -76,7 +76,7 @@ function parseInstruction(line: string, today: string, tomorrow: string): Predic
 
   const priorityMatch = normalized.match(/^priority is (highest|high|medium|normal|low|lowest)$/);
   if (priorityMatch) {
-    const requested = priorityMatch[1] === "medium" ? "normal" : priorityMatch[1];
+    const requested = priorityMatch[1];
     return (task) => task.priority === requested;
   }
 

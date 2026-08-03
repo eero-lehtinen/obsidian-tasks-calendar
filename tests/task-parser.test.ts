@@ -24,6 +24,11 @@ describe("parseTaskLine", () => {
   it("recognizes completed custom statuses", () => {
     expect(parseTaskLine("* [X] Finished ✅ 2026-07-24", "Done.md", 0)?.completed).toBe(true);
   });
+
+  it("distinguishes explicit medium priority from unset priority", () => {
+    expect(parseTaskLine("- [ ] Medium 🔼", "Tasks.md", 0)?.priority).toBe("medium");
+    expect(parseTaskLine("- [ ] Normal", "Tasks.md", 1)?.priority).toBe("normal");
+  });
 });
 
 describe("fallbackToggleLine", () => {

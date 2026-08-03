@@ -20,4 +20,12 @@ describe("compileQuery", () => {
     expect(query.error).toBeNull();
     expect(query.predicate(task)).toBe(true);
   });
+
+  it("distinguishes medium priority from unset priority", () => {
+    const medium = parseTaskLine("- [ ] Medium 🔼", "Tasks.md", 0)!;
+    const normal = parseTaskLine("- [ ] Normal", "Tasks.md", 1)!;
+    expect(compileQuery("priority is medium").predicate(medium)).toBe(true);
+    expect(compileQuery("priority is medium").predicate(normal)).toBe(false);
+    expect(compileQuery("priority is normal").predicate(normal)).toBe(true);
+  });
 });

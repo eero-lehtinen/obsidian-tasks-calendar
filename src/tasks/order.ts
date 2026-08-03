@@ -23,6 +23,17 @@ export function withoutTaskOrderKey(
   return remainingOrders;
 }
 
+export function withoutTaskOrderDate(
+  orders: Readonly<Record<string, readonly string[]>>,
+  date: string,
+): Record<string, string[]> {
+  const remainingOrders: Record<string, string[]> = {};
+  for (const [orderedDate, taskKeys] of Object.entries(orders)) {
+    if (orderedDate !== date) remainingOrders[orderedDate] = [...taskKeys];
+  }
+  return remainingOrders;
+}
+
 export function reorderTaskGroup(
   tasks: readonly CalendarTask[],
   activeId: string,

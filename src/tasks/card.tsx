@@ -53,7 +53,8 @@ const priorityMarkers = /(?:^|\s)(?:🔺|⏫|🔼|🔽|⏬)(?=\s|$)/gu;
 const priorityLabels = {
   highest: "Highest priority",
   high: "High priority",
-  normal: "Medium priority",
+  medium: "Medium priority",
+  normal: "Normal priority",
   low: "Low priority",
   lowest: "Lowest priority",
 } as const;
@@ -321,7 +322,7 @@ function getTaskName(task: CalendarTask): string {
 }
 
 function PriorityIcon({ priority }: { priority: CalendarTask["priority"] }) {
-  const pointsUp = priority === "highest" || priority === "high" || priority === "normal";
+  const pointsUp = priority === "highest" || priority === "high" || priority === "medium";
   const isDouble = priority === "high" || priority === "lowest";
   return (
     <span aria-label={priorityLabels[priority]} className="tasks-calendar-priority" data-level={priority} role="img">

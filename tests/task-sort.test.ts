@@ -14,4 +14,10 @@ describe("compareCalendarTasks", () => {
     const active = parseTaskLine("- [ ] Active 🔽 📅 2026-07-24", "Tasks.md", 4)!;
     expect([completed, active].sort(compareCalendarTasks)).toEqual([active, completed]);
   });
+
+  it("orders explicit medium priority above unset priority", () => {
+    const medium = parseTaskLine("- [ ] Medium 🔼 📅 2026-07-24", "Tasks.md", 4)!;
+    const normal = parseTaskLine("- [ ] Normal 📅 2026-07-24", "Tasks.md", 20)!;
+    expect([normal, medium].sort(compareCalendarTasks)).toEqual([medium, normal]);
+  });
 });

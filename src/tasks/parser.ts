@@ -69,7 +69,7 @@ export function parseTaskLine(raw: string, path: string, line: number): Calendar
 function parsePriority(body: string): CalendarTask["priority"] {
   if (body.includes("🔺")) return "highest";
   if (body.includes("⏫")) return "high";
-  if (body.includes("🔼")) return "normal";
+  if (body.includes("🔼")) return "medium";
   if (body.includes("🔽")) return "low";
   if (body.includes("⏬")) return "lowest";
   return "normal";

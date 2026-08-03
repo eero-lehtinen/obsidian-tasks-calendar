@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { orderCalendarTasks, reorderTaskGroup, taskOrderKey, withoutTaskOrderKey } from "../src/tasks/order";
+import {
+  orderCalendarTasks,
+  reorderTaskGroup,
+  taskOrderKey,
+  withoutTaskOrderDate,
+  withoutTaskOrderKey,
+} from "../src/tasks/order";
 import { parseTaskLine } from "../src/tasks/parser";
 
 const alpha = parseTaskLine("- [ ] Alpha 📅 2026-07-24", "Tasks.md", 1)!;
@@ -25,6 +31,20 @@ describe("orderCalendarTasks", () => {
         (task) => task.description,
       ),
     ).toEqual(["Alpha", "Completed"]);
+  });
+});
+
+describe("withoutTaskOrderDate", () => {
+  it("removes the selected date without changing other saved orders", () => {
+    expect(
+      withoutTaskOrderDate(
+        {
+          "2026-08-04": ["one", "two"],
+          "2026-08-05": ["three", "four"],
+        },
+        "2026-08-04",
+      ),
+    ).toEqual({ "2026-08-05": ["three", "four"] });
   });
 });
 

@@ -8,6 +8,7 @@ import { useCallback } from "react";
 import type TasksCalendarPlugin from "../main";
 import type { CalendarState, CalendarTask } from "../types";
 import { isoWeekNumber, toDateKey } from "./date-utils";
+import { showDayActions } from "./day-actions-menu";
 import type { CalendarModel } from "./model";
 import type { CalendarStateUpdate } from "./toolbar";
 
@@ -88,7 +89,7 @@ export function CalendarGrid({
                 if ((event.target as Element).closest(".tasks-calendar-task, .tasks-calendar-more, button, input"))
                   return;
                 event.preventDefault();
-                void plugin.createTask(key);
+                showDayActions(plugin, key, { x: event.clientX, y: event.clientY });
               }}
               onDoubleClick={(event) => {
                 if ((event.target as Element).closest(".tasks-calendar-task, .tasks-calendar-more, button, input"))

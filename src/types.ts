@@ -10,7 +10,7 @@ export interface CalendarTask {
   status: string;
   completed: boolean;
   tags: string[];
-  priority: "highest" | "high" | "normal" | "low" | "lowest";
+  priority: "highest" | "high" | "medium" | "normal" | "low" | "lowest";
   scheduled: string | null;
   due: string | null;
   start: string | null;

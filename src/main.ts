@@ -4,7 +4,7 @@ import { TASKS_CALENDAR_VIEW, TasksCalendarView } from "./calendar/view";
 import { PerformanceMonitor, PerformanceReportModal } from "./plugin/performance";
 import { DEFAULT_SETTINGS, TasksCalendarSettingTab } from "./plugin/settings";
 import { insertTaskAtTop } from "./tasks/file-content";
-import { withoutTaskOrderKey } from "./tasks/order";
+import { withoutTaskOrderDate, withoutTaskOrderKey } from "./tasks/order";
 import { fallbackToggleLine, rescheduleTaskLine } from "./tasks/parser";
 import { TaskStore } from "./tasks/store";
 import type {
@@ -184,6 +184,13 @@ export default class TasksCalendarPlugin extends Plugin {
 
   forgetTaskOrder(taskKey: string): void {
     this.settings.taskOrder = withoutTaskOrderKey(this.settings.taskOrder, taskKey);
+    this.scheduleSettingsSave();
+    this.refreshCalendars();
+  }
+
+  resetTaskOrder(date: string): void {
+    if (this.settings.taskOrder[date] === undefined) return;
+    this.settings.taskOrder = withoutTaskOrderDate(this.settings.taskOrder, date);
     this.scheduleSettingsSave();
     this.refreshCalendars();
   }
