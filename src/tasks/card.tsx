@@ -1,7 +1,7 @@
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { setIcon, setTooltip } from "obsidian";
+import { Component, MarkdownRenderer, setIcon, setTooltip } from "obsidian";
 import type {
   ChangeEventHandler,
   CSSProperties,
@@ -96,7 +96,7 @@ export function TaskDragPreview({
       style={{ "--tasks-calendar-completed-opacity": String(completedOpacity) } as CSSProperties}
     >
       <TaskCheckbox checked={task.completed} />
-      <TaskTitle taskName={taskName} />
+      <TaskTitle sourcePath={task.path} taskName={taskName} />
       {task.recurrence ? <RecurrenceIcon interactive={false} recurrence={task.recurrence} /> : null}
       {showSource ? <TaskSourceButton interactive={false} plugin={plugin} task={task} /> : null}
       <span aria-hidden="true" className="tasks-calendar-completion-overlay" />
@@ -169,7 +169,7 @@ function TaskCardView({
       return;
     }
     const target = event.target as Element;
-    if (target.closest(".tasks-calendar-checkbox, .tasks-calendar-task-source")) return;
+    if (target.closest("a, .tasks-calendar-checkbox, .tasks-calendar-task-source")) return;
 
     const isTouch = lastPointerType.current === "touch";
     lastPointerType.current = "mouse";
@@ -182,6 +182,7 @@ function TaskCardView({
   };
 
   const handleContextMenu = (event: MouseEvent<HTMLDivElement>) => {
+    if ((event.target as Element).closest("a")) return;
     event.preventDefault();
     event.stopPropagation();
     if (lastPointerType.current === "touch") {
@@ -275,7 +276,13 @@ function TaskCardView({
         }}
         titleId={titleId}
       />
-      <TaskTitle {...(drag ? { drag } : {})} taskName={taskName} titleId={titleId} />
+      <TaskTitle
+        {...(drag ? { drag } : {})}
+        onEdit={() => void plugin.editTask(task)}
+        sourcePath={task.path}
+        taskName={taskName}
+        titleId={titleId}
+      />
       {task.recurrence ? (
         <RecurrenceIcon
           interactive
@@ -325,21 +332,58 @@ function TaskCheckbox({
   );
 }
 
-function TaskTitle({ drag, taskName, titleId }: { drag?: TaskDragBinding; taskName: string; titleId?: string }) {
+function TaskTitle({
+  drag,
+  onEdit,
+  sourcePath,
+  taskName,
+  titleId,
+}: {
+  drag?: TaskDragBinding;
+  onEdit?: () => void;
+  sourcePath: string;
+  taskName: string;
+  titleId?: string;
+}) {
+  const contentRef = useRef<HTMLDivElement>(null);
   const keyboardOnKeyDown = drag?.listeners?.onKeyDown;
-  const keyboardDragProps = keyboardOnKeyDown
-    ? { onKeyDown: keyboardOnKeyDown as KeyboardEventHandler<HTMLButtonElement> }
-    : {};
+  const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = (event) => {
+    if ((event.target as Element).closest("a")) return;
+
+    keyboardOnKeyDown?.(event);
+    if (!event.defaultPrevented && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      onEdit?.();
+    }
+  };
+
+  useEffect(() => {
+    if (!contentRef.current) return;
+
+    const component = new Component();
+    component.load();
+    contentRef.current.replaceChildren();
+    void MarkdownRenderer.renderMarkdown(taskName, contentRef.current, sourcePath, component);
+    return () => component.unload();
+  }, [sourcePath, taskName]);
+
   return (
-    <button
-      {...(titleId ? { id: titleId } : { "aria-hidden": true, tabIndex: -1 })}
+    // biome-ignore lint/a11y/useSemanticElements: A native button cannot contain the Markdown links rendered in the title.
+    <div
+      {...(titleId ? { id: titleId } : { "aria-hidden": true })}
       className="tasks-calendar-task-title"
-      type="button"
       {...(drag ? { ...drag.attributes, ref: drag.setActivatorNodeRef } : {})}
-      {...keyboardDragProps}
+      onKeyDown={handleKeyDown}
+      onPointerDown={(event) => {
+        if ((event.target as Element).closest("a")) event.stopPropagation();
+      }}
+      role="button"
+      tabIndex={titleId ? 0 : -1}
     >
-      {taskName}
-    </button>
+      <div className="tasks-calendar-task-title-content" ref={contentRef}>
+        {taskName}
+      </div>
+    </div>
   );
 }
 

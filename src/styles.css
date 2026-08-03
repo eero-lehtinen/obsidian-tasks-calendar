@@ -719,6 +719,18 @@
   box-shadow: none !important;
 }
 
+.tasks-calendar-task-title-content > :first-child {
+  margin-top: 0;
+}
+
+.tasks-calendar-task-title-content > :last-child {
+  margin-bottom: 0;
+}
+
+.tasks-calendar-task-title a {
+  cursor: pointer;
+}
+
 .tasks-calendar-grid.is-week .tasks-calendar-task,
 .tasks-calendar-grid.is-day .tasks-calendar-task {
   padding: 7px;
