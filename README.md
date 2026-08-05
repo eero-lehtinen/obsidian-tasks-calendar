@@ -1,6 +1,6 @@
 # Tasks Calendar
 
-Tasks Calendar is an Obsidian community plugin that displays Markdown tasks in month and week calendar views. It is designed to work with the [Tasks plugin](https://publish.obsidian.md/tasks/Introduction), while remaining useful for standard Markdown checkboxes.
+Tasks Calendar is an Obsidian community plugin that displays Markdown tasks in month, week, and day calendar views. It is designed to work with the [Tasks plugin](https://publish.obsidian.md/tasks/Introduction), while remaining useful for standard Markdown checkboxes.
 
 > [!NOTE]
 > This plugin is coded with heavy AI assistance
@@ -13,7 +13,7 @@ Tasks Calendar is an Obsidian community plugin that displays Markdown tasks in m
 
 ## Features
 
-- Month and week layouts with previous, next, and today navigation
+- Month, week, and day layouts with previous, next, and today navigation
 - Persistent calendar mode, visible date, filters, search, and completion visibility in standalone and embedded calendars
 - Current-day highlighting and responsive desktop/mobile layouts
 - Scheduled, due, and start date support using Tasks emoji syntax
@@ -24,7 +24,7 @@ Tasks Calendar is an Obsidian community plugin that displays Markdown tasks in m
 - Recurring-task completion through the Tasks API when Tasks is installed
 - Click a task to edit it through Tasks; right-click, or tap on touch, for edit, source, and hold-to-delete actions
 - Drag tasks to reorder them within a day, or onto another day to reschedule them with their visual order reset
-- Right-click empty day space to create a due-dated task with the Tasks popup
+- Right-click empty day space to create a due-dated task with the Tasks popup when Tasks is installed and a new task file is configured
 - Automatic updates when Markdown files are created, edited, renamed, or deleted
 - In-session performance measurements for indexing, update latency, and rendering
 - A bounded “Overdue tasks” backlog for incomplete tasks older than today’s visible calendar range
@@ -60,11 +60,11 @@ npm install
 npm run build
 ```
 
-The development build writes Obsidian's generated `main.js` and `styles.css` files at the repository root. Copy them with `manifest.json` to the vault plugin directory.
+The build writes Obsidian's generated `main.js` and `styles.css` files at the repository root. Copy them with `manifest.json` to the vault plugin directory.
 
 ## Usage
 
-Run **Tasks Calendar: Open calendar** from the command palette or select the calendar-check ribbon icon. Use the arrow buttons to navigate, **Today** to return to the current date, and the **Month/Week** buttons to change layout.
+Run **Tasks Calendar: Open calendar** from the command palette or select the calendar-check ribbon icon. Use **Tasks Calendar: Open calendar in week view** or **Tasks Calendar: Open calendar in day view** to open a specific layout. Use the arrow buttons to navigate, **Today** to return to the current date, and the **Month**, **Week**, or **Day** buttons to change layout.
 
 Right-click a task to open its action menu. To delete a task, press and hold **Hold to delete** until the progress background fills; releasing early cancels deletion and keeps the menu open. On touch devices, tap a task to open the same menu.
 
@@ -92,7 +92,7 @@ The filter editor accepts one instruction per line. Every instruction must match
 - `is recurring`, `is not recurring`, `has tags`, `no tags`
 - Parenthesized `AND`, `OR`, and `NOT` expressions, for example `(scheduled today) OR (due today)`
 
-Display-only Tasks instructions such as `sort`, `group`, `limit`, `hide`, `show`, `short mode`, and `explain` are accepted and ignored because the calendar controls its own layout. Function filters and complex boolean expressions are not executed.
+Display-only Tasks instructions such as `sort`, `group`, `limit`, `hide`, `show`, `short mode`, and `explain` are accepted and ignored because the calendar controls its own layout. Function filters are not executed.
 
 ## Task formats
 
