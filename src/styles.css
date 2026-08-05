@@ -148,7 +148,7 @@
 }
 
 .tasks-calendar-grid {
-  --tasks-calendar-week-number-width: 34px;
+  --tasks-calendar-week-number-width: 24px;
   display: grid;
   grid-template-columns: var(--tasks-calendar-week-number-width) repeat(7, minmax(0, 1fr));
   flex: 1;
@@ -211,7 +211,7 @@
   position: relative;
   min-width: 0;
   min-height: 112px;
-  padding: 5px;
+  padding: 5px 5px 0;
   overflow: hidden;
   background: var(--background-primary);
 }
@@ -300,14 +300,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 30px;
-  padding: 0 2px 4px;
+  min-height: 20px;
+  padding: 0 2px;
 }
 
 .tasks-calendar-day-number {
   width: auto;
-  min-width: 26px;
-  height: 26px;
+  min-width: 20px;
+  height: 20px;
   padding: 0 5px;
   border: 0;
   border-radius: 999px;
@@ -315,6 +315,7 @@
   color: var(--text-normal);
   box-shadow: none;
   font-size: var(--font-ui-small);
+  line-height: 1;
 }
 
 .tasks-calendar-day.is-today .tasks-calendar-day-number {
@@ -349,9 +350,9 @@
   column-gap: 6px;
   row-gap: 4px;
   min-width: 0;
-  padding: 5px;
+  padding: 4px;
   position: relative;
-  border: 3px solid transparent;
+  border: 2px solid transparent;
   border-radius: 6px;
   background: var(--tasks-calendar-task-background);
   background-clip: padding-box;
@@ -950,7 +951,7 @@
   }
 
   .tasks-calendar-grid {
-    --tasks-calendar-week-number-width: 25px;
+    --tasks-calendar-week-number-width: 22px;
   }
 
   .tasks-calendar-week-number {
@@ -958,7 +959,7 @@
   }
 
   .tasks-calendar-day {
-    padding: 2px;
+    padding: 2px 2px 0;
   }
 
   .tasks-calendar-grid.is-month .tasks-calendar-day {
@@ -1039,7 +1040,7 @@
   }
 
   .tasks-calendar-grid:is(.is-month, .is-week) .tasks-calendar-day {
-    padding: 1px;
+    padding: 1px 1px 0;
   }
 
   .tasks-calendar-grid:is(.is-month, .is-week) .tasks-calendar-day-heading {
@@ -1177,7 +1178,7 @@
   }
 
   & .tasks-calendar-grid:is(.is-month, .is-week) .tasks-calendar-day {
-    padding: 1px;
+    padding: 1px 1px 0;
   }
 
   & .tasks-calendar-grid:is(.is-month, .is-week) .tasks-calendar-day-heading {
