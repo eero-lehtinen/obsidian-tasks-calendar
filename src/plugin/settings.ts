@@ -6,7 +6,7 @@ export const DEFAULT_SETTINGS: TasksCalendarSettings = {
   defaultView: "month",
   weekStartsOn: 1,
   showCompleted: true,
-  showTaskSource: true,
+  showTaskSource: false,
   completedOpacity: 0.42,
   forceAnimations: false,
   defaultQuery: "",
