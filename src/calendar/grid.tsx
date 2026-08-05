@@ -120,7 +120,12 @@ export function CalendarGrid({
                   strategy={verticalListSortingStrategy}
                 >
                   {activeTasks.map((task) =>
-                    renderTask(task, key, state.mode !== "month", !task.completed && remainingDayTasks === 1),
+                    renderTask(
+                      task,
+                      key,
+                      state.mode !== "month" && plugin.settings.showTaskSource,
+                      !task.completed && remainingDayTasks === 1,
+                    ),
                   )}
                 </SortableContext>
                 <SortableContext
@@ -128,7 +133,9 @@ export function CalendarGrid({
                   items={completedTasks.map((task) => task.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {completedTasks.map((task) => renderTask(task, key, state.mode !== "month"))}
+                  {completedTasks.map((task) =>
+                    renderTask(task, key, state.mode !== "month" && plugin.settings.showTaskSource),
+                  )}
                 </SortableContext>
                 {state.mode === "month" && dayTasks.length > 0 ? (
                   <button

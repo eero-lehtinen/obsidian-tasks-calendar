@@ -70,7 +70,7 @@ Right-click a task to open its action menu. To delete a task, press and hold **H
 
 Run **Tasks Calendar: Show performance report** to inspect initial indexing, individual file indexing, file-event-to-index latency, and calendar render timing. The report includes sample count, average, p50, p95, maximum, and latest values. Measurements are held only for the current session, capped at 500 samples per metric, and can be copied or reset.
 
-Tasks are placed using the first available date field configured in settings. The default order is scheduled (`⏳`), due (`📅`), then start (`🛫`).
+Tasks are placed using the first available date field configured in settings. The default order is scheduled (`⏳`), due (`📅`), then start (`🛫`). The source file shown beneath tasks in week and day views can be hidden in settings.
 
 To embed a filtered calendar in a note:
 

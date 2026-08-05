@@ -6,6 +6,7 @@ export const DEFAULT_SETTINGS: TasksCalendarSettings = {
   defaultView: "month",
   weekStartsOn: 1,
   showCompleted: true,
+  showTaskSource: true,
   completedOpacity: 0.42,
   forceAnimations: false,
   defaultQuery: "",
@@ -62,6 +63,17 @@ export class TasksCalendarSettingTab extends PluginSettingTab {
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.showCompleted).onChange(async (value) => {
           this.plugin.settings.showCompleted = value;
+          await this.plugin.saveSettings();
+          this.plugin.refreshCalendars();
+        }),
+      );
+
+    new Setting(containerEl)
+      .setName("Show task source file")
+      .setDesc("Display the source file beneath tasks in week and day views.")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.showTaskSource).onChange(async (value) => {
+          this.plugin.settings.showTaskSource = value;
           await this.plugin.saveSettings();
           this.plugin.refreshCalendars();
         }),

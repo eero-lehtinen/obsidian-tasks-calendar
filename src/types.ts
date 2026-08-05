@@ -24,6 +24,7 @@ export interface TasksCalendarSettings {
   defaultView: CalendarMode;
   weekStartsOn: 0 | 1;
   showCompleted: boolean;
+  showTaskSource: boolean;
   completedOpacity: number;
   forceAnimations: boolean;
   defaultQuery: string;
