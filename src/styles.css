@@ -271,7 +271,7 @@
 }
 
 .tasks-calendar-day.is-outside .tasks-calendar-day-number,
-.tasks-calendar-day.is-outside .tasks-calendar-task {
+.tasks-calendar-day.is-outside .tasks-calendar-task-list {
   opacity: 0.58;
 }
 
