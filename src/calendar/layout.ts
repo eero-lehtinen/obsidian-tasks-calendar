@@ -92,7 +92,8 @@ function fitMonthCell(layout: MonthCellLayout): void {
   for (const task of taskElements) task.hidden = false;
   moreButton.hidden = true;
 
-  const cellBottom = cell.getBoundingClientRect().bottom - 5;
+  const paddingBottom = Number.parseFloat(window.getComputedStyle(cell).paddingBottom) || 0;
+  const cellBottom = cell.getBoundingClientRect().bottom - paddingBottom;
   const lastTask = taskElements[taskElements.length - 1];
   if (!lastTask || lastTask.getBoundingClientRect().bottom <= cellBottom) return;
 

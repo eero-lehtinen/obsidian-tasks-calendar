@@ -2,7 +2,7 @@
 // biome-ignore-all lint/a11y/useFocusableInteractive: Grid headers describe cells and are not interaction targets.
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { setTooltip } from "obsidian";
+import { Platform, setTooltip } from "obsidian";
 import type { HTMLAttributes, ReactNode, RefObject } from "react";
 import { useCallback } from "react";
 import type TasksCalendarPlugin from "../main";
@@ -50,7 +50,9 @@ export function CalendarGrid({
       ) : null}
       {model.days.slice(0, 7).map((day) => (
         <div className="tasks-calendar-weekday" key={`weekday-${day.getDay()}`} role="columnheader">
-          {new Intl.DateTimeFormat(undefined, { weekday: state.mode === "month" ? "short" : "long" }).format(day)}
+          {new Intl.DateTimeFormat(undefined, {
+            weekday: Platform.isMobile && state.mode !== "day" ? "narrow" : state.mode === "month" ? "short" : "long",
+          }).format(day)}
         </div>
       ))}
       {model.days.map((day, index) => {
