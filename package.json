@@ -31,7 +31,7 @@
     "calendar",
     "tasks"
   ],
-  "author": "Obsidian Tasks Calendar contributors",
+  "author": "Eero Lehtinen",
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "2.5.5",
