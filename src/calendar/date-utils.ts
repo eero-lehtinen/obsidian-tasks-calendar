@@ -17,6 +17,12 @@ export function toDateKey(date: Date): string {
   return lightFormat(date, "yyyy-MM-dd");
 }
 
+export function millisecondsUntilNextDay(now: Date): number {
+  const nextDay = new Date(now);
+  nextDay.setHours(24, 0, 0, 0);
+  return nextDay.getTime() - now.getTime();
+}
+
 export function fromDateKey(value: string): Date {
   return parseISO(value);
 }

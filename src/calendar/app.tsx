@@ -26,6 +26,7 @@ import { calendarCollisionDetection } from "./drag-collision";
 import { CalendarGrid } from "./grid";
 import { calendarTaskDate, createCalendarModel } from "./model";
 import { CalendarToolbar, QueryEditor } from "./toolbar";
+import { useCurrentDay } from "./use-current-day";
 import { useCalendarLayout } from "./use-layout";
 
 export interface CalendarHandle {
@@ -75,6 +76,7 @@ export function CalendarApp({
   const [state, setState] = useState(initial);
   const [queryOpen, setQueryOpen] = useState(false);
   const [revision, setRevision] = useState(0);
+  const today = useCurrentDay();
   const [activeDrag, setActiveDrag] = useState<ActiveTaskDrag | null>(null);
   const [dropTargetDate, setDropTargetDate] = useState<string | null>(null);
   const [completionOverrides, setCompletionOverrides] = useState<Map<string, CompletionOverride>>(() => new Map());
@@ -115,8 +117,8 @@ export function CalendarApp({
     [completionOverrides, tasks],
   );
   const model = useMemo(
-    () => createCalendarModel(displayedTasks, state, plugin.settings, anchor),
-    [anchor, displayedTasks, plugin.settings, state],
+    () => createCalendarModel(displayedTasks, state, plugin.settings, anchor, fromDateKey(today)),
+    [anchor, displayedTasks, plugin.settings, state, today],
   );
   const { expectRecurringTask, highlightedDays, highlightedTasks, previewDays, previewRecurrence } =
     useRecurrenceFeedback({

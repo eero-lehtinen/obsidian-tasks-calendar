@@ -31,7 +31,7 @@ export function createCalendarModel(
   anchor: Date,
   now = new Date(),
 ): CalendarModel {
-  const query = compileQuery(state.query);
+  const query = compileQuery(state.query, now);
   const days = calendarDays(anchor, state.mode, settings.weekStartsOn);
   const today = toDateKey(now);
   const todayViewStart = toDateKey(calendarDays(now, state.mode, settings.weekStartsOn)[0]);

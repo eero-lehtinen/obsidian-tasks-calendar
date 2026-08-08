@@ -2,11 +2,19 @@ import { describe, expect, it } from "vitest";
 import {
   calendarDays,
   isoWeekNumber,
+  millisecondsUntilNextDay,
   moveAnchor,
   startOfWeek,
   titleForRange,
   toDateKey,
 } from "../src/calendar/date-utils";
+
+describe("millisecondsUntilNextDay", () => {
+  it("calculates the time until the next local day", () => {
+    expect(millisecondsUntilNextDay(new Date(2026, 6, 24, 23, 59, 58, 500))).toBe(1_500);
+    expect(millisecondsUntilNextDay(new Date(2026, 6, 24, 0, 0, 0, 0))).toBe(24 * 60 * 60 * 1_000);
+  });
+});
 
 describe("calendarDays", () => {
   it("builds a complete six-week month grid when required", () => {
