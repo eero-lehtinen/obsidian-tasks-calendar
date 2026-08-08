@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 
 const vaultArgument = process.argv[2];
 if (!vaultArgument) {
-  console.error("Usage: npm run deploy -- <path-to-obsidian-vault>");
+  console.error("Usage: pnpm run deploy <path-to-obsidian-vault>");
   process.exit(1);
 }
 
@@ -33,7 +33,7 @@ console.log(`Installed ${manifest.name} ${manifest.version} to ${pluginDirectory
 console.log("Reload Obsidian to load the updated plugin.");
 
 async function runBuild() {
-  const child = spawn("npm run build", {
+  const child = spawn("pnpm run build", {
     cwd: process.cwd(),
     stdio: "inherit",
     shell: true,

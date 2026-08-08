@@ -56,8 +56,8 @@ Restart Obsidian, open **Settings → Community plugins**, and enable **Tasks Ca
 ### Build from source
 
 ```bash
-npm install
-npm run build
+pnpm install
+pnpm run build
 ```
 
 The build writes Obsidian's generated `main.js` and `styles.css` files at the repository root. Copy them with `manifest.json` to the vault plugin directory.
@@ -101,30 +101,30 @@ The parser supports standard Markdown task list markers (`-`, `*`, `+`, and numb
 ## Development
 
 ```bash
-npm run check
-npm test
-npm run build
+pnpm run check
+pnpm test
+pnpm run build
 ```
 
 Available scripts:
 
-- `npm run dev`: watch the React, TypeScript, and CSS sources and rebuild `main.js` and `styles.css`
-- `npm run format`: format supported source and configuration files with Biome
-- `npm run format:check`: verify formatting without changing files
-- `npm run check`: verify formatting and type-check without emitting files
-- `npm test`: run the unit test suite
-- `npm run build`: verify formatting, type-check, and create minified production `main.js` and `styles.css`
-- `npm run clean`: remove generated build and release artifacts
-- `npm run deploy -- <vault-path>`: build and copy the runtime files to `<vault-path>/.obsidian/plugins/tasks-calendar/`
-- `npm run release`: clean, test, build, and assemble the three release assets under `dist/tasks-calendar-<version>/`
-- `npm version patch|minor|major`: synchronize `package.json`, `manifest.json`, and `versions.json`
+- `pnpm run dev`: watch the React, TypeScript, and CSS sources and rebuild `main.js` and `styles.css`
+- `pnpm run format`: format supported source and configuration files with Biome
+- `pnpm run format:check`: verify formatting without changing files
+- `pnpm run check`: verify formatting and type-check without emitting files
+- `pnpm test`: run the unit test suite
+- `pnpm run build`: verify formatting, type-check, and create minified production `main.js` and `styles.css`
+- `pnpm run clean`: remove generated build and release artifacts
+- `pnpm run deploy <vault-path>`: build and copy the runtime files to `<vault-path>/.obsidian/plugins/tasks-calendar/`
+- `pnpm run release`: clean, test, build, and assemble the three release assets under `dist/tasks-calendar-<version>/`
+- `pnpm version patch|minor|major`: synchronize `package.json`, `manifest.json`, and `versions.json`
 
 Generated `main.js`, `styles.css`, and `dist/` contents are intentionally ignored. Obsidian installations receive these files from GitHub release assets; they are not committed to the source repository.
 
 For example:
 
 ```bash
-npm run deploy -- "D:\Notes\My Vault"
+pnpm run deploy "D:\Notes\My Vault"
 ```
 
 The vault must already contain a `.obsidian` directory. The command creates the plugin-specific directory if needed and overwrites only the plugin's three generated runtime files.
@@ -134,7 +134,7 @@ The vault must already contain a `.obsidian` directory. The command creates the 
 Version and publish a release with:
 
 ```bash
-npm version patch -m "chore(release): %s"
+pnpm version patch --tag-version-prefix="" -m "chore(release): %s"
 git push origin master --follow-tags
 ```
 

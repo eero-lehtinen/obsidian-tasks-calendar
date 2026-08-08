@@ -8,13 +8,13 @@ Use Conventional Commits for every commit message.
 
 Run these commands before committing:
 
-- `npm run check`
-- `npm test`
-- `npm run build`
+- `pnpm run check`
+- `pnpm test`
+- `pnpm run build`
 
 ## Releases
 
-Run `npm run release` before pushing a release tag.
+Run `pnpm run release` before pushing a release tag.
 
 ## Project structure
 

@@ -1,0 +1,6 @@
+minimumReleaseAge: 1440
+minimumReleaseAgeIgnoreMissingTime: false
+minimumReleaseAgeStrict: true
+
+allowBuilds:
+  esbuild: true

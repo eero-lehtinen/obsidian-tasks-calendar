@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 
 const targetVersion = process.env.npm_package_version;
-if (!targetVersion) throw new Error("npm did not provide a target package version.");
+if (!targetVersion) throw new Error("The package manager did not provide a target package version.");
 
 const manifest = JSON.parse(await readFile("manifest.json", "utf8"));
 manifest.version = targetVersion;

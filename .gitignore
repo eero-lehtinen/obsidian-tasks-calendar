@@ -5,6 +5,7 @@
 
 # Dependencies
 node_modules/
+.pnpm-store/
 
 # Generated build and release artifacts
 /main.js
