@@ -7,6 +7,7 @@ import { insertTaskAtTop } from "./tasks/file-content";
 import { withoutTaskOrderDate, withoutTaskOrderKey } from "./tasks/order";
 import { fallbackToggleLine, rescheduleTaskLine } from "./tasks/parser";
 import { TaskStore } from "./tasks/store";
+import { openTaskEditor } from "./tasks/task-editor-modal";
 import type {
   CalendarMode,
   CalendarState,
@@ -142,25 +143,30 @@ export default class TasksCalendarPlugin extends Plugin {
   }
 
   async editTask(task: CalendarTask): Promise<void> {
-    const api = this.tasksApi;
-    if (!api) {
-      await this.openTask(task);
-      return;
-    }
     try {
-      const replacement = await api.editTaskLineModal(task.raw);
+      const replacement = await openTaskEditor(this.app, task.raw, {
+        mode: "edit",
+        source: {
+          path: task.path,
+          line: task.line + 1,
+          open: () => this.openTask(task),
+          delete: () => this.deleteTask(task),
+        },
+      });
       if (replacement && replacement !== task.raw) await this.taskStore.replaceTask(task, replacement);
     } catch (error) {
       new Notice(`Could not edit task: ${messageFrom(error)}`);
     }
   }
 
-  async deleteTask(task: CalendarTask): Promise<void> {
+  async deleteTask(task: CalendarTask): Promise<boolean> {
     try {
       await this.taskStore.deleteTask(task);
       new Notice(`Deleted “${task.description || "Untitled task"}”.`);
+      return true;
     } catch (error) {
       new Notice(`Could not delete task: ${messageFrom(error)}`);
+      return false;
     }
   }
 
@@ -196,11 +202,6 @@ export default class TasksCalendarPlugin extends Plugin {
   }
 
   async createTask(date: string): Promise<void> {
-    const api = this.tasksApi;
-    if (!api) {
-      new Notice("Enable the Tasks plugin to create tasks from the calendar.");
-      return;
-    }
     const configuredPath = this.settings.newTaskFile.trim();
     if (!configuredPath) {
       new Notice("Choose a new task file in Tasks Calendar settings.");
@@ -208,7 +209,7 @@ export default class TasksCalendarPlugin extends Plugin {
     }
 
     try {
-      const taskLine = await api.createTaskLineModal();
+      const taskLine = await openTaskEditor(this.app, `- [ ] 📅 ${date}`, { mode: "create" });
       if (!taskLine) return;
       const datedTaskLine = rescheduleTaskLine(taskLine, "due", date);
       const path = normalizePath(

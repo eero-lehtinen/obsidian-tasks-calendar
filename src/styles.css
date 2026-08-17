@@ -1266,3 +1266,327 @@
 .tasks-calendar-performance-table th {
   background: var(--background-secondary);
 }
+
+/* Task editor */
+
+.tasks-calendar-editor-modal {
+  width: min(680px, calc(100vw - 32px));
+}
+
+.tasks-calendar-editor {
+  display: grid;
+  gap: 13px;
+}
+
+.tasks-calendar-editor label,
+.tasks-calendar-editor legend {
+  color: var(--text-normal);
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-semibold);
+}
+
+.tasks-calendar-editor-description {
+  display: grid;
+  gap: 8px;
+}
+
+.tasks-calendar-editor-description textarea {
+  min-height: 72px;
+  resize: vertical;
+  width: 100%;
+}
+
+.tasks-calendar-editor-priority {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.tasks-calendar-editor-priority legend {
+  margin-bottom: 8px;
+}
+
+.tasks-calendar-editor-priority-options {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  padding: 3px;
+  overflow: hidden;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+
+.tasks-calendar-editor-priority-options label {
+  position: relative;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 3px 5px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-normal);
+  cursor: var(--cursor-link);
+  border-radius: calc(var(--radius-m) - 2px);
+  transition:
+    background-color 100ms ease,
+    color 100ms ease,
+    box-shadow 100ms ease;
+}
+
+.tasks-calendar-editor-priority-options label:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.tasks-calendar-editor-priority-options label:has(input:checked) {
+  color: var(--text-normal);
+  background: var(--background-primary);
+  box-shadow: var(--shadow-s);
+}
+
+.tasks-calendar-editor-priority-options label:has(input:focus-visible) {
+  box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.tasks-calendar-editor-priority-options input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tasks-calendar-editor-priority-marker {
+  font-size: var(--font-ui-small);
+  line-height: 1.2;
+}
+
+.tasks-calendar-editor-priority-options label[data-priority="highest"] .tasks-calendar-editor-priority-marker,
+.tasks-calendar-editor-priority-options label[data-priority="high"] .tasks-calendar-editor-priority-marker {
+  color: var(--color-red);
+}
+
+.tasks-calendar-editor-priority-options label[data-priority="medium"] .tasks-calendar-editor-priority-marker {
+  color: var(--color-orange);
+}
+
+.tasks-calendar-editor-priority-options label[data-priority="low"] .tasks-calendar-editor-priority-marker,
+.tasks-calendar-editor-priority-options label[data-priority="lowest"] .tasks-calendar-editor-priority-marker {
+  color: var(--color-blue);
+}
+
+.tasks-calendar-editor-fields {
+  display: grid;
+  gap: 13px;
+  padding: 14px 0;
+  border-top: 1px solid var(--background-modifier-border);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.tasks-calendar-editor-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.55fr);
+  gap: 7px;
+  align-items: start;
+}
+
+.tasks-calendar-editor-field > label {
+  align-self: center;
+  grid-column: 1 / -1;
+}
+
+.tasks-calendar-editor-field > input {
+  grid-column: 1;
+  grid-row: 2;
+  width: 100%;
+}
+
+.tasks-calendar-editor-date-controls {
+  display: grid;
+  grid-column: 1;
+  grid-row: 2;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 8px;
+}
+
+.tasks-calendar-editor-date-controls > input[type="text"] {
+  width: 100%;
+}
+
+.tasks-calendar-editor-date-picker-host {
+  position: relative;
+  display: flex;
+}
+
+.tasks-calendar-editor-date-picker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--input-height);
+  color: var(--text-muted);
+  cursor: pointer;
+  background: var(--interactive-normal);
+  border-radius: var(--input-radius);
+  box-shadow: var(--input-shadow);
+  width: 100%;
+}
+
+.tasks-calendar-editor-date-picker:hover {
+  color: var(--text-normal);
+  background: var(--interactive-hover);
+}
+
+.tasks-calendar-editor-date-picker svg {
+  width: 17px;
+  height: 17px;
+  pointer-events: none;
+}
+
+.tasks-calendar-editor-date-picker-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tasks-calendar-editor-feedback {
+  align-self: center;
+  grid-column: 2;
+  grid-row: 2;
+  min-height: 1.2em;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.tasks-calendar-editor-feedback.is-error {
+  color: var(--text-error);
+}
+
+.tasks-calendar-editor input.is-invalid {
+  border-color: var(--text-error);
+}
+
+.tasks-calendar-editor-future {
+  display: flex;
+  grid-column: 1;
+  gap: 8px;
+  align-items: center;
+  margin-left: 0;
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-normal);
+}
+
+.tasks-calendar-editor-future input {
+  margin: 0;
+}
+
+.tasks-calendar-editor-status {
+  display: grid;
+  gap: 8px;
+}
+
+.tasks-calendar-editor-status-label {
+  color: var(--text-normal);
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-semibold);
+}
+
+.tasks-calendar-editor-status label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: fit-content;
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-normal);
+}
+
+.tasks-calendar-editor-status input {
+  margin: 0;
+}
+
+.tasks-calendar-editor-source-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tasks-calendar-editor-source {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--link-color);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tasks-calendar-editor-source:hover {
+  color: var(--link-color-hover);
+  text-decoration: underline;
+}
+
+.tasks-calendar-editor-source svg {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+}
+
+.tasks-calendar-editor-source span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tasks-calendar-editor .tasks-calendar-editor-delete {
+  flex: 0 0 auto;
+  color: var(--text-error);
+  background: var(--interactive-normal);
+  border: 1px solid color-mix(in srgb, var(--text-error) 25%, var(--background-modifier-border));
+}
+
+.tasks-calendar-editor .tasks-calendar-editor-delete:hover {
+  color: var(--text-error);
+  background: color-mix(in srgb, var(--text-error) 7%, var(--interactive-hover));
+  border-color: color-mix(in srgb, var(--text-error) 45%, var(--background-modifier-border));
+}
+
+.tasks-calendar-editor-confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.tasks-calendar-editor-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.32fr);
+  gap: 10px;
+}
+
+.tasks-calendar-editor-actions button {
+  justify-content: center;
+}
+
+@media (max-width: 560px) {
+  .tasks-calendar-editor-priority-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tasks-calendar-editor-field {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tasks-calendar-editor-feedback {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}
