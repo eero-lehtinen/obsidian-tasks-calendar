@@ -327,7 +327,12 @@ function PriorityIcon({ priority }: { priority: CalendarTask["priority"] }) {
   return (
     <span aria-label={priorityLabels[priority]} className="tasks-calendar-priority" data-level={priority} role="img">
       <svg aria-hidden="true" viewBox="0 0 14 14">
-        {isDouble ? (
+        {priority === "highest" ? (
+          <>
+            <path d="M1.3 11.2 7 2 12.7 11.2Z" fill="none" stroke="currentColor" strokeWidth="1.2" />
+            <path d="M5.1 9.4 7 6.3 8.9 9.4Z" />
+          </>
+        ) : isDouble ? (
           pointsUp ? (
             <>
               <path d="M2.2 7 7 2.2 11.8 7Z" />
