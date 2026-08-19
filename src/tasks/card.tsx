@@ -185,13 +185,7 @@ function TaskCardView({
     const target = event.target as Element;
     if (target.closest("a, .tasks-calendar-checkbox, .tasks-calendar-task-source")) return;
 
-    const isTouch = lastPointerType.current === "touch";
     lastPointerType.current = "mouse";
-    if (isTouch) {
-      event.preventDefault();
-      showTaskActions(plugin, task, { x: event.clientX, y: event.clientY });
-      return;
-    }
     void plugin.editTask(task);
   };
 
