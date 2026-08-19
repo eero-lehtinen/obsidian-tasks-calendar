@@ -10,6 +10,7 @@ import {
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { MotionConfig } from "motion/react";
+import { Platform } from "obsidian";
 import type { CSSProperties, Ref } from "react";
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -27,6 +28,7 @@ import { CalendarGrid } from "./grid";
 import { calendarTaskDate, createCalendarModel } from "./model";
 import { CalendarToolbar, QueryEditor } from "./toolbar";
 import { useCurrentDay } from "./use-current-day";
+import { useDaySwipe } from "./use-day-swipe";
 import { useCalendarLayout } from "./use-layout";
 
 export interface CalendarHandle {
@@ -164,6 +166,22 @@ export function CalendarApp({
     });
   }, []);
 
+  const navigate = useCallback(
+    (direction: -1 | 1) => {
+      updateState((current) => ({
+        ...current,
+        anchor: toDateKey(moveAnchor(fromDateKey(current.anchor), current.mode, direction)),
+      }));
+    },
+    [updateState],
+  );
+
+  useDaySwipe({
+    enabled: Platform.isMobile && state.mode === "day" && activeDrag === null,
+    gridRef,
+    onSwipe: navigate,
+  });
+
   let taskIndex = 0;
   const renderTask = (task: CalendarTask, date: string, showSource: boolean, completesDay = false) => {
     const titleId = `tasks-calendar-${instanceId}-task-${taskIndex++}`;
@@ -235,11 +253,7 @@ export function CalendarApp({
           style={{ "--tasks-calendar-completed-opacity": String(plugin.settings.completedOpacity) } as CSSProperties}
         >
           <CalendarToolbar
-            onNavigate={(direction) =>
-              updateState({
-                anchor: toDateKey(moveAnchor(fromDateKey(state.anchor), state.mode, direction)),
-              })
-            }
+            onNavigate={navigate}
             onQueryToggle={() => setQueryOpen((open) => !open)}
             onToday={() => updateState({ anchor: toDateKey(new Date()) })}
             plugin={plugin}
