@@ -7,7 +7,7 @@ describe("completion time transaction filter", () => {
     const state = createState("- [ ] Write report ✅ 2026-08-30");
     const transaction = replaceDocument(state, "- [x] Write report ✅ 2026-08-30");
 
-    expect(transaction.newDoc.toString()).toBe("- [x] Write report ✅ 2026-08-30 🕒 14:32");
+    expect(transaction.newDoc.toString()).toBe("- [x] Write report 🕒 14:32 ✅ 2026-08-30");
   });
 
   it("handles a transaction that changes only the checkbox character", () => {
@@ -31,7 +31,7 @@ describe("completion time transaction filter", () => {
     const transaction = replaceDocument(state, replacement);
 
     expect(transaction.newDoc.toString()).toBe(
-      "- [ ] Write report 🔁 every day 📅 2026-08-31\n- [x] Write report 🔁 every day 📅 2026-08-30 ✅ 2026-08-30 🕒 14:32",
+      "- [ ] Write report 🔁 every day 📅 2026-08-31\n- [x] Write report 🕒 14:32 🔁 every day 📅 2026-08-30 ✅ 2026-08-30",
     );
   });
 
@@ -43,10 +43,10 @@ describe("completion time transaction filter", () => {
   });
 
   it("does not alter completion times when recording is disabled", () => {
-    const state = createState("- [x] Write report ✅ 2026-08-30 🕒 14:32", false);
+    const state = createState("- [x] Write report 🕒 14:32 ✅ 2026-08-30", false);
     const transaction = state.update({ changes: { from: 3, to: 4, insert: " " } });
 
-    expect(transaction.newDoc.toString()).toBe("- [ ] Write report ✅ 2026-08-30 🕒 14:32");
+    expect(transaction.newDoc.toString()).toBe("- [ ] Write report 🕒 14:32 ✅ 2026-08-30");
   });
 });
 

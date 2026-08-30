@@ -89,11 +89,11 @@ export function taskEditorModelFromLine(raw: string): TaskEditorModel {
 export function taskLineFromEditorModel(model: TaskEditorModel): string {
   const parts = [
     model.description.trim().replace(/[\r\n]+/gu, " "),
+    model.completionTime ? `🕒 ${model.completionTime}` : "",
     PRIORITY_MARKERS[model.priority],
     model.recurrence.trim() ? `🔁 ${model.recurrence.trim()}` : "",
     model.due ? `📅 ${model.due}` : "",
     model.done ? `✅ ${model.done}` : "",
-    model.completionTime ? `🕒 ${model.completionTime}` : "",
     ...model.preservedMetadata,
     model.blockLink,
   ].filter(Boolean);

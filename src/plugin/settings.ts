@@ -94,7 +94,7 @@ export class TasksCalendarSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Record completion time")
-      .setDesc("Add 🕒 HH:mm after the Tasks done date when a task is completed.")
+      .setDesc("Add 🕒 HH:mm when a task is completed.")
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.recordCompletionTime).onChange(async (value) => {
           this.plugin.settings.recordCompletionTime = value;

@@ -48,7 +48,7 @@ describe("task editor model", () => {
       completionTime: "14:32",
       preservedMetadata: [],
     });
-    expect(taskLineFromEditorModel(model)).toBe("- [x] Ship it ✅ 2026-08-30 🕒 14:32");
+    expect(taskLineFromEditorModel(model)).toBe("- [x] Ship it 🕒 14:32 ✅ 2026-08-30");
   });
 
   it("validates recurrence syntax and requires a date anchor", () => {

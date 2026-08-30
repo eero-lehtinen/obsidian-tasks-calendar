@@ -6,9 +6,12 @@ import {
 } from "../src/tasks/completion-time";
 
 describe("completion time", () => {
-  it("adds the time after the Tasks done date", () => {
+  it("places the time before every Tasks metadata field", () => {
     expect(addCompletionTime("- [x] Write report ✅ 2026-08-30", "14:32")).toBe(
-      "- [x] Write report ✅ 2026-08-30 🕒 14:32",
+      "- [x] Write report 🕒 14:32 ✅ 2026-08-30",
+    );
+    expect(addCompletionTime("- [x] Write report ⏫ 🔁 every day 📅 2026-08-30 ✅ 2026-08-30", "14:32")).toBe(
+      "- [x] Write report 🕒 14:32 ⏫ 🔁 every day 📅 2026-08-30 ✅ 2026-08-30",
     );
   });
 
@@ -25,7 +28,7 @@ describe("completion time", () => {
       "- [ ] Write report 🔁 every day 📅 2026-08-31\n- [x] Write report 🔁 every day 📅 2026-08-30 ✅ 2026-08-30";
 
     expect(addCompletionTimeToCompletedLine(replacement, "14:32")).toBe(
-      "- [ ] Write report 🔁 every day 📅 2026-08-31\n- [x] Write report 🔁 every day 📅 2026-08-30 ✅ 2026-08-30 🕒 14:32",
+      "- [ ] Write report 🔁 every day 📅 2026-08-31\n- [x] Write report 🕒 14:32 🔁 every day 📅 2026-08-30 ✅ 2026-08-30",
     );
   });
 
@@ -35,6 +38,6 @@ describe("completion time", () => {
   });
 
   it("removes the completion time when a task is reopened", () => {
-    expect(removeCompletionTime("- [ ] Write report ✅ 2026-08-30 🕒 14:32")).toBe("- [ ] Write report ✅ 2026-08-30");
+    expect(removeCompletionTime("- [ ] Write report 🕒 14:32 ✅ 2026-08-30")).toBe("- [ ] Write report ✅ 2026-08-30");
   });
 });
