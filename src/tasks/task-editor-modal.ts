@@ -204,6 +204,12 @@ class TaskEditorModal extends Modal {
     const checkbox = label.createEl("input", { attr: { type: "checkbox" } });
     checkbox.checked = COMPLETED_STATUSES.has(this.model.status);
     label.createSpan({ text: "Completed" });
+    if (this.model.done || this.model.completionTime) {
+      const details = [this.model.done, this.model.completionTime ? `🕒 ${this.model.completionTime}` : ""]
+        .filter(Boolean)
+        .join(" · ");
+      label.createSpan({ text: `· ${details}` });
+    }
     checkbox.addEventListener("change", () => {
       this.model.status = checkbox.checked ? "x" : " ";
     });

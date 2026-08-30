@@ -39,6 +39,18 @@ describe("task editor model", () => {
     expect(parseTaskDate("", true, monday)).toEqual({ dateKey: null, error: null });
   });
 
+  it("preserves completion date and time separately from the description", () => {
+    const model = taskEditorModelFromLine("- [x] Ship it ✅ 2026-08-30 🕒 14:32");
+
+    expect(model).toMatchObject({
+      description: "Ship it",
+      done: "2026-08-30",
+      completionTime: "14:32",
+      preservedMetadata: [],
+    });
+    expect(taskLineFromEditorModel(model)).toBe("- [x] Ship it ✅ 2026-08-30 🕒 14:32");
+  });
+
   it("validates recurrence syntax and requires a date anchor", () => {
     expect(validateRecurrence("every week on Monday", true)).toEqual({
       normalized: "every week on Monday",

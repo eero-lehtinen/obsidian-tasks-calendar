@@ -13,6 +13,7 @@ const DATE_MARKERS: Record<
   "❌": "cancelled",
 };
 const COMPLETED_STATUSES = new Set(["x", "X", "-", "_"]);
+const COMPLETION_TIME_MARKER = /🕒\s*(\d{2}:\d{2})/u;
 
 export function parseTaskLine(raw: string, path: string, line: number): CalendarTask | null {
   const match = raw.match(TASK_PATTERN);
@@ -36,11 +37,13 @@ export function parseTaskLine(raw: string, path: string, line: number): Calendar
     const dateMatch = body.match(new RegExp(`${marker}\\s*(\\d{4}-\\d{2}-\\d{2})`, "u"));
     dates[field] = dateMatch?.[1] ?? null;
   }
+  const completionTime = body.match(COMPLETION_TIME_MARKER)?.[1] ?? null;
 
   const recurrenceMatch = body.match(/🔁\s*([^🛫⏳📅➕✅❌🏁]+?)(?=\s+(?:🛫|⏳|📅|➕|✅|❌|🏁)|\s+\^[\w-]+$|$)/u);
   const tags = Array.from(body.matchAll(/(^|\s)(#[^ !@#$%^&*(),.?":{}|<>]+)/gu), (tag) => tag[2]);
   const description = body
     .replace(/(?:🛫|⏳|📅|➕|✅|❌)\s*\d{4}-\d{2}-\d{2}/gu, "")
+    .replace(/🕒\s*\d{2}:\d{2}/gu, "")
     .replace(/🔁\s*([^🛫⏳📅➕✅❌🏁]+?)(?=\s+(?:🛫|⏳|📅|➕|✅|❌|🏁)|\s+\^[\w-]+$|$)/gu, "")
     .replace(/\s+\^[\w-]+$/u, "")
     .replace(/\s+/g, " ")
@@ -61,6 +64,7 @@ export function parseTaskLine(raw: string, path: string, line: number): Calendar
     start: dates.start,
     created: dates.created,
     done: dates.done,
+    completionTime,
     cancelled: dates.cancelled,
     recurrence: recurrenceMatch?.[1].trim() ?? null,
   };

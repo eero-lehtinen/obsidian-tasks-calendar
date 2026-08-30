@@ -16,6 +16,7 @@ export interface CalendarTask {
   start: string | null;
   created: string | null;
   done: string | null;
+  completionTime: string | null;
   cancelled: string | null;
   recurrence: string | null;
 }

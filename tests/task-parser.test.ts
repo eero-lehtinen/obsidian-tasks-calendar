@@ -25,6 +25,12 @@ describe("parseTaskLine", () => {
     expect(parseTaskLine("* [X] Finished ✅ 2026-07-24", "Done.md", 0)?.completed).toBe(true);
   });
 
+  it("parses completion time separately from the task description", () => {
+    const task = parseTaskLine("- [x] Finished ✅ 2026-07-24 🕒 14:32", "Done.md", 0)!;
+    expect(task.completionTime).toBe("14:32");
+    expect(task.description).toBe("Finished");
+  });
+
   it("distinguishes explicit medium priority from unset priority", () => {
     expect(parseTaskLine("- [ ] Medium 🔼", "Tasks.md", 0)?.priority).toBe("medium");
     expect(parseTaskLine("- [ ] Normal", "Tasks.md", 1)?.priority).toBe("normal");

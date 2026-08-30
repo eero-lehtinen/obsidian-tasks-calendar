@@ -12,6 +12,8 @@ export interface TaskEditorModel {
   priority: TaskPriority;
   recurrence: string;
   due: string;
+  done: string;
+  completionTime: string;
   preservedMetadata: string[];
   blockLink: string;
   trailingWhitespace: string;
@@ -30,6 +32,8 @@ export interface RecurrenceValidation {
 
 const TASK_LINE_PATTERN = /^([\s\t>]*(?:[-*+]|\d+[.)])\s+)\[(.)\]\s*(.*?)(\s*)$/u;
 const DUE_PATTERN = /(?:^|\s)📅\s*(\d{4}-\d{2}-\d{2})(?=\s|$)/u;
+const DONE_PATTERN = /(?:^|\s)✅\s*(\d{4}-\d{2}-\d{2})(?=\s|$)/u;
+const COMPLETION_TIME_PATTERN = /(?:^|\s)🕒\s*(\d{2}:\d{2})(?=\s|$)/u;
 const RECURRENCE_PATTERN = /(?:^|\s)🔁\s*([^🛫⏳📅➕✅❌🏁]+?)(?=\s+(?:🛫|⏳|📅|➕|✅|❌|🏁|🆔|⛔)|\s+\^[\w-]+$|$)/u;
 const PRIORITY_MARKERS: Record<TaskPriority, string> = {
   highest: "🔺",
@@ -40,7 +44,7 @@ const PRIORITY_MARKERS: Record<TaskPriority, string> = {
   lowest: "⏬",
 };
 const PRESERVED_METADATA_PATTERN =
-  /(?:🛫|⏳|➕|✅|❌)\s*\d{4}-\d{2}-\d{2}|🏁\s*(?:keep|delete)|🆔\s*[^\s]+|⛔\s*[^\s]+/giu;
+  /(?:🛫|⏳|➕|❌)\s*\d{4}-\d{2}-\d{2}|🏁\s*(?:keep|delete)|🆔\s*[^\s]+|⛔\s*[^\s]+/giu;
 const PRIORITY_PATTERN = /(?:^|\s)(?:🔺|⏫|🔼|🔽|⏬)(?=\s|$)/gu;
 
 export function taskEditorModelFromLine(raw: string): TaskEditorModel {
@@ -49,12 +53,16 @@ export function taskEditorModelFromLine(raw: string): TaskEditorModel {
 
   const body = match[3];
   const due = body.match(DUE_PATTERN)?.[1] ?? "";
+  const done = body.match(DONE_PATTERN)?.[1] ?? "";
+  const completionTime = body.match(COMPLETION_TIME_PATTERN)?.[1] ?? "";
   const recurrence = body.match(RECURRENCE_PATTERN)?.[1].trim() ?? "";
   const blockLinkMatch = body.match(/(?:^|\s)(\^[\w-]+)$/u);
   const blockLink = blockLinkMatch?.[1] ?? "";
   const preservedMetadata = Array.from(body.matchAll(PRESERVED_METADATA_PATTERN), (metadata) => metadata[0].trim());
   const description = body
     .replace(DUE_PATTERN, " ")
+    .replace(DONE_PATTERN, " ")
+    .replace(COMPLETION_TIME_PATTERN, " ")
     .replace(RECURRENCE_PATTERN, " ")
     .replace(PRIORITY_PATTERN, " ")
     .replace(PRESERVED_METADATA_PATTERN, " ")
@@ -69,6 +77,8 @@ export function taskEditorModelFromLine(raw: string): TaskEditorModel {
     priority: priorityFromBody(body),
     recurrence,
     due,
+    done,
+    completionTime,
     preservedMetadata,
     blockLink,
     trailingWhitespace: match[4],
@@ -82,6 +92,8 @@ export function taskLineFromEditorModel(model: TaskEditorModel): string {
     PRIORITY_MARKERS[model.priority],
     model.recurrence.trim() ? `🔁 ${model.recurrence.trim()}` : "",
     model.due ? `📅 ${model.due}` : "",
+    model.done ? `✅ ${model.done}` : "",
+    model.completionTime ? `🕒 ${model.completionTime}` : "",
     ...model.preservedMetadata,
     model.blockLink,
   ].filter(Boolean);

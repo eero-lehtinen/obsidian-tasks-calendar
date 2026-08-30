@@ -3,6 +3,8 @@ import { TasksCalendarRenderer } from "./calendar/renderer";
 import { TASKS_CALENDAR_VIEW, TasksCalendarView } from "./calendar/view";
 import { PerformanceMonitor, PerformanceReportModal } from "./plugin/performance";
 import { DEFAULT_SETTINGS, TasksCalendarSettingTab } from "./plugin/settings";
+import { addCompletionTimeToCompletedLine, removeCompletionTime } from "./tasks/completion-time";
+import { createCompletionTimeTransactionFilter } from "./tasks/completion-time-transaction-filter";
 import { insertTaskAtTop } from "./tasks/file-content";
 import { withoutTaskOrderDate, withoutTaskOrderKey } from "./tasks/order";
 import { fallbackToggleLine, rescheduleTaskLine } from "./tasks/parser";
@@ -40,6 +42,7 @@ export default class TasksCalendarPlugin extends Plugin {
     await this.loadSettings();
     this.taskStore = new TaskStore(this.app.vault, this.performanceMonitor);
     await this.taskStore.initialize();
+    this.registerEditorExtension(createCompletionTimeTransactionFilter());
 
     this.registerView(TASKS_CALENDAR_VIEW, (leaf) => new TasksCalendarView(leaf, this));
     this.addRibbonIcon("calendar-check", "Open Tasks Calendar", () => void this.activateView());
@@ -132,8 +135,19 @@ export default class TasksCalendarPlugin extends Plugin {
 
   async toggleTask(task: CalendarTask): Promise<boolean> {
     try {
-      const replacement =
-        this.tasksApi?.executeToggleTaskDoneCommand(task.raw, task.path) ?? fallbackToggleLine(task.raw);
+      const sourceLine = task.completed ? removeCompletionTime(task.raw) : task.raw;
+      let replacement =
+        this.tasksApi?.executeToggleTaskDoneCommand(sourceLine, task.path) ?? fallbackToggleLine(sourceLine);
+      if (!task.completed) {
+        const timedReplacement = addCompletionTimeToCompletedLine(replacement);
+        const completionTimeAdded = timedReplacement !== replacement;
+        replacement = timedReplacement;
+        if (completionTimeAdded) {
+          console.info(
+            `Tasks Calendar: detected task completion in ${task.path}:${task.line + 1}; added completion time.`,
+          );
+        }
+      }
       await this.taskStore.replaceTask(task, replacement);
       return true;
     } catch (error) {
