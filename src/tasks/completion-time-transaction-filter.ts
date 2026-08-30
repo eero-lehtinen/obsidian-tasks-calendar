@@ -8,9 +8,12 @@ interface LineChange {
   insert: string;
 }
 
-export function createCompletionTimeTransactionFilter(getCompletionTime: () => string = currentLocalTime): Extension {
+export function createCompletionTimeTransactionFilter(
+  getCompletionTime: () => string = currentLocalTime,
+  shouldRecordCompletionTime: () => boolean = () => true,
+): Extension {
   return EditorState.transactionFilter.of((transaction) => {
-    if (!transaction.docChanged) return transaction;
+    if (!transaction.docChanged || !shouldRecordCompletionTime()) return transaction;
 
     const changes = completionTimeChanges(transaction, getCompletionTime());
     if (changes.length === 0) return transaction;

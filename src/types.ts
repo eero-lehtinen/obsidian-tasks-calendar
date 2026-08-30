@@ -27,6 +27,7 @@ export interface TasksCalendarSettings {
   showCompleted: boolean;
   showTaskSource: boolean;
   completedOpacity: number;
+  recordCompletionTime: boolean;
   forceAnimations: boolean;
   defaultQuery: string;
   datePreference: DateField[];

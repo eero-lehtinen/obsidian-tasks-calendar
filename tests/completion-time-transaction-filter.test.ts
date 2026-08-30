@@ -41,12 +41,24 @@ describe("completion time transaction filter", () => {
 
     expect(transaction.newDoc.toString()).toBe("- [ ] Write final report");
   });
+
+  it("does not alter completion times when recording is disabled", () => {
+    const state = createState("- [x] Write report ✅ 2026-08-30 🕒 14:32", false);
+    const transaction = state.update({ changes: { from: 3, to: 4, insert: " " } });
+
+    expect(transaction.newDoc.toString()).toBe("- [ ] Write report ✅ 2026-08-30 🕒 14:32");
+  });
 });
 
-function createState(document: string): EditorState {
+function createState(document: string, recordCompletionTime = true): EditorState {
   return EditorState.create({
     doc: document,
-    extensions: [createCompletionTimeTransactionFilter(() => "14:32")],
+    extensions: [
+      createCompletionTimeTransactionFilter(
+        () => "14:32",
+        () => recordCompletionTime,
+      ),
+    ],
   });
 }
 

@@ -42,7 +42,9 @@ export default class TasksCalendarPlugin extends Plugin {
     await this.loadSettings();
     this.taskStore = new TaskStore(this.app.vault, this.performanceMonitor);
     await this.taskStore.initialize();
-    this.registerEditorExtension(createCompletionTimeTransactionFilter());
+    this.registerEditorExtension(
+      createCompletionTimeTransactionFilter(undefined, () => this.settings.recordCompletionTime),
+    );
 
     this.registerView(TASKS_CALENDAR_VIEW, (leaf) => new TasksCalendarView(leaf, this));
     this.addRibbonIcon("calendar-check", "Open Tasks Calendar", () => void this.activateView());
@@ -135,10 +137,11 @@ export default class TasksCalendarPlugin extends Plugin {
 
   async toggleTask(task: CalendarTask): Promise<boolean> {
     try {
-      const sourceLine = task.completed ? removeCompletionTime(task.raw) : task.raw;
+      const sourceLine =
+        task.completed && this.settings.recordCompletionTime ? removeCompletionTime(task.raw) : task.raw;
       let replacement =
         this.tasksApi?.executeToggleTaskDoneCommand(sourceLine, task.path) ?? fallbackToggleLine(sourceLine);
-      if (!task.completed) {
+      if (!task.completed && this.settings.recordCompletionTime) {
         const timedReplacement = addCompletionTimeToCompletedLine(replacement);
         const completionTimeAdded = timedReplacement !== replacement;
         replacement = timedReplacement;

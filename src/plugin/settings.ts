@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS: TasksCalendarSettings = {
   showCompleted: true,
   showTaskSource: false,
   completedOpacity: 0.42,
+  recordCompletionTime: true,
   forceAnimations: false,
   defaultQuery: "",
   datePreference: ["scheduled", "due", "start"],
@@ -90,6 +91,16 @@ export class TasksCalendarSettingTab extends PluginSettingTab {
           this.plugin.refreshCalendars();
         }),
     );
+
+    new Setting(containerEl)
+      .setName("Record completion time")
+      .setDesc("Add 🕒 HH:mm after the Tasks done date when a task is completed.")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.recordCompletionTime).onChange(async (value) => {
+          this.plugin.settings.recordCompletionTime = value;
+          await this.plugin.saveSettings();
+        }),
+      );
 
     new Setting(containerEl)
       .setName("Always animate")
