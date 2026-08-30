@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  completionDateLabel,
   parseTaskDate,
   taskEditorModelFromLine,
   taskLineFromEditorModel,
@@ -37,6 +38,14 @@ describe("task editor model", () => {
     expect(parseTaskDate("thu", true, monday)).toEqual({ dateKey: "2026-08-20", error: null });
     expect(parseTaskDate("2026-02-30", true, monday).error).not.toBeNull();
     expect(parseTaskDate("", true, monday)).toEqual({ dateKey: null, error: null });
+  });
+
+  it("labels only today's and yesterday's completion dates", () => {
+    const referenceDate = new Date(2026, 7, 20, 12);
+
+    expect(completionDateLabel("2026-08-20", referenceDate)).toBe("2026-08-20 (today)");
+    expect(completionDateLabel("2026-08-19", referenceDate)).toBe("2026-08-19 (yesterday)");
+    expect(completionDateLabel("2026-08-18", referenceDate)).toBe("2026-08-18");
   });
 
   it("preserves completion date and time separately from the description", () => {

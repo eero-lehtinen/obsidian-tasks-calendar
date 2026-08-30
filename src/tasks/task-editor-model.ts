@@ -1,5 +1,5 @@
 import * as chrono from "chrono-node";
-import { format, isValid, parseISO } from "date-fns";
+import { format, isSameDay, isValid, parseISO, subDays } from "date-fns";
 import { RRule } from "rrule";
 import type { CalendarTask } from "../types";
 
@@ -112,6 +112,14 @@ export function parseTaskDate(input: string, forwardOnly: boolean, referenceDate
   const parsed = chrono.parseDate(trimmed, referenceDate, { forwardDate: forwardOnly });
   if (!parsed || !isValid(parsed)) return { dateKey: null, error: "Enter a date such as “thu” or choose one." };
   return { dateKey: format(parsed, "yyyy-MM-dd"), error: null };
+}
+
+export function completionDateLabel(done: string, referenceDate = new Date()): string {
+  const parsed = parseISO(done);
+  if (!isValid(parsed)) return done;
+  if (isSameDay(parsed, referenceDate)) return `${done} (today)`;
+  if (isSameDay(parsed, subDays(referenceDate, 1))) return `${done} (yesterday)`;
+  return done;
 }
 
 export function validateRecurrence(ruleText: string, hasDateAnchor: boolean): RecurrenceValidation {
