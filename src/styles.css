@@ -1577,6 +1577,28 @@
 }
 
 @media (max-width: 560px) {
+  .tasks-calendar-editor-source-actions {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .tasks-calendar-editor-source {
+    flex: 1 1 100%;
+    align-items: flex-start;
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .tasks-calendar-editor-source span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+  }
+
+  .tasks-calendar-editor .tasks-calendar-editor-delete {
+    margin-inline-start: auto;
+  }
+
   .tasks-calendar-editor-priority-options {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
