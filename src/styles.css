@@ -251,10 +251,10 @@
   overflow-y: auto;
 }
 
-.tasks-calendar-grid.is-month,
-.tasks-calendar-grid.is-week,
-.tasks-calendar-grid.is-day {
+.tasks-calendar-content {
+  display: flex;
   flex: 0 0 auto;
+  flex-direction: column;
   height: min(620px, calc(100vh - 180px));
   min-height: 260px;
   overflow: hidden;
@@ -879,13 +879,33 @@
 }
 
 .tasks-calendar-overdue-tasks {
+  box-sizing: border-box;
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
-  max-height: min(220px, 32vh);
+  max-height: min(220px, 32vh, 45%);
   border-top: 1px solid var(--tasks-calendar-border);
   overflow: hidden;
   background: var(--background-secondary);
+}
+
+.tasks-calendar .tasks-calendar-overdue-resize {
+  flex: 0 0 8px;
+  width: 100%;
+  height: 8px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.tasks-calendar .tasks-calendar-overdue-resize:hover,
+.tasks-calendar .tasks-calendar-overdue-resize:focus-visible {
+  background: var(--tasks-calendar-accent);
 }
 
 .tasks-calendar-overdue-header {
@@ -924,11 +944,6 @@
   font-size: 0.82em;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.tasks-calendar:has(.tasks-calendar-overdue-tasks) .tasks-calendar-grid.is-week,
-.tasks-calendar:has(.tasks-calendar-overdue-tasks) .tasks-calendar-grid.is-day {
-  max-height: calc(100vh - 280px);
 }
 
 @container (max-width: 760px) {
@@ -1023,6 +1038,9 @@
 
   .tasks-calendar-grid:is(.is-month, .is-week) {
     --tasks-calendar-week-number-width: 18px;
+  }
+
+  .tasks-calendar-content:is(.is-month, .is-week) {
     min-height: 0;
     resize: none;
   }
@@ -1161,6 +1179,9 @@
 
   & .tasks-calendar-grid:is(.is-month, .is-week) {
     --tasks-calendar-week-number-width: 18px;
+  }
+
+  & .tasks-calendar-content:is(.is-month, .is-week) {
     min-height: 0;
     resize: none;
   }

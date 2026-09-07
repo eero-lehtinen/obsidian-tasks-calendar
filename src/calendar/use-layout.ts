@@ -7,6 +7,7 @@ import type { CalendarStateUpdate } from "./toolbar";
 
 export function useCalendarLayout({
   constrainHeightToContainer,
+  contentRef,
   gridRef,
   model,
   queryOpen,
@@ -14,6 +15,7 @@ export function useCalendarLayout({
   updateState,
 }: {
   constrainHeightToContainer: boolean;
+  contentRef: RefObject<HTMLDivElement | null>;
   gridRef: RefObject<HTMLDivElement | null>;
   model: unknown;
   queryOpen: boolean;
@@ -29,20 +31,24 @@ export function useCalendarLayout({
     void queryOpen;
     const layout = layoutRef.current;
     const grid = gridRef.current;
-    if (!grid) return;
+    const content = contentRef.current;
+    if (!grid || !content) return;
     layout.reset();
 
     const heightKey = mode === "day" ? "dayHeight" : mode === "week" ? "weekHeight" : "monthHeight";
     const desiredHeight = mode === "day" ? dayHeight : mode === "week" ? weekHeight : monthHeight;
     layout.observeHeight(
-      grid,
+      content,
       desiredHeight,
       (height) => {
         if (height !== desiredHeight) updateState({ [heightKey]: height });
       },
       constrainHeightToContainer
         ? () =>
-            Math.max(0, (grid.parentElement?.getBoundingClientRect().bottom ?? 0) - grid.getBoundingClientRect().top)
+            Math.max(
+              0,
+              (content.parentElement?.getBoundingClientRect().bottom ?? 0) - content.getBoundingClientRect().top,
+            )
         : null,
     );
 
@@ -62,5 +68,16 @@ export function useCalendarLayout({
       layout.observeMonth(grid, layouts);
     }
     return () => layout.reset();
-  }, [constrainHeightToContainer, dayHeight, gridRef, model, mode, monthHeight, queryOpen, updateState, weekHeight]);
+  }, [
+    constrainHeightToContainer,
+    contentRef,
+    dayHeight,
+    gridRef,
+    model,
+    mode,
+    monthHeight,
+    queryOpen,
+    updateState,
+    weekHeight,
+  ]);
 }

@@ -25,6 +25,7 @@ import { fromDateKey, moveAnchor, toDateKey } from "./date-utils";
 import { calendarCollisionDetection } from "./drag-collision";
 import { CalendarGrid } from "./grid";
 import { calendarTaskDate, createCalendarModel } from "./model";
+import { OverduePanel } from "./overdue-panel";
 import { CalendarToolbar, QueryEditor } from "./toolbar";
 import { useCurrentDay } from "./use-current-day";
 import { useCalendarLayout } from "./use-layout";
@@ -82,6 +83,7 @@ export function CalendarApp({
   const [completionOverrides, setCompletionOverrides] = useState<Map<string, CompletionOverride>>(() => new Map());
   const stateRef = useRef(state);
   const gridRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
@@ -140,6 +142,7 @@ export function CalendarApp({
 
   useCalendarLayout({
     constrainHeightToContainer,
+    contentRef,
     gridRef,
     model,
     queryOpen,
@@ -248,48 +251,53 @@ export function CalendarApp({
           />
           {queryOpen ? <QueryEditor state={state} updateState={updateState} /> : null}
           {model.queryError ? <div className="tasks-calendar-error">{model.queryError}</div> : null}
-          <CalendarGrid
-            anchor={anchor}
-            dropTargetDate={dropTargetDate}
-            gridRef={gridRef}
-            highlightedDays={highlightedDays}
-            model={model}
-            plugin={plugin}
-            recurrencePreview={previewDays}
-            renderTask={renderTask}
-            state={state}
-            updateState={updateState}
-          />
-          {model.overdueTasks.length > 0 ? (
-            <section className="tasks-calendar-overdue-tasks">
-              <header className="tasks-calendar-overdue-header">
-                <h3>Overdue tasks</h3>
-                <span className="tasks-calendar-overdue-count">{model.overdueTasks.length}</span>
-              </header>
-              <div className="tasks-calendar-task-list tasks-calendar-overdue-list">
-                {model.overdueTasks.map((task) => (
-                  <TaskCard
-                    calendarDate={calendarTaskDate(task, plugin.settings, model.today) ?? model.today}
-                    highlightNewRecurrence={highlightedTasks.has(taskVisualKey(task))}
-                    key={task.id}
-                    meta={
-                      <span className="tasks-calendar-overdue-meta">
-                        {calendarTaskDate(task, plugin.settings, model.today) ?? "No date"} ·{" "}
-                        {task.path.replace(/\.md$/i, "")}
-                      </span>
-                    }
-                    onCompletionChange={updateCompletionOverride}
-                    onRecurringCompletion={expectRecurringTask}
-                    onRecurrencePreview={previewRecurrence}
-                    plugin={plugin}
-                    showSource={false}
-                    task={task}
-                    titleId={`tasks-calendar-${instanceId}-task-${taskIndex++}`}
-                  />
-                ))}
-              </div>
-            </section>
-          ) : null}
+          <div className={`tasks-calendar-content is-${state.mode}`} ref={contentRef}>
+            <CalendarGrid
+              anchor={anchor}
+              dropTargetDate={dropTargetDate}
+              gridRef={gridRef}
+              highlightedDays={highlightedDays}
+              model={model}
+              plugin={plugin}
+              recurrencePreview={previewDays}
+              renderTask={renderTask}
+              state={state}
+              updateState={updateState}
+            />
+            {model.overdueTasks.length > 0 ? (
+              <OverduePanel
+                height={state.overdueHeight ?? null}
+                onHeightChange={(overdueHeight) => updateState({ overdueHeight })}
+              >
+                <header className="tasks-calendar-overdue-header">
+                  <h3>Overdue tasks</h3>
+                  <span className="tasks-calendar-overdue-count">{model.overdueTasks.length}</span>
+                </header>
+                <div className="tasks-calendar-task-list tasks-calendar-overdue-list">
+                  {model.overdueTasks.map((task) => (
+                    <TaskCard
+                      calendarDate={calendarTaskDate(task, plugin.settings, model.today) ?? model.today}
+                      highlightNewRecurrence={highlightedTasks.has(taskVisualKey(task))}
+                      key={task.id}
+                      meta={
+                        <span className="tasks-calendar-overdue-meta">
+                          {calendarTaskDate(task, plugin.settings, model.today) ?? "No date"} ·{" "}
+                          {task.path.replace(/\.md$/i, "")}
+                        </span>
+                      }
+                      onCompletionChange={updateCompletionOverride}
+                      onRecurringCompletion={expectRecurringTask}
+                      onRecurrencePreview={previewRecurrence}
+                      plugin={plugin}
+                      showSource={false}
+                      task={task}
+                      titleId={`tasks-calendar-${instanceId}-task-${taskIndex++}`}
+                    />
+                  ))}
+                </div>
+              </OverduePanel>
+            ) : null}
+          </div>
         </div>
         {createPortal(
           <TaskDragOverlay

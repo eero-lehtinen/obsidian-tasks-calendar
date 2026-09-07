@@ -33,6 +33,7 @@ export class TasksCalendarRenderer extends MarkdownRenderChild {
       dayHeight: initial.dayHeight ?? null,
       monthHeight: initial.monthHeight ?? null,
       weekHeight: initial.weekHeight ?? null,
+      overdueHeight: initial.overdueHeight ?? null,
     };
   }
 

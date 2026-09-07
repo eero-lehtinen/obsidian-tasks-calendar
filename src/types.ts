@@ -47,6 +47,7 @@ export interface CalendarState {
   dayHeight: number | null;
   monthHeight: number | null;
   weekHeight: number | null;
+  overdueHeight?: number | null;
 }
 
 export interface QueryResult {
