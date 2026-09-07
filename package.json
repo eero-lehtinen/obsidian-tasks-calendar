@@ -1,6 +1,6 @@
 {
   "name": "obsidian-tasks-calendar",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "A calendar view for tasks in an Obsidian vault.",
   "private": true,
   "main": "main.js",
