@@ -9,6 +9,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { differenceInCalendarDays } from "date-fns";
 import { MotionConfig } from "motion/react";
 import type { CSSProperties, Ref } from "react";
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
@@ -274,26 +275,30 @@ export function CalendarApp({
                   <span className="tasks-calendar-overdue-count">{model.overdueTasks.length}</span>
                 </header>
                 <div className="tasks-calendar-task-list tasks-calendar-overdue-list">
-                  {model.overdueTasks.map((task) => (
-                    <TaskCard
-                      calendarDate={calendarTaskDate(task, plugin.settings, model.today) ?? model.today}
-                      highlightNewRecurrence={highlightedTasks.has(taskVisualKey(task))}
-                      key={task.id}
-                      meta={
-                        <span className="tasks-calendar-overdue-meta">
-                          {calendarTaskDate(task, plugin.settings, model.today) ?? "No date"} ·{" "}
-                          {task.path.replace(/\.md$/i, "")}
-                        </span>
-                      }
-                      onCompletionChange={updateCompletionOverride}
-                      onRecurringCompletion={expectRecurringTask}
-                      onRecurrencePreview={previewRecurrence}
-                      plugin={plugin}
-                      showSource={false}
-                      task={task}
-                      titleId={`tasks-calendar-${instanceId}-task-${taskIndex++}`}
-                    />
-                  ))}
+                  {model.overdueTasks.map((task) => {
+                    const date = calendarTaskDate(task, plugin.settings, model.today);
+                    const daysAgo = date ? differenceInCalendarDays(fromDateKey(model.today), fromDateKey(date)) : 0;
+                    return (
+                      <TaskCard
+                        calendarDate={date ?? model.today}
+                        highlightNewRecurrence={highlightedTasks.has(taskVisualKey(task))}
+                        key={task.id}
+                        meta={
+                          <span className="tasks-calendar-overdue-meta">
+                            {date ? `${daysAgo} ${daysAgo === 1 ? "day" : "days"} ago · ${date}` : "No date"} ·{" "}
+                            {task.path.replace(/\.md$/i, "")}
+                          </span>
+                        }
+                        onCompletionChange={updateCompletionOverride}
+                        onRecurringCompletion={expectRecurringTask}
+                        onRecurrencePreview={previewRecurrence}
+                        plugin={plugin}
+                        showSource={false}
+                        task={task}
+                        titleId={`tasks-calendar-${instanceId}-task-${taskIndex++}`}
+                      />
+                    );
+                  })}
                 </div>
               </OverduePanel>
             ) : null}
