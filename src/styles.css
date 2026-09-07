@@ -884,9 +884,9 @@
   flex: 0 0 auto;
   flex-direction: column;
   max-height: min(220px, 32vh, 45%);
-  border-top: 1px solid var(--tasks-calendar-border);
+  border: 1px solid var(--tasks-calendar-border);
   overflow: hidden;
-  background: var(--background-secondary);
+  background: var(--background-primary);
 }
 
 .tasks-calendar .tasks-calendar-overdue-resize {
@@ -913,6 +913,7 @@
   align-items: center;
   gap: 8px;
   padding: 7px 12px 5px;
+  background: var(--background-secondary);
 }
 
 .tasks-calendar-overdue-header h3 {
