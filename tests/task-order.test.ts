@@ -19,6 +19,67 @@ describe("orderCalendarTasks", () => {
     ).toEqual([alpha.id, gamma.id, beta.id]);
   });
 
+  it("keeps a new higher-priority task above a manually reordered priority group", () => {
+    const high = parseTaskLine("- [ ] High ⏫ 📅 2026-07-24", "Tasks.md", 4)!;
+
+    expect(
+      orderCalendarTasks([alpha, beta, high], [taskOrderKey(alpha), taskOrderKey(beta)]).map(
+        (task) => task.description,
+      ),
+    ).toEqual(["High ⏫", "Alpha", "Beta"]);
+  });
+
+  it("preserves an explicit manual order across priority groups", () => {
+    const high = parseTaskLine("- [ ] High ⏫ 📅 2026-07-24", "Tasks.md", 4)!;
+
+    expect(
+      orderCalendarTasks([alpha, high], [taskOrderKey(alpha), taskOrderKey(high)]).map((task) => task.description),
+    ).toEqual(["Alpha", "High ⏫"]);
+  });
+
+  it("inserts a new task after the last higher priority when existing priorities are overridden", () => {
+    const high = parseTaskLine("- [ ] High ⏫ 📅 2026-07-24", "Tasks.md", 4)!;
+    const medium = parseTaskLine("- [ ] Medium 🔼 📅 2026-07-24", "Tasks.md", 5)!;
+
+    expect(
+      orderCalendarTasks([alpha, high, medium], [taskOrderKey(alpha), taskOrderKey(high)]).map(
+        (task) => task.description,
+      ),
+    ).toEqual(["Alpha", "High ⏫", "Medium 🔼"]);
+  });
+
+  it("inserts a new task after its priority group when priorities have been manually overridden", () => {
+    const high = parseTaskLine("- [ ] High ⏫ 📅 2026-07-24", "Tasks.md", 4)!;
+    const otherHigh = parseTaskLine("- [ ] Other high ⏫ 📅 2026-07-24", "Tasks.md", 5)!;
+
+    expect(
+      orderCalendarTasks([alpha, high, otherHigh], [taskOrderKey(alpha), taskOrderKey(high)]).map(
+        (task) => task.description,
+      ),
+    ).toEqual(["Alpha", "High ⏫", "Other high ⏫"]);
+  });
+
+  it("inserts a new task above all tasks when only lower priorities exist", () => {
+    const high = parseTaskLine("- [ ] High ⏫ 📅 2026-07-24", "Tasks.md", 4)!;
+    const low = parseTaskLine("- [ ] Low 🔽 📅 2026-07-24", "Tasks.md", 5)!;
+
+    expect(
+      orderCalendarTasks([alpha, low, high], [taskOrderKey(low), taskOrderKey(alpha)]).map((task) => task.description),
+    ).toEqual(["High ⏫", "Low 🔽", "Alpha"]);
+  });
+
+  it("inserts a new task below all tasks when only higher priorities exist", () => {
+    const high = parseTaskLine("- [ ] High ⏫ 📅 2026-07-24", "Tasks.md", 4)!;
+    const highest = parseTaskLine("- [ ] Highest 🔺 📅 2026-07-24", "Tasks.md", 5)!;
+    const low = parseTaskLine("- [ ] Low 🔽 📅 2026-07-24", "Tasks.md", 6)!;
+
+    expect(
+      orderCalendarTasks([high, highest, low], [taskOrderKey(high), taskOrderKey(highest)]).map(
+        (task) => task.description,
+      ),
+    ).toEqual(["High ⏫", "Highest 🔺", "Low 🔽"]);
+  });
+
   it("uses the default order when no visual order exists", () => {
     expect(orderCalendarTasks([alpha, beta, gamma]).map((task) => task.id)).toEqual([gamma.id, beta.id, alpha.id]);
   });

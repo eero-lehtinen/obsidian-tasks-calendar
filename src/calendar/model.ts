@@ -1,4 +1,4 @@
-import { compareTasksInOrder, orderCalendarTasks } from "../tasks/order";
+import { orderCalendarTasks } from "../tasks/order";
 import { compileQuery } from "../tasks/query";
 import type { CalendarState, CalendarTask, TasksCalendarSettings } from "../types";
 import { calendarDays, toDateKey } from "./date-utils";
@@ -56,15 +56,20 @@ export function createCalendarModel(
   }
 
   for (const [date, bucket] of tasksByDate) tasksByDate.set(date, orderCalendarTasks(bucket, settings.taskOrder[date]));
-  overdueTasks.sort((left, right) => {
-    const leftDate = calendarTaskDate(left, settings, today) ?? "";
-    const rightDate = calendarTaskDate(right, settings, today) ?? "";
-    return leftDate.localeCompare(rightDate) || compareTasksInOrder(left, right, settings.taskOrder[leftDate]);
-  });
+  const overdueByDate = new Map<string, CalendarTask[]>();
+  for (const task of overdueTasks) {
+    const date = calendarTaskDate(task, settings, today) ?? "";
+    const dateTasks = overdueByDate.get(date) ?? [];
+    dateTasks.push(task);
+    overdueByDate.set(date, dateTasks);
+  }
+  const orderedOverdueTasks = [...overdueByDate.entries()]
+    .sort(([leftDate], [rightDate]) => leftDate.localeCompare(rightDate))
+    .flatMap(([date, dateTasks]) => orderCalendarTasks(dateTasks, settings.taskOrder[date]));
 
   return {
     days,
-    overdueTasks,
+    overdueTasks: orderedOverdueTasks,
     queryError: query.error,
     tasksByDate,
     today,
