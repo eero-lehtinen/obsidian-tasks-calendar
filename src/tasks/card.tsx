@@ -1,4 +1,4 @@
-import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
+import { type DraggableAttributes, type DraggableSyntheticListeners, useDraggable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Component, MarkdownRenderer, setIcon, setTooltip } from "obsidian";
@@ -78,6 +78,30 @@ export function SortableTaskCard(props: TaskCardProps) {
           opacity: isDragging ? 0 : undefined,
           transform: CSS.Transform.toString(transform),
           transition,
+        },
+      }}
+    />
+  );
+}
+
+export function DraggableTaskCard(props: TaskCardProps) {
+  const { task, calendarDate } = props;
+  const { attributes, isDragging, listeners, setActivatorNodeRef, setNodeRef, transform } = useDraggable({
+    id: task.id,
+    data: { date: calendarDate, showSource: props.showSource, task },
+  });
+  return (
+    <TaskCardView
+      {...props}
+      drag={{
+        attributes,
+        isDragging,
+        listeners,
+        setActivatorNodeRef,
+        setNodeRef,
+        style: {
+          opacity: isDragging ? 0 : undefined,
+          transform: CSS.Translate.toString(transform),
         },
       }}
     />

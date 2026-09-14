@@ -15,7 +15,7 @@ import type { CSSProperties, Ref } from "react";
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type TasksCalendarPlugin from "../main";
-import { SortableTaskCard, TaskCard, TaskDragPreview } from "../tasks/card";
+import { DraggableTaskCard, SortableTaskCard, TaskDragPreview } from "../tasks/card";
 import type { CompletionOverride } from "../tasks/completion-overrides";
 import { applyCompletionOverrides, reconcileCompletionOverrides } from "../tasks/completion-overrides";
 import { reorderTaskGroup, taskOrderKey } from "../tasks/order";
@@ -279,7 +279,7 @@ export function CalendarApp({
                     const date = calendarTaskDate(task, plugin.settings, model.today);
                     const daysAgo = date ? differenceInCalendarDays(fromDateKey(model.today), fromDateKey(date)) : 0;
                     return (
-                      <TaskCard
+                      <DraggableTaskCard
                         calendarDate={date ?? model.today}
                         highlightNewRecurrence={highlightedTasks.has(taskVisualKey(task))}
                         key={task.id}
