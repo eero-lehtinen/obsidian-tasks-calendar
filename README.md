@@ -2,6 +2,8 @@
 
 Tasks Calendar is an Obsidian community plugin that displays Markdown tasks in month, week, and day calendar views. It is designed to work with the [Tasks plugin](https://publish.obsidian.md/tasks/Introduction), while remaining useful for standard Markdown checkboxes.
 
+Works on both desktop and mobile.
+
 > [!NOTE]
 > This plugin is coded with heavy AI assistance
 
