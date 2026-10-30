@@ -267,12 +267,17 @@
 }
 
 .tasks-calendar-day.is-outside {
-  background: color-mix(in srgb, var(--background-primary) 76%, #000);
+  --tasks-calendar-outside-background: color-mix(in srgb, var(--background-primary) 76%, #000);
+  background: var(--tasks-calendar-outside-background);
 }
 
-.tasks-calendar-day.is-outside .tasks-calendar-day-number,
+.tasks-calendar-day.is-outside .tasks-calendar-day-number {
+  background: color-mix(in srgb, var(--interactive-normal) 50%, var(--tasks-calendar-outside-background));
+  color: var(--text-muted);
+}
+
 .tasks-calendar-day.is-outside .tasks-calendar-task-list {
-  opacity: 0.58;
+  opacity: 0.85;
 }
 
 .tasks-calendar-day.is-today {
