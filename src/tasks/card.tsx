@@ -1,7 +1,7 @@
 import { type DraggableAttributes, type DraggableSyntheticListeners, useDraggable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Component, MarkdownRenderer, setIcon, setTooltip } from "obsidian";
+import { type App, Component, MarkdownRenderer, setIcon, setTooltip } from "obsidian";
 import type {
   ChangeEventHandler,
   CSSProperties,
@@ -20,6 +20,7 @@ import {
   playRecurrenceCreatedFeedback,
   TASK_COMPLETION_FEEDBACK_DURATION_MS,
 } from "./completion-feedback";
+import { handleTaskLinkClick } from "./link-navigation";
 
 interface TaskCardProps {
   calendarDate: string;
@@ -132,7 +133,7 @@ export function TaskDragPreview({
       style={{ "--tasks-calendar-completed-opacity": String(completedOpacity) } as CSSProperties}
     >
       <TaskCheckbox checked={task.completed} />
-      <TaskTitle sourcePath={task.path} taskName={taskName} />
+      <TaskTitle app={plugin.app} sourcePath={task.path} taskName={taskName} />
       {priority ? <PriorityIcon priority={priority} /> : null}
       {task.recurrence ? <RecurrenceIcon interactive={false} recurrence={task.recurrence} /> : null}
       {showSource ? <TaskSourceButton interactive={false} plugin={plugin} task={task} /> : null}
@@ -310,6 +311,7 @@ function TaskCardView({
       />
       <TaskTitle
         {...(drag ? { drag } : {})}
+        app={plugin.app}
         onEdit={() => void plugin.editTask(task)}
         sourcePath={task.path}
         taskName={taskName}
@@ -407,12 +409,14 @@ function TaskCheckbox({
 }
 
 function TaskTitle({
+  app,
   drag,
   onEdit,
   sourcePath,
   taskName,
   titleId,
 }: {
+  app: App;
   drag?: TaskDragBinding;
   onEdit?: () => void;
   sourcePath: string;
@@ -447,6 +451,8 @@ function TaskTitle({
       {...(titleId ? { id: titleId } : { "aria-hidden": true })}
       className="tasks-calendar-task-title"
       {...(drag ? { ...drag.attributes, ref: drag.setActivatorNodeRef } : {})}
+      onAuxClick={(event) => handleTaskLinkClick(event.nativeEvent, app.workspace, sourcePath)}
+      onClick={(event) => handleTaskLinkClick(event.nativeEvent, app.workspace, sourcePath)}
       onKeyDown={handleKeyDown}
       onPointerDown={(event) => {
         if ((event.target as Element).closest("a")) event.stopPropagation();
