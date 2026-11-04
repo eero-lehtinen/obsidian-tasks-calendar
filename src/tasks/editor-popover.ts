@@ -7,6 +7,15 @@ interface VisibleViewport {
   height: number;
 }
 
+export function editorVisibleViewport(
+  viewport: VisibleViewport,
+  layoutHeight: number,
+  bottomInset: number,
+): VisibleViewport {
+  const bottom = Math.min(viewport.top + viewport.height, layoutHeight - Math.max(0, bottomInset));
+  return { ...viewport, height: Math.max(0, bottom - viewport.top) };
+}
+
 export function editorPopoverBounds(
   anchor: Pick<DOMRect, "left" | "top" | "bottom">,
   viewport: VisibleViewport,
@@ -41,15 +50,25 @@ export function addEditorPopover(parent: HTMLElement, icon: string | null, label
   });
   let viewportListeners: AbortController | undefined;
   const view = parent.ownerDocument.defaultView ?? window;
+  let layoutHeight = Math.max(view.innerHeight, parent.ownerDocument.documentElement.clientHeight);
+  let insetProbe: HTMLDivElement | undefined;
+  let insetObserver: MutationObserver | undefined;
+  let panelObserver: ResizeObserver | undefined;
+  let settleTimers: number[] = [];
   const position = (): void => {
     if (!panel.matches(":popover-open")) return;
     const visualViewport = view.visualViewport;
-    const viewport = {
-      left: visualViewport?.offsetLeft ?? 0,
-      top: visualViewport?.offsetTop ?? 0,
-      width: visualViewport?.width ?? view.innerWidth,
-      height: visualViewport?.height ?? view.innerHeight,
-    };
+    layoutHeight = Math.max(layoutHeight, view.innerHeight, parent.ownerDocument.documentElement.clientHeight);
+    const viewport = editorVisibleViewport(
+      {
+        left: visualViewport?.offsetLeft ?? 0,
+        top: visualViewport?.offsetTop ?? 0,
+        width: visualViewport?.width ?? view.innerWidth,
+        height: visualViewport?.height ?? view.innerHeight,
+      },
+      layoutHeight,
+      insetProbe?.getBoundingClientRect().height ?? 0,
+    );
     const anchor = summary.getBoundingClientRect();
     const size = editorPopoverBounds(anchor, viewport, 0);
     panel.style.width = `${size.width}px`;
@@ -61,6 +80,14 @@ export function addEditorPopover(parent: HTMLElement, icon: string | null, label
   const stopPositioning = (): void => {
     viewportListeners?.abort();
     viewportListeners = undefined;
+    insetObserver?.disconnect();
+    insetObserver = undefined;
+    panelObserver?.disconnect();
+    panelObserver = undefined;
+    for (const timer of settleTimers) view.clearTimeout(timer);
+    settleTimers = [];
+    insetProbe?.remove();
+    insetProbe = undefined;
   };
   const close = (): void => {
     stopPositioning();
@@ -71,15 +98,40 @@ export function addEditorPopover(parent: HTMLElement, icon: string | null, label
       close();
       return;
     }
+    stopPositioning();
+    insetProbe = parent.createDiv({
+      cls: "tasks-calendar-editor-keyboard-inset",
+      attr: { "aria-hidden": "true" },
+    });
     panel.showPopover();
     position();
-    stopPositioning();
     viewportListeners = new AbortController();
     const options = { signal: viewportListeners.signal };
     view.addEventListener("resize", position, options);
     view.visualViewport?.addEventListener("resize", position, options);
     view.visualViewport?.addEventListener("scroll", position, options);
+    view.addEventListener(
+      "orientationchange",
+      () => {
+        layoutHeight = view.innerHeight;
+        position();
+      },
+      options,
+    );
+    insetObserver = new MutationObserver(position);
+    for (const element of [parent.ownerDocument.documentElement, parent.ownerDocument.body]) {
+      insetObserver.observe(element, { attributes: true, attributeFilter: ["style", "class"] });
+    }
+    panelObserver = new ResizeObserver(position);
+    panelObserver.observe(panel);
+    const settle = (): void => {
+      for (const timer of settleTimers) view.clearTimeout(timer);
+      settleTimers = [100, 300, 600].map((delay) => view.setTimeout(position, delay));
+    };
+    panel.addEventListener("focusin", settle, options);
+    panel.addEventListener("focusout", settle, options);
     panel.querySelector("input")?.focus();
+    settle();
   });
   panel.addEventListener("toggle", () => {
     const open = panel.matches(":popover-open");

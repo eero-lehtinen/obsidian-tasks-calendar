@@ -1538,6 +1538,18 @@
   color: var(--text-error);
 }
 
+.tasks-calendar-editor-keyboard-inset {
+  position: fixed;
+  width: 0;
+  height: max(0px, var(--keyboard-height, 0px), var(--safe-area-inset-bottom, 0px));
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .tasks-calendar-editor-property-panel {
   position: fixed;
   inset: auto;
