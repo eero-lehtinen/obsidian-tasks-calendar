@@ -47,6 +47,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "chrono-node": "2.10.3",
     "date-fns": "^4.4.0",
+    "diff": "^9.0.0",
     "motion": "^14.8.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

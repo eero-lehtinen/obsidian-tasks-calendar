@@ -3,7 +3,9 @@ import { type App, Component, MarkdownRenderer, setIcon, setTooltip } from "obsi
 import type { ChangeEventHandler, CSSProperties, KeyboardEventHandler } from "react";
 import { useEffect, useRef } from "react";
 import type { CalendarTask } from "../types";
+import { renderedPositionAtPoint, type TaskTextPosition } from "./editor-caret";
 import { handleTaskLinkClick } from "./link-navigation";
+import { priorityIconPaths, priorityPathAttributes } from "./priority-icons";
 
 const tooltipOptions = { placement: "bottom" as const, delay: 200 };
 
@@ -37,33 +39,12 @@ export function getTaskName(task: CalendarTask): string {
 }
 
 export function PriorityIcon({ priority }: { priority: CalendarTask["priority"] }) {
-  const pointsUp = priority === "highest" || priority === "high" || priority === "medium";
-  const isDouble = priority === "high" || priority === "lowest";
   return (
     <span aria-label={priorityLabels[priority]} className="tasks-calendar-priority" data-level={priority} role="img">
       <svg aria-hidden="true" viewBox="0 0 14 14">
-        {priority === "highest" ? (
-          <>
-            <path d="M1.3 11.2 7 2 12.7 11.2Z" fill="none" stroke="currentColor" strokeWidth="1.2" />
-            <path d="M5.1 9.4 7 6.3 8.9 9.4Z" />
-          </>
-        ) : isDouble ? (
-          pointsUp ? (
-            <>
-              <path d="M2.2 7 7 2.2 11.8 7Z" />
-              <path d="M2.2 12.2 7 7.4 11.8 12.2Z" />
-            </>
-          ) : (
-            <>
-              <path d="M2.2 1.8 7 6.6 11.8 1.8Z" />
-              <path d="M2.2 7 7 11.8 11.8 7Z" />
-            </>
-          )
-        ) : pointsUp ? (
-          <path d="M1.8 10.5 7 3.3 12.2 10.5Z" />
-        ) : (
-          <path d="M1.8 3.5 7 10.7 12.2 3.5Z" />
-        )}
+        {priorityIconPaths[priority].map((path, index) => (
+          <path key={path} d={path} {...priorityPathAttributes(priority, index)} />
+        ))}
       </svg>
     </span>
   );
@@ -106,6 +87,7 @@ export function TaskCheckbox({
 export function TaskTitle({
   app,
   drag,
+  editOnClick = false,
   onEdit,
   sourcePath,
   taskName,
@@ -113,7 +95,8 @@ export function TaskTitle({
 }: {
   app: App;
   drag?: TaskDragBinding;
-  onEdit?: () => void;
+  editOnClick?: boolean;
+  onEdit?: (position?: TaskTextPosition) => void;
   sourcePath: string;
   taskName: string;
   titleId?: string;
@@ -147,7 +130,13 @@ export function TaskTitle({
       className="tasks-calendar-task-title"
       {...(drag ? { ...drag.attributes, ref: drag.setActivatorNodeRef } : {})}
       onAuxClick={(event) => handleTaskLinkClick(event.nativeEvent, app.workspace, sourcePath)}
-      onClick={(event) => handleTaskLinkClick(event.nativeEvent, app.workspace, sourcePath)}
+      onClick={(event) => {
+        handleTaskLinkClick(event.nativeEvent, app.workspace, sourcePath);
+        if (!editOnClick || event.defaultPrevented || (event.target as Element).closest("a") || !onEdit) return;
+        event.stopPropagation();
+        const content = contentRef.current;
+        onEdit(content ? renderedPositionAtPoint(content, event.clientX, event.clientY) : undefined);
+      }}
       onKeyDown={handleKeyDown}
       onPointerDown={(event) => {
         if ((event.target as Element).closest("a")) event.stopPropagation();

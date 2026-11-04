@@ -1,26 +1,16 @@
 import { type App, Modal, setIcon } from "obsidian";
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { sourceOffsetAtRenderedPosition, type TaskTextPosition } from "./editor-caret";
+import { addTaskMetadata } from "./editor-metadata";
 import { TaskEditorPreview } from "./editor-preview";
 import { parseTaskLine } from "./parser";
 import {
   completionDateLabel,
-  parseTaskDate,
   type TaskEditorModel,
-  type TaskPriority,
   taskEditorModelFromLine,
   taskLineFromEditorModel,
-  validateRecurrence,
 } from "./task-editor-model";
-
-const PRIORITIES: { value: TaskPriority; label: string; marker: string }[] = [
-  { value: "lowest", label: "Lowest", marker: "⏬" },
-  { value: "low", label: "Low", marker: "🔽" },
-  { value: "normal", label: "Normal", marker: "—" },
-  { value: "medium", label: "Medium", marker: "🔼" },
-  { value: "high", label: "High", marker: "⏫" },
-  { value: "highest", label: "Highest", marker: "🔺" },
-];
 
 interface TaskEditorOptions {
   mode: "create" | "edit";
@@ -60,100 +50,37 @@ class TaskEditorModal extends Modal {
     this.contentEl.empty();
 
     const form = this.contentEl.createEl("form", { cls: "tasks-calendar-editor" });
-    this.addSourceActions(form);
     const description = this.addDescription(form);
-    this.addPriorityPicker(form);
-
-    const fields = form.createDiv({ cls: "tasks-calendar-editor-fields" });
-    const recurrence = this.addTextField(fields, "Recurs", "Try “every week on Monday”", this.model.recurrence);
-    recurrence.input.autocomplete = "off";
-    const recurrenceFeedback = recurrence.row.createDiv({ cls: "tasks-calendar-editor-feedback" });
-
-    const dueRow = fields.createDiv({ cls: "tasks-calendar-editor-field" });
-    dueRow.createEl("label", { attr: { for: "tasks-calendar-editor-due" }, text: "Due" });
-    const dueControls = dueRow.createDiv({ cls: "tasks-calendar-editor-date-controls" });
-    const dueInput = dueControls.createEl("input", {
-      attr: { autocomplete: "off", id: "tasks-calendar-editor-due", placeholder: "YYYY-MM-DD or “thu”", type: "text" },
-      value: this.model.due,
-    });
-    const datePickerHost = dueControls.createDiv({ cls: "tasks-calendar-editor-date-picker-host" });
-    const datePickerButton = datePickerHost.createEl("button", {
-      attr: { "aria-label": "Choose due date", type: "button" },
-      cls: "tasks-calendar-editor-date-picker",
-    });
-    datePickerButton.type = "button";
-    setIcon(datePickerButton, "calendar-days");
-    const datePicker = datePickerHost.createEl("input", {
-      attr: { "aria-label": "Due date picker", tabindex: "-1", type: "date" },
-      cls: "tasks-calendar-editor-date-picker-input",
-    });
-    datePicker.value = this.model.due;
-    const dueFeedback = dueRow.createDiv({ cls: "tasks-calendar-editor-feedback" });
-
-    const futureRow = fields.createEl("label", { cls: "tasks-calendar-editor-future" });
-    const forwardOnly = futureRow.createEl("input", { attr: { type: "checkbox" } });
-    forwardOnly.checked = true;
-    futureRow.createSpan({ text: "Only future dates" });
+    this.addSourceLink(form);
+    const metadata = addTaskMetadata(form, this.model);
 
     const actions = form.createDiv({ cls: "tasks-calendar-editor-actions" });
-    const apply = actions.createEl("button", { attr: { type: "submit" }, cls: "mod-cta", text: "Apply" });
-    apply.type = "submit";
-    const cancel = actions.createEl("button", { attr: { type: "button" }, text: "Cancel" });
-    cancel.type = "button";
-
+    this.addDeleteAction(actions);
+    const buttons = actions.createDiv({ cls: "tasks-calendar-editor-save-actions" });
+    const cancel = buttons.createEl("button", {
+      attr: { type: "button" },
+      cls: "tasks-calendar-editor-cancel",
+      text: "Cancel",
+    });
+    const apply = buttons.createEl("button", { attr: { type: "submit" }, cls: "mod-cta", text: "Save" });
     const validate = (): void => {
-      const parsedDate = parseTaskDate(dueInput.value, forwardOnly.checked);
-      dueInput.toggleClass("is-invalid", parsedDate.error !== null);
-      dueFeedback.setText(parsedDate.error ?? (parsedDate.dateKey ? formatDatePreview(parsedDate.dateKey) : ""));
-      dueFeedback.toggleClass("is-error", parsedDate.error !== null);
-      if (parsedDate.dateKey) datePicker.value = parsedDate.dateKey;
-
-      const recurrenceResult = validateRecurrence(
-        recurrence.input.value,
-        parsedDate.dateKey !== null || this.model.hasOtherRecurrenceDate,
-      );
-      recurrence.input.toggleClass("is-invalid", recurrenceResult.error !== null);
-      recurrenceFeedback.setText(recurrenceResult.error ?? recurrenceResult.normalized ?? "Not recurring");
-      recurrenceFeedback.toggleClass("is-error", recurrenceResult.error !== null);
-
-      apply.disabled =
-        description.value.trim().length === 0 || parsedDate.error !== null || recurrenceResult.error !== null;
+      const result = metadata.validate();
+      apply.disabled = description.value.trim().length === 0 || !result.valid;
     };
-
-    description.addEventListener("input", validate);
-    dueInput.addEventListener("input", validate);
-    dueInput.addEventListener("blur", () => {
-      const result = parseTaskDate(dueInput.value, forwardOnly.checked);
-      if (result.dateKey) dueInput.value = result.dateKey;
-      validate();
-    });
-    datePicker.addEventListener("input", () => {
-      dueInput.value = datePicker.value;
-      validate();
-    });
-    datePickerButton.addEventListener("click", (event) => {
-      event.preventDefault();
-      datePicker.showPicker();
-    });
-    forwardOnly.addEventListener("change", validate);
-    recurrence.input.addEventListener("input", validate);
-    cancel.addEventListener("click", (event) => {
-      event.preventDefault();
-      this.close();
-    });
+    form.addEventListener("input", validate);
+    form.addEventListener("change", validate);
+    cancel.addEventListener("click", () => this.close());
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       validate();
       if (apply.disabled) return;
-      const due = parseTaskDate(dueInput.value, forwardOnly.checked).dateKey;
+      const result = metadata.validate();
       this.model.description = description.value;
-      this.model.recurrence = recurrence.input.value;
-      this.model.due = due ?? "";
+      this.model.recurrence = result.recurrence;
+      this.model.due = result.due;
       this.finish(taskLineFromEditorModel(this.model));
     });
-
     validate();
-    window.setTimeout(() => description.focus({ preventScroll: true }), 0);
   }
 
   override onClose(): void {
@@ -168,7 +95,8 @@ class TaskEditorModal extends Modal {
     const preview = section.createDiv({
       cls: "tasks-calendar-editor-preview",
     });
-    this.descriptionPreviewRoot = createRoot(preview);
+    const taskPreview = preview.createDiv();
+    this.descriptionPreviewRoot = createRoot(taskPreview);
     const sourcePath = this.options.source?.path ?? "";
     if (this.model.done || this.model.completionTime) {
       const details = [
@@ -179,12 +107,58 @@ class TaskEditorModal extends Modal {
         .join(" · ");
       section.createDiv({ cls: "tasks-calendar-editor-completion-details", text: details });
     }
-    section.createEl("label", { attr: { for: "tasks-calendar-editor-description" }, text: "Edit text" });
     const input = section.createEl("textarea", {
-      attr: { id: "tasks-calendar-editor-description", placeholder: "What needs to be done?", rows: "3" },
+      attr: {
+        "aria-label": "Task description",
+        id: "tasks-calendar-editor-description",
+        placeholder: "Task",
+        rows: "1",
+      },
       text: this.model.description,
     });
     input.value = this.model.description;
+    const resizeInput = (): void => {
+      const title = preview.querySelector<HTMLElement>(".tasks-calendar-task-title");
+      if (!title || input.hidden) return;
+      const sectionRect = section.getBoundingClientRect();
+      const titleRect = title.getBoundingClientRect();
+      input.style.left = `${titleRect.left - sectionRect.left}px`;
+      input.style.top = `${titleRect.top - sectionRect.top}px`;
+      input.style.width = `${titleRect.width}px`;
+      input.style.height = "0px";
+      const border =
+        parseFloat(getComputedStyle(input).borderTopWidth) + parseFloat(getComputedStyle(input).borderBottomWidth);
+      const height = input.scrollHeight + border;
+      input.style.height = `${height}px`;
+      title.style.height = `${height}px`;
+    };
+    const beginEditing = (position?: TaskTextPosition): void => {
+      const title = preview.querySelector<HTMLElement>(".tasks-calendar-task-title");
+      if (!title) {
+        if (section.isConnected) window.requestAnimationFrame(() => beginEditing(position));
+        return;
+      }
+      input.hidden = false;
+      preview.addClass("is-editing");
+      title.setAttribute("aria-hidden", "true");
+      title.tabIndex = -1;
+      resizeInput();
+      input.focus({ preventScroll: true });
+      const offset = position ? sourceOffsetAtRenderedPosition(input.value, position) : input.value.length;
+      input.setSelectionRange(offset, offset);
+    };
+    input.hidden = true;
+    input.addEventListener("input", resizeInput);
+    input.addEventListener("blur", () => {
+      input.hidden = true;
+      preview.removeClass("is-editing");
+      const title = preview.querySelector<HTMLElement>(".tasks-calendar-task-title");
+      if (title) {
+        title.style.height = "";
+        title.removeAttribute("aria-hidden");
+        title.tabIndex = 0;
+      }
+    });
     const updatePreview = (): void => {
       const recurrence = form.querySelector<HTMLInputElement>("#tasks-calendar-editor-recurs")?.value;
       const task = parseTaskLine(
@@ -206,52 +180,35 @@ class TaskEditorModal extends Modal {
             this.model.status = completed ? "x" : " ";
             updatePreview();
           },
-          onEdit: () => input.focus(),
+          onEdit: beginEditing,
         }),
       );
     };
     form.addEventListener("input", updatePreview);
     form.addEventListener("change", updatePreview);
     updatePreview();
+    if (this.options.mode === "create") window.setTimeout(beginEditing, 0);
     input.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      if (event.isComposing) return;
+      if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
-        input.form?.requestSubmit();
+        input.blur();
+        preview.querySelector<HTMLElement>(".tasks-calendar-task-title")?.focus();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        input.blur();
+        preview.querySelector<HTMLElement>(".tasks-calendar-task-title")?.focus();
       }
     });
     return input;
   }
 
-  private addPriorityPicker(form: HTMLFormElement): void {
-    const section = form.createEl("fieldset", { cls: "tasks-calendar-editor-priority" });
-    section.createEl("legend", { text: "Priority" });
-    const options = section.createDiv({ cls: "tasks-calendar-editor-priority-options" });
-    for (const priority of PRIORITIES) {
-      const label = options.createEl("label", { attr: { "data-priority": priority.value } });
-      const radio = label.createEl("input", { attr: { name: "priority", type: "radio", value: priority.value } });
-      radio.checked = this.model.priority === priority.value;
-      radio.addEventListener("change", () => {
-        if (radio.checked) this.model.priority = priority.value;
-      });
-      label.createSpan({ cls: "tasks-calendar-editor-priority-marker", text: priority.marker });
-      label.createSpan({ text: priority.label });
-    }
-  }
-
-  private addTextField(parent: HTMLElement, labelText: string, placeholder: string, value: string) {
-    const row = parent.createDiv({ cls: "tasks-calendar-editor-field" });
-    const id = `tasks-calendar-editor-${labelText.toLowerCase()}`;
-    row.createEl("label", { attr: { for: id }, text: labelText });
-    const input = row.createEl("input", { attr: { id, placeholder, type: "text" }, value });
-    return { input, row };
-  }
-
-  private addSourceActions(form: HTMLFormElement): void {
+  private addSourceLink(form: HTMLFormElement): void {
     const source = this.options.source;
     if (!source) return;
 
-    const row = form.createDiv({ cls: "tasks-calendar-editor-source-actions" });
-    const sourceLink = row.createEl("a", {
+    const sourceLink = form.createEl("a", {
       attr: { "aria-label": `Open ${source.path} at line ${source.line}`, href: "#" },
       cls: "tasks-calendar-editor-source",
     });
@@ -262,8 +219,12 @@ class TaskEditorModal extends Modal {
       this.close();
       void source.open();
     });
+  }
 
-    const deleteButton = row.createEl("button", {
+  private addDeleteAction(actions: HTMLElement): void {
+    const source = this.options.source;
+    if (!source) return;
+    const deleteButton = actions.createEl("button", {
       attr: { type: "button" },
       cls: "tasks-calendar-editor-delete",
       text: "Delete task",
@@ -337,8 +298,4 @@ class DeleteTaskConfirmationModal extends Modal {
     this.resolveResult(confirmed);
     if (confirmed) this.close();
   }
-}
-
-function formatDatePreview(dateKey: string): string {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: "full" }).format(new Date(`${dateKey}T00:00:00`));
 }
