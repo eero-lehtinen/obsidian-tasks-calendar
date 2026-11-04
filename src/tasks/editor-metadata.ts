@@ -104,6 +104,16 @@ export function addTaskMetadata(form: HTMLFormElement, model: TaskEditorModel) {
   });
 
   return {
+    readState() {
+      return { due: dueInput.value, recurrence: recurrenceInput.value, forwardOnly: forwardOnly.checked };
+    },
+    restoreState(state: { due: string; recurrence: string; forwardOnly: boolean }) {
+      dueInput.value = state.due;
+      recurrenceInput.value = state.recurrence;
+      forwardOnly.checked = state.forwardOnly;
+      datePicker.value = parseTaskDate(state.due, state.forwardOnly).dateKey ?? "";
+      updatePriority();
+    },
     validate() {
       const parsedDate = parseTaskDate(dueInput.value, forwardOnly.checked);
       const parsedRecurrence = validateRecurrence(

@@ -4,6 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { sourceOffsetAtRenderedPosition, type TaskTextPosition } from "./editor-caret";
 import { addTaskMetadata } from "./editor-metadata";
 import { TaskEditorPreview } from "./editor-preview";
+import { registerEditorUndo } from "./editor-undo";
 import { parseTaskLine } from "./parser";
 import {
   completionDateLabel,
@@ -81,6 +82,7 @@ class TaskEditorModal extends Modal {
       this.finish(taskLineFromEditorModel(this.model));
     });
     validate();
+    registerEditorUndo(form, description, metadata, this.model);
   }
 
   override onClose(): void {
