@@ -1,7 +1,6 @@
 import { useDraggable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { setTooltip } from "obsidian";
 import type { CSSProperties, MouseEvent, PointerEvent, ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type TasksCalendarPlugin from "../main";
@@ -36,7 +35,6 @@ interface TaskCardProps {
   onRecurrencePreview: (task: CalendarTask | null) => void;
 }
 
-const tooltipOptions = { placement: "bottom" as const, delay: 200 };
 const completionStyleDelayMs = TASK_COMPLETION_FEEDBACK_DURATION_MS * 0.65;
 const completionMoveDelayMs = 200;
 export function SortableTaskCard(props: TaskCardProps) {
@@ -320,16 +318,10 @@ function TaskSourceButton({
   plugin: TasksCalendarPlugin;
   task: CalendarTask;
 }) {
-  const ref = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (interactive && ref.current) setTooltip(ref.current, `Open ${task.path}`, tooltipOptions);
-  }, [interactive, task.path]);
-
   return (
     <button
       {...(interactive ? { onClick: () => void plugin.openTask(task) } : { "aria-hidden": true, tabIndex: -1 })}
       className="tasks-calendar-task-source"
-      ref={ref}
       type="button"
     >
       {task.path.replace(/\.md$/i, "").split("/").pop()}

@@ -802,7 +802,9 @@
 .tasks-calendar-task-source {
   display: block;
   grid-column: 2 / -1;
-  width: 100%;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
   height: auto;
   padding: 0;
   border: 0;
