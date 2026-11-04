@@ -1,4 +1,4 @@
-import { setIcon } from "obsidian";
+import { Platform, setIcon } from "obsidian";
 
 interface VisibleViewport {
   left: number;
@@ -20,6 +20,7 @@ export function editorPopoverBounds(
   anchor: Pick<DOMRect, "left" | "top" | "bottom">,
   viewport: VisibleViewport,
   panelHeight: number,
+  placement: "above" | "below" = "below",
 ) {
   const width = Math.max(0, Math.min(360, viewport.width - 32));
   const maxHeight = Math.max(0, viewport.height - 32);
@@ -28,7 +29,7 @@ export function editorPopoverBounds(
   const bottomEdge = viewport.top + viewport.height - 16;
   const below = anchor.bottom + 8;
   const above = anchor.top - height - 8;
-  const preferredTop = below + height <= bottomEdge ? below : above;
+  const preferredTop = placement === "above" || below + height > bottomEdge ? above : below;
   return {
     width,
     maxHeight,
@@ -70,10 +71,11 @@ export function addEditorPopover(parent: HTMLElement, icon: string | null, label
       insetProbe?.getBoundingClientRect().height ?? 0,
     );
     const anchor = summary.getBoundingClientRect();
-    const size = editorPopoverBounds(anchor, viewport, 0);
+    const placement = Platform.isMobile ? "above" : "below";
+    const size = editorPopoverBounds(anchor, viewport, 0, placement);
     panel.style.width = `${size.width}px`;
     panel.style.maxHeight = `${size.maxHeight}px`;
-    const bounds = editorPopoverBounds(anchor, viewport, panel.getBoundingClientRect().height);
+    const bounds = editorPopoverBounds(anchor, viewport, panel.getBoundingClientRect().height, placement);
     panel.style.left = `${bounds.left}px`;
     panel.style.top = `${bounds.top}px`;
   };

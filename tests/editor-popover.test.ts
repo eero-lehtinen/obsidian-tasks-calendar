@@ -1,9 +1,27 @@
 import { describe, expect, it, vi } from "vitest";
 import { editorPopoverBounds, editorVisibleViewport } from "../src/tasks/editor-popover";
 
-vi.mock("obsidian", () => ({ setIcon: vi.fn() }));
+vi.mock("obsidian", () => ({ Platform: { isMobile: false }, setIcon: vi.fn() }));
 
 describe("editor popover positioning", () => {
+  it("keeps mobile panels above the control before and after the keyboard opens", () => {
+    const anchor = { left: 20, top: 300, bottom: 332 };
+    const before = editorPopoverBounds(anchor, { left: 0, top: 0, width: 390, height: 800 }, 180, "above");
+    const after = editorPopoverBounds(anchor, { left: 0, top: 0, width: 390, height: 480 }, 180, "above");
+    expect(before.top).toBe(112);
+    expect(after.top).toBe(before.top);
+  });
+
+  it("keeps upward-opening panels within the viewport when space above is limited", () => {
+    const bounds = editorPopoverBounds(
+      { left: 20, top: 120, bottom: 152 },
+      { left: 0, top: 0, width: 390, height: 480 },
+      200,
+      "above",
+    );
+    expect(bounds.top).toBe(16);
+  });
+
   it("opens below the control when there is room", () => {
     const bounds = editorPopoverBounds(
       { left: 100, top: 100, bottom: 132 },
