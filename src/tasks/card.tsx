@@ -2,7 +2,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { setTooltip } from "obsidian";
-import type { CSSProperties, MouseEvent, PointerEvent, ReactNode, RefObject } from "react";
+import type { CSSProperties, MouseEvent, PointerEvent, ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type TasksCalendarPlugin from "../main";
 import type { CalendarTask } from "../types";
@@ -158,7 +158,6 @@ function TaskCardView({
   const pointerListeners = { ...drag?.listeners };
   delete pointerListeners.onKeyDown;
 
-  useTooltip(itemRef, taskName);
   useEffect(() => {
     setOptimisticCompleted(task.completed);
     if (completionStyleTimer.current === null) setStyledCompleted(task.completed);
@@ -336,10 +335,4 @@ function TaskSourceButton({
       {task.path.replace(/\.md$/i, "").split("/").pop()}
     </button>
   );
-}
-
-function useTooltip(ref: RefObject<HTMLElement | null>, text: string): void {
-  useEffect(() => {
-    if (ref.current) setTooltip(ref.current, text, tooltipOptions);
-  }, [ref, text]);
 }
