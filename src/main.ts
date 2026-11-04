@@ -163,6 +163,7 @@ export default class TasksCalendarPlugin extends Plugin {
     try {
       const replacement = await openTaskEditor(this.app, task.raw, {
         mode: "edit",
+        completedOpacity: this.settings.completedOpacity,
         source: {
           path: task.path,
           line: task.line + 1,
@@ -226,7 +227,10 @@ export default class TasksCalendarPlugin extends Plugin {
     }
 
     try {
-      const taskLine = await openTaskEditor(this.app, `- [ ] 📅 ${date}`, { mode: "create" });
+      const taskLine = await openTaskEditor(this.app, `- [ ] 📅 ${date}`, {
+        mode: "create",
+        completedOpacity: this.settings.completedOpacity,
+      });
       if (!taskLine) return;
       const datedTaskLine = rescheduleTaskLine(taskLine, "due", date);
       const path = normalizePath(

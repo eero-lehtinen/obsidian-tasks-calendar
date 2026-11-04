@@ -1317,6 +1317,31 @@
   gap: 8px;
 }
 
+.tasks-calendar-editor-preview .tasks-calendar-task {
+  padding: 12px;
+  column-gap: 12px;
+}
+
+.tasks-calendar-editor-preview .tasks-calendar-task:hover,
+.tasks-calendar-editor-preview .tasks-calendar-task:active {
+  background: var(--tasks-calendar-task-background);
+  background-clip: padding-box;
+}
+
+.tasks-calendar-editor-preview .tasks-calendar-task-title {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.tasks-calendar-editor-description textarea {
+  font-size: calc(var(--font-ui-smaller) + 1px);
+}
+
+.tasks-calendar-editor-completion-details {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
 .tasks-calendar-editor-description textarea {
   min-height: 72px;
   resize: vertical;
@@ -1510,30 +1535,6 @@
 }
 
 .tasks-calendar-editor-future input {
-  margin: 0;
-}
-
-.tasks-calendar-editor-status {
-  display: grid;
-  gap: 8px;
-}
-
-.tasks-calendar-editor-status-label {
-  color: var(--text-normal);
-  font-size: var(--font-ui-medium);
-  font-weight: var(--font-semibold);
-}
-
-.tasks-calendar-editor-status label {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  width: fit-content;
-  font-size: var(--font-ui-small);
-  font-weight: var(--font-normal);
-}
-
-.tasks-calendar-editor-status input {
   margin: 0;
 }
 

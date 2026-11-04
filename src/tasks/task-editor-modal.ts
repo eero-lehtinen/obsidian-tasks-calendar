@@ -1,4 +1,8 @@
 import { type App, Modal, setIcon } from "obsidian";
+import { createElement } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { TaskEditorPreview } from "./editor-preview";
+import { parseTaskLine } from "./parser";
 import {
   completionDateLabel,
   parseTaskDate,
@@ -17,10 +21,10 @@ const PRIORITIES: { value: TaskPriority; label: string; marker: string }[] = [
   { value: "high", label: "High", marker: "⏫" },
   { value: "highest", label: "Highest", marker: "🔺" },
 ];
-const COMPLETED_STATUSES = new Set(["x", "X", "-", "_"]);
 
 interface TaskEditorOptions {
   mode: "create" | "edit";
+  completedOpacity: number;
   source?: {
     path: string;
     line: number;
@@ -38,6 +42,7 @@ export function openTaskEditor(app: App, taskLine: string, options: TaskEditorOp
 class TaskEditorModal extends Modal {
   private readonly model: TaskEditorModel;
   private settled = false;
+  private descriptionPreviewRoot: Root | undefined;
 
   constructor(
     app: App,
@@ -56,7 +61,6 @@ class TaskEditorModal extends Modal {
 
     const form = this.contentEl.createEl("form", { cls: "tasks-calendar-editor" });
     this.addSourceActions(form);
-    this.addStatus(form);
     const description = this.addDescription(form);
     this.addPriorityPicker(form);
 
@@ -153,18 +157,62 @@ class TaskEditorModal extends Modal {
   }
 
   override onClose(): void {
+    this.descriptionPreviewRoot?.unmount();
+    this.descriptionPreviewRoot = undefined;
     this.contentEl.empty();
     this.finish(null);
   }
 
   private addDescription(form: HTMLFormElement): HTMLTextAreaElement {
     const section = form.createEl("section", { cls: "tasks-calendar-editor-description" });
-    section.createEl("label", { attr: { for: "tasks-calendar-editor-description" }, text: "Description" });
+    const preview = section.createDiv({
+      cls: "tasks-calendar-editor-preview",
+    });
+    this.descriptionPreviewRoot = createRoot(preview);
+    const sourcePath = this.options.source?.path ?? "";
+    if (this.model.done || this.model.completionTime) {
+      const details = [
+        completionDateLabel(this.model.done),
+        this.model.completionTime ? `🕒 ${this.model.completionTime}` : "",
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      section.createDiv({ cls: "tasks-calendar-editor-completion-details", text: details });
+    }
+    section.createEl("label", { attr: { for: "tasks-calendar-editor-description" }, text: "Edit text" });
     const input = section.createEl("textarea", {
       attr: { id: "tasks-calendar-editor-description", placeholder: "What needs to be done?", rows: "3" },
       text: this.model.description,
     });
     input.value = this.model.description;
+    const updatePreview = (): void => {
+      const recurrence = form.querySelector<HTMLInputElement>("#tasks-calendar-editor-recurs")?.value;
+      const task = parseTaskLine(
+        taskLineFromEditorModel({
+          ...this.model,
+          description: input.value,
+          recurrence: recurrence ?? this.model.recurrence,
+        }),
+        sourcePath,
+        this.options.source?.line ?? 0,
+      );
+      if (!task) return;
+      this.descriptionPreviewRoot?.render(
+        createElement(TaskEditorPreview, {
+          app: this.app,
+          completedOpacity: this.options.completedOpacity,
+          task,
+          onCompletionChange: (completed: boolean) => {
+            this.model.status = completed ? "x" : " ";
+            updatePreview();
+          },
+          onEdit: () => input.focus(),
+        }),
+      );
+    };
+    form.addEventListener("input", updatePreview);
+    form.addEventListener("change", updatePreview);
+    updatePreview();
     input.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
         event.preventDefault();
@@ -196,27 +244,6 @@ class TaskEditorModal extends Modal {
     row.createEl("label", { attr: { for: id }, text: labelText });
     const input = row.createEl("input", { attr: { id, placeholder, type: "text" }, value });
     return { input, row };
-  }
-
-  private addStatus(form: HTMLFormElement): void {
-    const section = form.createEl("section", { cls: "tasks-calendar-editor-status" });
-    section.createSpan({ cls: "tasks-calendar-editor-status-label", text: "Status" });
-    const label = section.createEl("label");
-    const checkbox = label.createEl("input", { attr: { type: "checkbox" } });
-    checkbox.checked = COMPLETED_STATUSES.has(this.model.status);
-    label.createSpan({ text: "Completed" });
-    if (this.model.done || this.model.completionTime) {
-      const details = [
-        completionDateLabel(this.model.done),
-        this.model.completionTime ? `🕒 ${this.model.completionTime}` : "",
-      ]
-        .filter(Boolean)
-        .join(" · ");
-      label.createSpan({ text: `· ${details}` });
-    }
-    checkbox.addEventListener("change", () => {
-      this.model.status = checkbox.checked ? "x" : " ";
-    });
   }
 
   private addSourceActions(form: HTMLFormElement): void {
