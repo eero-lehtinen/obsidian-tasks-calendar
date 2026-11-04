@@ -1,4 +1,5 @@
 import { Menu, setIcon } from "obsidian";
+import { addEditorPopover } from "./editor-popover";
 import { priorityIconName, registerPriorityIcons } from "./priority-icons";
 import { parseTaskDate, type TaskEditorModel, type TaskPriority, validateRecurrence } from "./task-editor-model";
 
@@ -21,7 +22,7 @@ export function addTaskMetadata(form: HTMLFormElement, model: TaskEditorModel) {
     attr: { type: "button", "aria-label": "Choose due date (Alt+D)", "aria-keyshortcuts": "Alt+D" },
   });
   setIcon(calendarShortcut, "calendar-days");
-  const due = addPanel(dateChip, null, "Edit due date");
+  const due = addEditorPopover(dateChip, null, "Edit due date");
   const dueInput = addInput(due.panel, "Due date", "tasks-calendar-editor-due", "Tomorrow or YYYY-MM-DD", model.due);
   const dueControls = due.panel.createDiv({ cls: "tasks-calendar-editor-date-controls" });
   dueControls.appendChild(dueInput);
@@ -59,7 +60,7 @@ export function addTaskMetadata(form: HTMLFormElement, model: TaskEditorModel) {
     due.summary.focus();
   });
 
-  const recurrence = addPanel(row, "repeat-2", "Recurrence");
+  const recurrence = addEditorPopover(row, "repeat-2", "Recurrence");
   const recurrenceInput = addInput(
     recurrence.panel,
     "Repeat",
@@ -127,6 +128,10 @@ export function addTaskMetadata(form: HTMLFormElement, model: TaskEditorModel) {
   });
 
   return {
+    dispose() {
+      due.dispose();
+      recurrence.dispose();
+    },
     openCalendar,
     readState() {
       return { due: dueInput.value, recurrence: recurrenceInput.value, forwardOnly: forwardOnly.checked };
@@ -172,49 +177,6 @@ export function addTaskMetadata(form: HTMLFormElement, model: TaskEditorModel) {
       };
     },
   };
-}
-
-function addPanel(parent: HTMLElement, icon: string | null, label: string) {
-  const summary = parent.createEl("button", {
-    cls: "tasks-calendar-editor-chip",
-    attr: { type: "button", "aria-label": label, "aria-expanded": "false", "aria-haspopup": "dialog" },
-  });
-  if (icon) setIcon(summary.createSpan(), icon);
-  const caption = summary.createSpan();
-  const panel = parent.createDiv({
-    cls: "tasks-calendar-editor-property-panel",
-    attr: { popover: "auto", role: "dialog", "aria-label": label },
-  });
-  const close = (): void => {
-    if (panel.matches(":popover-open")) panel.hidePopover();
-  };
-  summary.addEventListener("click", () => {
-    if (panel.matches(":popover-open")) {
-      close();
-      return;
-    }
-    const rect = summary.getBoundingClientRect();
-    const width = Math.min(360, window.innerWidth - 32);
-    panel.style.width = `${width}px`;
-    panel.style.left = `${Math.max(16, Math.min(rect.left, window.innerWidth - width - 16))}px`;
-    panel.showPopover();
-    const height = panel.getBoundingClientRect().height;
-    panel.style.top = `${Math.max(16, Math.min(rect.bottom + 8, window.innerHeight - height - 16))}px`;
-    panel.querySelector("input")?.focus();
-  });
-  panel.addEventListener("toggle", () => {
-    const open = panel.matches(":popover-open");
-    summary.setAttribute("aria-expanded", String(open));
-  });
-  panel.addEventListener("keydown", (event) => {
-    const confirmsInput = event.key === "Enter" && event.target instanceof HTMLInputElement;
-    if ((event.key !== "Escape" && !confirmsInput) || event.isComposing) return;
-    event.preventDefault();
-    event.stopPropagation();
-    close();
-    summary.focus();
-  });
-  return { summary, caption, panel, close };
 }
 
 function addInput(parent: HTMLElement, label: string, id: string, placeholder: string, value: string) {

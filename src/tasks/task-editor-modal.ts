@@ -34,6 +34,7 @@ class TaskEditorModal extends Modal {
   private readonly model: TaskEditorModel;
   private settled = false;
   private descriptionPreviewRoot: Root | undefined;
+  private disposeMetadata: (() => void) | undefined;
 
   constructor(
     app: App,
@@ -54,6 +55,7 @@ class TaskEditorModal extends Modal {
     const description = this.addDescription(form);
     this.addSourceLink(form);
     const metadata = addTaskMetadata(form, this.model);
+    this.disposeMetadata = () => metadata.dispose();
     this.scope.register(["Alt"], "d", () => {
       metadata.openCalendar();
       return false;
@@ -90,6 +92,8 @@ class TaskEditorModal extends Modal {
   }
 
   override onClose(): void {
+    this.disposeMetadata?.();
+    this.disposeMetadata = undefined;
     this.descriptionPreviewRoot?.unmount();
     this.descriptionPreviewRoot = undefined;
     this.contentEl.empty();
