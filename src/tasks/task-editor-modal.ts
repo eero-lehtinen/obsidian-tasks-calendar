@@ -54,6 +54,10 @@ class TaskEditorModal extends Modal {
     const description = this.addDescription(form);
     this.addSourceLink(form);
     const metadata = addTaskMetadata(form, this.model);
+    this.scope.register(["Alt"], "d", () => {
+      metadata.openCalendar();
+      return false;
+    });
 
     const actions = form.createDiv({ cls: "tasks-calendar-editor-actions" });
     this.addDeleteAction(actions);

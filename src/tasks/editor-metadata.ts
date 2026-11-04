@@ -14,7 +14,14 @@ const PRIORITIES: { value: TaskPriority; label: string }[] = [
 export function addTaskMetadata(form: HTMLFormElement, model: TaskEditorModel) {
   registerPriorityIcons();
   const row = form.createDiv({ cls: "tasks-calendar-editor-metadata" });
-  const due = addPanel(row, "calendar-days", "Due date");
+  const dateChip = row.createDiv({ cls: "tasks-calendar-editor-date-chip" });
+  const calendarHost = dateChip.createDiv({ cls: "tasks-calendar-editor-date-picker-host" });
+  const calendarShortcut = calendarHost.createEl("button", {
+    cls: "tasks-calendar-editor-chip tasks-calendar-editor-date-shortcut",
+    attr: { type: "button", "aria-label": "Choose due date (Alt+D)", "aria-keyshortcuts": "Alt+D" },
+  });
+  setIcon(calendarShortcut, "calendar-days");
+  const due = addPanel(dateChip, null, "Edit due date");
   const dueInput = addInput(due.panel, "Due date", "tasks-calendar-editor-due", "Tomorrow or YYYY-MM-DD", model.due);
   const dueControls = due.panel.createDiv({ cls: "tasks-calendar-editor-date-controls" });
   dueControls.appendChild(dueInput);
@@ -24,12 +31,24 @@ export function addTaskMetadata(form: HTMLFormElement, model: TaskEditorModel) {
     cls: "tasks-calendar-editor-date-picker",
   });
   setIcon(datePickerButton, "calendar-days");
-  const datePicker = datePickerHost.createEl("input", {
-    attr: { "aria-label": "Due date picker", tabindex: "-1", type: "date" },
-    cls: "tasks-calendar-editor-date-picker-input",
-  });
-  datePickerButton.addEventListener("click", () => datePicker.showPicker());
-  datePicker.value = model.due;
+  const createDatePicker = (host: HTMLElement): HTMLInputElement => {
+    const picker = host.createEl("input", {
+      attr: { "aria-label": "Due date picker", tabindex: "-1", type: "date" },
+      cls: "tasks-calendar-editor-date-picker-input",
+    });
+    picker.value = model.due;
+    picker.addEventListener("input", () => {
+      dueInput.value = picker.value;
+    });
+    return picker;
+  };
+  const datePicker = createDatePicker(calendarHost);
+  const panelDatePicker = createDatePicker(datePickerHost);
+  const showCalendar = (picker: HTMLInputElement): void => {
+    picker.value = parseTaskDate(dueInput.value, forwardOnly.checked).dateKey ?? "";
+    picker.showPicker();
+  };
+  datePickerButton.addEventListener("click", () => showCalendar(panelDatePicker));
   const futureLabel = due.panel.createEl("label", { cls: "tasks-calendar-editor-future" });
   const forwardOnly = futureLabel.createEl("input", { attr: { type: "checkbox" } });
   forwardOnly.checked = true;
@@ -95,15 +114,20 @@ export function addTaskMetadata(form: HTMLFormElement, model: TaskEditorModel) {
     menu.showAtPosition({ x: rect.left, y: rect.bottom + 4 });
   });
 
-  datePicker.addEventListener("input", () => {
-    dueInput.value = datePicker.value;
-  });
+  const openCalendar = (): void => {
+    due.close();
+    recurrence.close();
+    showCalendar(datePicker);
+  };
+  calendarShortcut.addEventListener("click", openCalendar);
+
   dueInput.addEventListener("blur", () => {
     const result = parseTaskDate(dueInput.value, forwardOnly.checked);
     if (result.dateKey) dueInput.value = result.dateKey;
   });
 
   return {
+    openCalendar,
     readState() {
       return { due: dueInput.value, recurrence: recurrenceInput.value, forwardOnly: forwardOnly.checked };
     },
@@ -111,7 +135,9 @@ export function addTaskMetadata(form: HTMLFormElement, model: TaskEditorModel) {
       dueInput.value = state.due;
       recurrenceInput.value = state.recurrence;
       forwardOnly.checked = state.forwardOnly;
-      datePicker.value = parseTaskDate(state.due, state.forwardOnly).dateKey ?? "";
+      const date = parseTaskDate(state.due, state.forwardOnly).dateKey ?? "";
+      datePicker.value = date;
+      panelDatePicker.value = date;
       updatePriority();
     },
     validate() {
@@ -123,6 +149,8 @@ export function addTaskMetadata(form: HTMLFormElement, model: TaskEditorModel) {
       due.caption.setText(parsedDate.dateKey ?? (dueInput.value.trim() || "Add date"));
       recurrence.caption.setText(parsedRecurrence.normalized ?? (recurrenceInput.value.trim() || "Add recurrence"));
       due.summary.toggleClass("is-empty", !dueInput.value.trim());
+      dateChip.toggleClass("is-empty", !dueInput.value.trim());
+      dateChip.toggleClass("is-error", parsedDate.error !== null);
       recurrence.summary.toggleClass("is-empty", !recurrenceInput.value.trim());
       for (const [field, feedback, summary, error] of [
         [dueInput, dueFeedback, due.summary, parsedDate.error],
@@ -133,7 +161,10 @@ export function addTaskMetadata(form: HTMLFormElement, model: TaskEditorModel) {
         feedback.hidden = error === null;
         summary.toggleClass("is-error", error !== null);
       }
-      if (parsedDate.dateKey) datePicker.value = parsedDate.dateKey;
+      if (parsedDate.dateKey) {
+        datePicker.value = parsedDate.dateKey;
+        panelDatePicker.value = parsedDate.dateKey;
+      }
       return {
         due: parsedDate.dateKey ?? "",
         recurrence: recurrenceInput.value,
@@ -143,12 +174,12 @@ export function addTaskMetadata(form: HTMLFormElement, model: TaskEditorModel) {
   };
 }
 
-function addPanel(parent: HTMLElement, icon: string, label: string) {
+function addPanel(parent: HTMLElement, icon: string | null, label: string) {
   const summary = parent.createEl("button", {
     cls: "tasks-calendar-editor-chip",
     attr: { type: "button", "aria-label": label, "aria-expanded": "false", "aria-haspopup": "dialog" },
   });
-  setIcon(summary.createSpan(), icon);
+  if (icon) setIcon(summary.createSpan(), icon);
   const caption = summary.createSpan();
   const panel = parent.createDiv({
     cls: "tasks-calendar-editor-property-panel",
