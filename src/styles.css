@@ -454,6 +454,15 @@
     transform 140ms ease;
 }
 
+.tasks-calendar-checkbox-control input[type="checkbox"].tasks-calendar-checkbox {
+  box-sizing: border-box;
+  width: 16px;
+  min-width: 0;
+  height: 16px;
+  min-height: 0;
+  margin: 0;
+}
+
 .tasks-calendar-checkbox:hover {
   border-color: var(--interactive-accent);
   transform: scale(1.08);
