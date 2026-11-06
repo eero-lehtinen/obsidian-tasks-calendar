@@ -51,6 +51,7 @@ class TaskEditorModal extends Modal {
     this.modalEl.addClass("tasks-calendar-editor-modal");
     this.contentEl.empty();
 
+    const initialTaskLine = taskLineFromEditorModel(this.model);
     const form = this.contentEl.createEl("form", { cls: "tasks-calendar-editor" });
     const description = this.addDescription(form);
     const details = form.createDiv({ cls: "tasks-calendar-editor-details" });
@@ -72,10 +73,22 @@ class TaskEditorModal extends Modal {
       cls: "tasks-calendar-editor-cancel",
       text: "Cancel",
     });
-    const apply = buttons.createEl("button", { attr: { type: "submit" }, cls: "mod-cta", text: "Save" });
+    const apply = buttons.createEl("button", {
+      attr: { type: "submit" },
+      cls: "tasks-calendar-editor-save",
+      text: "Save",
+    });
     const validate = (): void => {
       const result = metadata.validate();
-      apply.disabled = description.value.trim().length === 0 || !result.valid;
+      const taskLine = taskLineFromEditorModel({
+        ...this.model,
+        description: description.value,
+        due: result.due,
+        recurrence: result.recurrence,
+      });
+      const unchanged = this.options.mode === "edit" && taskLine === initialTaskLine;
+      apply.disabled = description.value.trim().length === 0 || !result.valid || unchanged;
+      apply.toggleClass("mod-cta", !apply.disabled);
     };
     form.addEventListener("input", validate);
     form.addEventListener("change", validate);
@@ -182,7 +195,7 @@ class TaskEditorModal extends Modal {
           task,
           onCompletionChange: (completed: boolean) => {
             this.model.status = completed ? "x" : " ";
-            updatePreview();
+            form.dispatchEvent(new Event("change", { bubbles: true }));
           },
           onEdit: beginEditing,
         }),
