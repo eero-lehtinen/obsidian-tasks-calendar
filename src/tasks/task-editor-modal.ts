@@ -53,7 +53,10 @@ class TaskEditorModal extends Modal {
 
     const form = this.contentEl.createEl("form", { cls: "tasks-calendar-editor" });
     const description = this.addDescription(form);
-    this.addSourceLink(form);
+    const details = form.createDiv({ cls: "tasks-calendar-editor-details" });
+    this.addCompletionDetails(details);
+    this.addSourceLink(details);
+    if (!details.hasChildNodes()) details.remove();
     const metadata = addTaskMetadata(form, this.model);
     this.disposeMetadata = () => metadata.dispose();
     this.scope.register(["Alt"], "d", () => {
@@ -108,15 +111,6 @@ class TaskEditorModal extends Modal {
     const taskPreview = preview.createDiv();
     this.descriptionPreviewRoot = createRoot(taskPreview);
     const sourcePath = this.options.source?.path ?? "";
-    if (this.model.done || this.model.completionTime) {
-      const details = [
-        completionDateLabel(this.model.done),
-        this.model.completionTime ? `🕒 ${this.model.completionTime}` : "",
-      ]
-        .filter(Boolean)
-        .join(" · ");
-      section.createDiv({ cls: "tasks-calendar-editor-completion-details", text: details });
-    }
     const input = section.createEl("textarea", {
       attr: {
         "aria-label": "Task description",
@@ -214,11 +208,20 @@ class TaskEditorModal extends Modal {
     return input;
   }
 
-  private addSourceLink(form: HTMLFormElement): void {
+  private addCompletionDetails(parent: HTMLElement): void {
+    if (!this.model.done && !this.model.completionTime) return;
+
+    const timestamp = [completionDateLabel(this.model.done), this.model.completionTime].filter(Boolean).join(" at ");
+    const details = parent.createDiv({ cls: "tasks-calendar-editor-completion-details" });
+    setIcon(details, "check-check");
+    details.createSpan({ text: `Completed ${timestamp}` });
+  }
+
+  private addSourceLink(parent: HTMLElement): void {
     const source = this.options.source;
     if (!source) return;
 
-    const sourceLink = form.createEl("a", {
+    const sourceLink = parent.createEl("a", {
       attr: { "aria-label": `Open ${source.path} at line ${source.line}`, href: "#" },
       cls: "tasks-calendar-editor-source",
     });

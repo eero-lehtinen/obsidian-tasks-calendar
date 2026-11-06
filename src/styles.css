@@ -1394,30 +1394,35 @@
   line-height: 1.5;
 }
 
-.tasks-calendar-editor-completion-details {
-  padding-inline-start: 30px;
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller);
+.tasks-calendar-editor-details {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-block: -4px;
 }
 
+.tasks-calendar-editor-completion-details,
 .tasks-calendar-editor-source {
   display: inline-flex;
   gap: 6px;
-  align-items: center;
+  align-items: flex-start;
   align-self: flex-start;
   max-width: 100%;
-  margin-top: -10px;
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
+  line-height: 1.5;
   text-decoration: none;
 }
 
+.tasks-calendar-editor-completion-details svg,
 .tasks-calendar-editor-source svg {
   flex: 0 0 auto;
   width: 13px;
   height: 13px;
+  margin-top: 0.2em;
 }
 
+.tasks-calendar-editor-completion-details span,
 .tasks-calendar-editor-source span {
   min-width: 0;
   overflow-wrap: anywhere;
